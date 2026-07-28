@@ -10,7 +10,633 @@
         #map { height: 100vh; width: 100vw; }
         .user-info {
             position: absolute;
-            top: 10px; right: 10px; background: white;
+            top: 10px; right: 10px; background: white;<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Radar CyberX - Telegram MiniApp</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        :root {
+            --tg-theme-bg-color: #0e1621;
+            --tg-theme-text-color: #ffffff;
+            --tg-theme-hint-color: #708499;
+            --tg-bg-glass: rgba(17, 27, 43, 0.92);
+            --tg-border-glass: rgba(255, 255, 255, 0.08);
+            --accent-blue: #3390ec;
+            --accent-online: #4bb34b;
+            --accent-danger: #e53935;
+        }
+
+        body {
+            margin: 0; padding: 0; background-color: var(--tg-theme-bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden; color: var(--tg-theme-text-color); user-select: none;
+        }
+
+        #map { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+        .leaflet-tile-pane { filter: brightness(0.5) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
+
+        .tg-tap { transition: transform 0.1s ease, opacity 0.1s ease; cursor: pointer; }
+        .tg-tap:active { transform: scale(0.95); opacity: 0.8; }
+
+        .telegram-search-bar {
+            position: absolute; top: 14px; left: 14px; right: 14px; z-index: 1007;
+            background: var(--tg-bg-glass); backdrop-filter: blur(20px);
+            border: 1px solid var(--tg-border-glass); border-radius: 20px;
+            padding: 10px 16px; display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .search-input-box { display: flex; align-items: center; gap: 12px; color: var(--tg-theme-hint-color); font-size: 14px; }
+        .search-input-box i { color: var(--accent-blue); font-size: 16px; }
+
+        .user-avatar-badge {
+            width: 34px; height: 34px; background: linear-gradient(135deg, #3390ec, #1b6ac9);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: bold; color: #fff; position: relative;
+        }
+        .user-avatar-badge::after {
+            content: ''; position: absolute; bottom: 1px; right: 1px; width: 9px; height: 9px;
+            background: var(--accent-online); border: 2px solid var(--tg-theme-bg-color); border-radius: 50%;
+        }
+
+        .map-floating-controls {
+            position: absolute; top: 82px; right: 14px; z-index: 1006; display: flex; flex-direction: column; gap: 10px;
+        }
+        .floating-action-btn {
+            background: var(--tg-bg-glass); border: 1px solid var(--tg-border-glass);
+            color: var(--tg-theme-hint-color); width: 44px; height: 44px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 17px;
+            backdrop-filter: blur(15px); box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+        .floating-action-btn:hover { color: var(--accent-blue); }
+
+        .proximity-alert-banner {
+            position: absolute; top: 82px; left: 14px; right: 70px; z-index: 1006;
+            background: rgba(51, 144, 236, 0.9); backdrop-filter: blur(10px);
+            border-radius: 14px; padding: 10px 14px; color: #fff; font-size: 12px;
+            display: none; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            animation: fadeIn 0.3s ease;
+        }
+        .proximity-alert-banner.active { display: flex; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .dating-profile-sheet {
+            position: absolute; bottom: -420px; left: 0; right: 0; z-index: 1020;
+            background: rgba(15, 23, 38, 0.98); backdrop-filter: blur(30px);
+            border-radius: 28px 28px 0 0; padding: 16px 20px 28px 20px;
+            transition: bottom 0.4s cubic-bezier(0.1, 0.9, 0.2, 1);
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.7);
+            border-top: 1px solid rgba(51, 144, 236, 0.3);
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .dating-profile-sheet.open { bottom: 0; }
+        .sheet-indicator { width: 40px; height: 4px; background: rgba(255, 255, 255, 0.2); border-radius: 2px; align-self: center; }
+
+        .profile-header-info { display: flex; align-items: center; gap: 14px; }
+        .profile-big-avatar {
+            width: 60px; height: 60px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-size: 20px; font-weight: bold; color: #fff; flex-shrink: 0;
+        }
+        .profile-text-details h3 { margin: 0 0 4px 0; font-size: 17px; color: #fff; }
+        .distance-tag {
+            font-size: 11px; color: var(--accent-blue); background: rgba(51, 144, 236, 0.15);
+            padding: 2px 8px; border-radius: 8px; display: inline-block; margin-bottom: 4px;
+        }
+        .profile-text-details p { margin: 0; font-size: 12px; color: var(--tg-theme-hint-color); }
+
+        .profile-bio-box {
+            background: rgba(255, 255, 255, 0.04); border: 1px solid var(--tg-border-glass);
+            border-radius: 12px; padding: 10px 14px; font-size: 13px; color: #d1d5db; line-height: 1.4;
+        }
+
+        .profile-actions-row { display: flex; gap: 10px; margin-top: 4px; }
+        .telegram-btn {
+            flex: 1; border-radius: 14px; padding: 12px; font-weight: bold; font-size: 13px;
+            display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; border: none;
+        }
+        .btn-primary-tg { background: linear-gradient(135deg, #3390ec, #1b6ac9); color: #fff; }
+        .btn-secondary-tg { background: rgba(255, 255, 255, 0.06); border: 1px solid var(--tg-border-glass); color: #fff; }
+        .btn-route-tg { background: rgba(75, 179, 75, 0.2); border: 1px solid rgba(75, 179, 75, 0.4); color: #4bb34b; }
+
+        .radar-modal-overlay {
+            position: fixed; inset: 0; z-index: 2000; background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .radar-modal-overlay.active { display: flex; }
+        .radar-modal-card {
+            background: #131d2e; border: 1px solid rgba(51, 144, 236, 0.3);
+            border-radius: 20px; padding: 20px; width: 100%; max-width: 340px;
+        }
+
+        .radius-preset-chips { display: flex; gap: 6px; margin: 10px 0 16px 0; flex-wrap: wrap; }
+        .radius-chip {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--tg-border-glass);
+            padding: 6px 12px; border-radius: 10px; font-size: 12px; color: #fff; cursor: pointer;
+        }
+        .radius-chip.active { background: var(--accent-blue); border-color: var(--accent-blue); }
+
+        .telegram-tabbar {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 1010;
+            background: var(--tg-bg-glass); backdrop-filter: blur(20px);
+            border-top: 1px solid var(--tg-border-glass);
+            display: flex; justify-content: space-around; align-items: center; height: 60px;
+        }
+        .tab-item {
+            text-decoration: none; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; color: var(--tg-theme-hint-color); font-size: 10px; width: 100%; height: 100%;
+        }
+        .tab-item i { font-size: 18px; margin-bottom: 3px; }
+        .tab-item.active { color: var(--accent-blue); }
+
+        .app-view-panel {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 60px;
+            z-index: 1005; background: var(--tg-theme-bg-color); overflow-y: auto; display: none; padding: 16px; box-sizing: border-box;
+        }
+        .app-view-panel.active { display: block; }
+
+        .chat-room-container { display: flex; flex-direction: column; height: 100%; justify-content: space-between; }
+        .messages-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px; }
+        .message-bubble { max-width: 75%; padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.4; word-break: break-word; }
+        .message-bubble.incoming { background: #1f2c3a; color: #fff; align-self: flex-start; }
+        .message-bubble.outgoing { background: var(--accent-blue); color: #fff; align-self: flex-end; }
+
+        .chat-input-row { display: flex; gap: 8px; align-items: center; padding-top: 10px; border-top: 1px solid var(--tg-border-glass); }
+        .chat-text-input {
+            flex-grow: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--tg-border-glass);
+            border-radius: 12px; padding: 10px 14px; color: #fff; font-size: 13px; outline: none;
+        }
+        .chat-send-btn { background: var(--accent-blue); border: none; width: 42px; height: 42px; border-radius: 12px; color: #fff; cursor: pointer; }
+
+        .chat-list-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px;
+            cursor: pointer; margin-bottom: 6px; background: rgba(255,255,255,0.02); border: 1px solid var(--tg-border-glass);
+        }
+        .chat-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 15px; flex-shrink: 0; }
+
+        .profile-form-group { margin-bottom: 12px; }
+        .profile-form-group label { display: block; font-size: 12px; color: var(--accent-blue); margin-bottom: 6px; font-weight: bold; }
+        .profile-form-input, .profile-form-textarea {
+            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--tg-border-glass);
+            border-radius: 12px; padding: 10px; color: #fff; font-size: 13px; outline: none; box-sizing: border-box;
+        }
+        .profile-form-textarea { resize: none; height: 70px; }
+
+        .toggle-switch-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <div class="telegram-search-bar tg-tap" id="open-radar-filter">
+        <div class="search-input-box">
+            <i class="fas fa-radar"></i>
+            <span id="header-filter-text">شعاع جستجو: ۵ کیلومتر</span>
+        </div>
+        <div class="user-avatar-badge" id="my-initials">CX</div>
+    </div>
+
+    <div class="proximity-alert-banner" id="proximity-banner">
+        <i class="fas fa-bell" style="font-size: 16px;"></i>
+        <div style="flex-grow: 1;">
+            <div style="font-weight: bold;" id="alert-title-text">کاربر جدید نزدیک شد!</div>
+            <div style="font-size: 10px; opacity: 0.8;" id="alert-desc-text">یک کاربر وارد شعاع ۱ کیلومتری شما شد.</div>
+        </div>
+    </div>
+
+    <div class="map-floating-controls" id="map-controls">
+        <button class="floating-action-btn tg-tap" id="gps-btn" title="موقعیت من"><i class="fas fa-crosshairs"></i></button>
+    </div>
+
+    <div class="radar-modal-overlay" id="radar-modal">
+        <div class="radar-modal-card">
+            <h3 style="color: #fff; margin-top: 0; font-size: 16px;">تنظیم شعاع رادار</h3>
+            <label style="color: var(--tg-theme-hint-color); font-size: 12px;">فاصله انتخابی: <span id="range-val" style="color: var(--accent-blue); font-weight: bold;">۵</span> کیلومتر</label>
+
+            <div class="radius-preset-chips">
+                <div class="radius-chip tg-tap" data-val="1">۱ کیلومتر</div>
+                <div class="radius-chip tg-tap" data-val="3">۳ کیلومتر</div>
+                <div class="radius-chip tg-tap active" data-val="5">۵ کیلومتر</div>
+                <div class="radius-chip tg-tap" data-val="10">۱۰ کیلومتر</div>
+                <div class="radius-chip tg-tap" data-val="25">۲۵ کیلومتر</div>
+            </div>
+
+            <input type="range" id="distance-slider" min="1" max="50" value="5" style="width: 100%; accent-color: var(--accent-blue); margin: 6px 0 16px 0;">
+            <button class="telegram-btn btn-primary-tg tg-tap" id="apply-filter-btn">اعمال فیلتر رادار</button>
+        </div>
+    </div>
+
+    <div class="dating-profile-sheet" id="profile-sheet">
+        <div class="sheet-indicator"></div>
+        <div class="profile-header-info">
+            <div class="profile-big-avatar" id="sheet-avatar">س</div>
+            <div class="profile-text-details">
+                <h3 id="sheet-name">سارا</h3>
+                <span class="distance-tag" id="sheet-distance">محاسبه فاصله...</span>
+                <p id="sheet-status-text" style="color: var(--accent-online);">● آنلاین</p>
+            </div>
+        </div>
+        <div class="profile-bio-box" id="sheet-bio">بیوگرافی کاربر...</div>
+        <div class="profile-actions-row">
+            <button class="telegram-btn btn-primary-tg tg-tap" id="start-chat-btn"><i class="fas fa-comment-dots"></i> پیام</button>
+            <button class="telegram-btn btn-route-tg tg-tap" id="route-to-user-btn"><i class="fas fa-route"></i> مسیریابی</button>
+            <button class="telegram-btn btn-secondary-tg tg-tap" id="close-sheet-btn">بستن</button>
+        </div>
+    </div>
+
+    <div id="chats-view" class="app-view-panel">
+        <h3 style="font-size: 15px; margin: 5px 0 12px 0; color: #fff;">گفتگوها</h3>
+        <div id="chat-conversations-list"></div>
+    </div>
+
+    <div id="active-chat-room-view" class="app-view-panel">
+        <div class="chat-room-container">
+            <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--tg-border-glass);">
+                <button class="telegram-btn btn-secondary-tg tg-tap" id="back-to-chats" style="flex: unset; padding: 6px 10px;"><i class="fas fa-arrow-right"></i></button>
+                <div class="chat-avatar" id="room-user-avatar" style="width: 34px; height: 34px; font-size: 13px;">س</div>
+                <span id="room-user-name" style="font-weight: bold; font-size: 14px; color: #fff;">سارا</span>
+            </div>
+            <div class="messages-list" id="room-messages-box"></div>
+            <div class="chat-input-row">
+                <input type="text" class="chat-text-input" id="chat-input-field" placeholder="پیام...">
+                <button class="chat-send-btn tg-tap" id="send-msg-btn"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="my-profile-view" class="app-view-panel">
+        <div style="text-align: center; padding: 10px 0;">
+            <div style="width: 65px; height: 65px; background: linear-gradient(135deg, #3390ec, #1b6ac9); border-radius: 50%; margin: 0 auto 8px auto; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; color: #fff;" id="my-profile-avatar-box">CX</div>
+            <h3 id="my-name-title" style="margin: 0; font-size: 16px; color: #fff;">کاربر</h3>
+            <span style="font-size: 11px; color: var(--accent-blue);" id="my-username-tag">@TelegramUser</span>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--tg-border-glass); border-radius: 16px; padding: 12px; margin-top: 10px;">
+            <div class="profile-form-group">
+                <label>نام نمایشی</label>
+                <input type="text" id="edit-name-input" class="profile-form-input" value="کاربر">
+            </div>
+            <div class="profile-form-group">
+                <label>بیوگرافی (درباره من)</label>
+                <textarea id="edit-bio-input" class="profile-form-textarea">توسعه‌دهنده مینی‌اپ 🚀</textarea>
+            </div>
+            <div class="toggle-switch-row">
+                <span style="font-size: 13px; color: #fff;">حالت رادار مخفی (Stealth Mode)</span>
+                <input type="checkbox" id="stealth-mode-toggle" style="width: 18px; height: 18px; accent-color: var(--accent-blue);">
+            </div>
+        </div>
+
+        <button class="telegram-btn btn-primary-tg tg-tap" id="save-profile-btn" style="width: 100%; margin-top: 16px;">ذخیره تغییرات</button>
+    </div>
+
+    <nav class="telegram-tabbar">
+        <a href="#" class="nav-item tab-item active" data-target="map-view"><i class="fas fa-map"></i><span>نقشه</span></a>
+        <a href="#" class="nav-item tab-item" data-target="chats-view"><i class="fas fa-comment-alt"></i><span>چت‌ها</span></a>
+        <a href="#" class="nav-item tab-item" data-target="my-profile-view"><i class="fas fa-user"></i><span>پروفایل</span></a>
+    </nav>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let myName = localStorage.getItem('cyberx_name') || "کاربر سایبر";
+        let myBio = localStorage.getItem('cyberx_bio') || "توسعه‌دهنده مینی‌اپ 🚀";
+        let isStealthMode = localStorage.getItem('cyberx_stealth') === 'true';
+
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            const user = tg.initDataUnsafe.user;
+            if(!localStorage.getItem('cyberx_name') && user.first_name) myName = user.first_name;
+            if(user.username) document.getElementById('my-username-tag').innerText = `@${user.username}`;
+        }
+
+        document.getElementById('my-initials').innerText = myName.charAt(0);
+        document.getElementById('my-name-title').innerText = myName;
+        document.getElementById('edit-name-input').value = myName;
+        document.getElementById('edit-bio-input').value = myBio;
+        document.getElementById('my-profile-avatar-box').innerText = myName.charAt(0);
+        document.getElementById('stealth-mode-toggle').checked = isStealthMode;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const map = L.map('map', { zoomControl: false }).setView([35.6892, 51.3890], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+            let userMarker = null;
+            let userLatLng = [35.6892, 51.3890];
+            let activeRadiusKm = parseInt(localStorage.getItem('cyberx_radius')) || 5;
+            let markersLayerGroup = L.layerGroup().addTo(map);
+            let routePolyline = null;
+
+            const allNearbyUsers = [
+                { id: 1, name: 'سارا', lat: 35.6920, lng: 51.3850, bio: 'علاقه‌مند به برنامه‌نویسی و تکنولوژی 💻', avatar: 'س', color: '#ff416c' },
+                { id: 2, name: 'احسان', lat: 35.6850, lng: 51.3940, bio: 'توسعه‌دهنده فرانت‌اند و مینی‌اپ تلگرام', avatar: 'ا', color: '#3390ec' },
+                { id: 3, name: 'نیلوفر', lat: 35.7010, lng: 51.4100, bio: 'طراح UI/UX و علاقه‌مند به هوش مصنوعی 🎨', avatar: 'ن', color: '#9c27b0' },
+                { id: 4, name: 'آرش', lat: 35.6720, lng: 51.3650, bio: 'فعال حوزه شبکه و امنیت سایبری 🛡️', avatar: 'آ', color: '#ff9800' },
+                { id: 5, name: 'مینا', lat: 35.7150, lng: 51.3500, bio: 'مدیر پروژه و توسعه‌دهنده پایتون 🐍', avatar: 'م', color: '#00bcd4' }
+            ];
+
+            const chatMessagesStore = {
+                1: [{ sender: 'incoming', text: 'سلام! پروژه مینی‌اپ چطور پیش میره؟' }],
+                2: [{ sender: 'incoming', text: 'سلام، کدهای رادار تست شد؟' }],
+                3: [{ sender: 'incoming', text: 'طرح‌های UI جدید آماده شد.' }],
+                4: [{ sender: 'incoming', text: 'گزارش امنیتی سرور بررسی شد.' }],
+                5: [{ sender: 'incoming', text: 'پایتون و فلاسگ کانفیگ شد.' }]
+            };
+
+            let selectedUserForChat = null;
+            const profileSheet = document.getElementById('profile-sheet');
+
+            function calculateDistance(lat1, lon1, lat2, lon2) {
+                const R = 6371;
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                          Math.sin(dLon/2) * Math.sin(dLon/2);
+                return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+            }
+
+            function renderMarkers() {
+                markersLayerGroup.clearLayers();
+                if (isStealthMode) return;
+
+                let closeUserFound = false;
+
+                allNearbyUsers.forEach(u => {
+                    const distKm = calculateDistance(userLatLng[0], userLatLng[1], u.lat, u.lng);
+
+                    if (distKm <= 1.0) {
+                        closeUserFound = true;
+                        document.getElementById('alert-title-text').innerText = `${u.name} در نزدیکی شماست!`;
+                        document.getElementById('alert-desc-text').innerText = `فاصله کمتر از ۱ کیلومتر (${Math.round(distKm*1000)} متر)`;
+                        document.getElementById('proximity-banner').classList.add('active');
+                    }
+
+                    if (distKm <= activeRadiusKm) {
+                        const customIcon = L.divIcon({
+                            className: 'custom-div-icon',
+                            html: `<div style="background: ${u.color}; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.4);">${u.avatar}</div>`,
+                            iconSize: [34, 34], iconAnchor: [17, 17]
+                        });
+
+                        const marker = L.marker([u.lat, u.lng], { icon: customIcon });
+                        marker.on('click', () => {
+                            tg.HapticFeedback.impactOccurred('medium');
+                            selectedUserForChat = u;
+                            const distText = distKm < 1 ? Math.round(distKm * 1000) + ' متر' : distKm.toFixed(1) + ' کیلومتر';
+
+                            document.getElementById('sheet-name').innerText = u.name;
+                            document.getElementById('sheet-distance').innerText = `${distText} فاصله`;
+                            document.getElementById('sheet-bio').innerText = u.bio;
+                            document.getElementById('sheet-avatar').style.background = u.color;
+                            document.getElementById('sheet-avatar').innerText = u.avatar;
+                            profileSheet.classList.add('open');
+                        });
+                        markersLayerGroup.addLayer(marker);
+                    }
+                });
+
+                if (!closeUserFound) {
+                    document.getElementById('proximity-banner').classList.remove('active');
+                }
+            }
+
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(position => {
+                    userLatLng = [position.coords.latitude, position.coords.longitude];
+                    if (!userMarker) {
+                        map.setView(userLatLng, 14);
+                        userMarker = L.marker(userLatLng, {
+                            icon: L.divIcon({
+                                html: '<div style="background: var(--accent-blue); width: 14px; height: 14px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 10px #3390ec;"></div>'
+                            })
+                        }).addTo(map);
+                    } else {
+                        userMarker.setLatLng(userLatLng);
+                    }
+                    renderMarkers();
+                }, () => renderMarkers(), { enableHighAccuracy: true });
+            } else {
+                renderMarkers();
+            }
+
+            document.getElementById('gps-btn').addEventListener('click', () => {
+                tg.HapticFeedback.impactOccurred('light');
+                map.setView(userLatLng, 14);
+            });
+
+            document.getElementById('route-to-user-btn').addEventListener('click', () => {
+                if (!selectedUserForChat) return;
+                profileSheet.classList.remove('open');
+                tg.HapticFeedback.notificationOccurred('success');
+
+                if (routePolyline) map.removeLayer(routePolyline);
+
+                const targetLatLng = [selectedUserForChat.lat, selectedUserForChat.lng];
+                routePolyline = L.polyline([userLatLng, targetLatLng], {
+                    color: '#4bb34b',
+                    weight: 4,
+                    dashArray: '6, 6'
+                }).addTo(map);
+
+                map.fitBounds(routePolyline.getBounds(), { padding: [50, 50] });
+            });
+
+            const radarModal = document.getElementById('radar-modal');
+            const distanceSlider = document.getElementById('distance-slider');
+            const rangeValSpan = document.getElementById('range-val');
+            const headerFilterText = document.getElementById('header-filter-text');
+
+            distanceSlider.value = activeRadiusKm;
+            rangeValSpan.innerText = activeRadiusKm;
+            headerFilterText.innerText = `شعاع جستجو: ${activeRadiusKm} کیلومتر`;
+
+            document.getElementById('open-radar-filter').addEventListener('click', () => radarModal.classList.add('active'));
+
+            document.querySelectorAll('.radius-chip').forEach(chip => {
+                const val = parseInt(chip.getAttribute('data-val'));
+                if(val === activeRadiusKm) chip.classList.add('active');
+                else chip.classList.remove('active');
+
+                chip.addEventListener('click', () => {
+                    document.querySelectorAll('.radius-chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    activeRadiusKm = val;
+                    distanceSlider.value = val;
+                    rangeValSpan.innerText = val;
+                    tg.HapticFeedback.impactOccurred('light');
+                });
+            });
+
+            distanceSlider.addEventListener('input', function() {
+                activeRadiusKm = parseInt(this.value);
+                rangeValSpan.innerText = activeRadiusKm;
+                document.querySelectorAll('.radius-chip').forEach(c => {
+                    if(parseInt(c.getAttribute('data-val')) === activeRadiusKm) c.classList.add('active');
+                    else c.classList.remove('active');
+                });
+            });
+
+            document.getElementById('apply-filter-btn').addEventListener('click', () => {
+                radarModal.classList.remove('active');
+                headerFilterText.innerText = `شعاع جستجو: ${activeRadiusKm} کیلومتر`;
+                localStorage.setItem('cyberx_radius', activeRadiusKm);
+
+                fetch('/api/update-radius', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        radius: activeRadiusKm,
+                        initData: tg.initData || ''
+                    })
+                })
+                .then(res => res.json())
+                .then(data => console.log("Radius synced:", data))
+                .catch(err => console.error("Sync error:", err));
+
+                renderMarkers();
+                tg.HapticFeedback.notificationOccurred('success');
+            });
+
+            document.getElementById('close-sheet-btn').addEventListener('click', () => profileSheet.classList.remove('open'));
+
+            document.getElementById('save-profile-btn').addEventListener('click', () => {
+                myName = document.getElementById('edit-name-input').value.trim();
+                myBio = document.getElementById('edit-bio-input').value.trim();
+                isStealthMode = document.getElementById('stealth-mode-toggle').checked;
+
+                localStorage.setItem('cyberx_name', myName);
+                localStorage.setItem('cyberx_bio', myBio);
+                localStorage.setItem('cyberx_stealth', isStealthMode);
+
+                document.getElementById('my-name-title').innerText = myName;
+                document.getElementById('my-initials').innerText = myName.charAt(0);
+                document.getElementById('my-profile-avatar-box').innerText = myName.charAt(0);
+
+                renderMarkers();
+                tg.HapticFeedback.notificationOccurred('success');
+                alert('تنظیمات ذخیره شد!');
+            });
+
+            function updateChatsList() {
+                const list = document.getElementById('chat-conversations-list');
+                list.innerHTML = '';
+                allNearbyUsers.forEach(u => {
+                    const msgs = chatMessagesStore[u.id] || [];
+                    const last = msgs.length ? msgs[msgs.length - 1].text : 'شروع گفتگو...';
+
+                    const item = document.createElement('div');
+                    item.className = 'chat-list-item tg-tap';
+                    item.innerHTML = `
+                        <div class="chat-avatar" style="background: ${u.color};">${u.avatar}</div>
+                        <div style="flex-grow: 1; overflow: hidden;">
+                            <div style="font-weight: bold; font-size: 13px; color: #fff; margin-bottom: 2px;">${u.name}</div>
+                            <div style="font-size: 11px; color: var(--tg-theme-hint-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${last}</div>
+                        </div>
+                    `;
+                    item.addEventListener('click', () => openChatRoom(u));
+                    list.appendChild(item);
+                });
+            }
+
+            function openChatRoom(user) {
+                selectedUserForChat = user;
+                profileSheet.classList.remove('open');
+                document.getElementById('room-user-name').innerText = user.name;
+                document.getElementById('room-user-avatar').style.background = user.color;
+                document.getElementById('room-user-avatar').innerText = user.avatar;
+
+                document.querySelectorAll('.app-view-panel').forEach(v => v.classList.remove('active'));
+                document.getElementById('active-chat-room-view').classList.add('active');
+                renderMessages();
+            }
+
+            function renderMessages() {
+                const box = document.getElementById('room-messages-box');
+                box.innerHTML = '';
+                if (!selectedUserForChat) return;
+
+                (chatMessagesStore[selectedUserForChat.id] || []).forEach(m => {
+                    const div = document.createElement('div');
+                    div.className = `message-bubble ${m.sender}`;
+                    div.innerText = m.text;
+                    box.appendChild(div);
+                });
+                box.scrollTop = box.scrollHeight;
+            }
+
+            document.getElementById('start-chat-btn').addEventListener('click', () => {
+                if (selectedUserForChat) openChatRoom(selectedUserForChat);
+            });
+
+            document.getElementById('back-to-chats').addEventListener('click', () => {
+                document.getElementById('active-chat-room-view').classList.remove('active');
+                document.getElementById('chats-view').classList.add('active');
+                updateChatsList();
+            });
+
+            function sendMessage() {
+                const input = document.getElementById('chat-input-field');
+                const text = input.value.trim();
+                if (!text || !selectedUserForChat) return;
+
+                if (!chatMessagesStore[selectedUserForChat.id]) {
+                    chatMessagesStore[selectedUserForChat.id] = [];
+                }
+
+                chatMessagesStore[selectedUserForChat.id].push({ sender: 'outgoing', text: text });
+                input.value = '';
+                renderMessages();
+                tg.HapticFeedback.impactOccurred('light');
+
+                setTimeout(() => {
+                    chatMessagesStore[selectedUserForChat.id].push({
+                        sender: 'incoming',
+                        text: 'پیام شما دریافت شد. به زودی بررسی خواهم کرد! 👍'
+                    });
+                    renderMessages();
+                }, 1000);
+            }
+
+            document.getElementById('send-msg-btn').addEventListener('click', sendMessage);
+            document.getElementById('chat-input-field').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+
+                    const targetId = item.getAttribute('data-target');
+                    document.querySelectorAll('.app-view-panel').forEach(v => v.classList.remove('active'));
+
+                    if (targetId === 'map-view') {
+                        profileSheet.classList.remove('open');
+                    } else {
+                        document.getElementById(targetId).classList.add('active');
+                        if (targetId === 'chats-view') {
+                            updateChatsList();
+                        }
+                    }
+                    tg.HapticFeedback.selectionChanged();
+                });
+            });
+
+            updateChatsList();
+        });
+    </script>
+</body>
+</html>
             padding: 10px 15px; border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             z-index: 1000; font-size: 14px; font-weight: bold;
