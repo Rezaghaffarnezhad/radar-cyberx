@@ -2,18 +2,6 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نقشه زنده - Radar CyberX</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        body { margin: 0; padding: 0; font-family: Tahoma, sans-serif; }
-        #map { height: 100vh; width: 100vw; }
-        .user-info {
-            position: absolute;
-            top: 10px; right: 10px; background: white;<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Radar CyberX - Telegram MiniApp</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -39,7 +27,7 @@
         }
 
         #map { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
-        .leaflet-tile-pane { filter: brightness(0.5) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
+        .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) !important; }
 
         .tg-tap { transition: transform 0.1s ease, opacity 0.1s ease; cursor: pointer; }
         .tg-tap:active { transform: scale(0.95); opacity: 0.8; }
@@ -596,14 +584,6 @@
                 input.value = '';
                 renderMessages();
                 tg.HapticFeedback.impactOccurred('light');
-
-                setTimeout(() => {
-                    chatMessagesStore[selectedUserForChat.id].push({
-                        sender: 'incoming',
-                        text: 'پیام شما دریافت شد. به زودی بررسی خواهم کرد! 👍'
-                    });
-                    renderMessages();
-                }, 1000);
             }
 
             document.getElementById('send-msg-btn').addEventListener('click', sendMessage);
@@ -611,70 +591,25 @@
                 if (e.key === 'Enter') sendMessage();
             });
 
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.addEventListener('click', (e) => {
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.addEventListener('click', (e) => {
                     e.preventDefault();
-                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                    item.classList.add('active');
+                    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
 
-                    const targetId = item.getAttribute('data-target');
+                    const target = tab.getAttribute('data-target');
                     document.querySelectorAll('.app-view-panel').forEach(v => v.classList.remove('active'));
 
-                    if (targetId === 'map-view') {
-                        profileSheet.classList.remove('open');
-                    } else {
-                        document.getElementById(targetId).classList.add('active');
-                        if (targetId === 'chats-view') {
-                            updateChatsList();
-                        }
+                    if (target === 'chats-view') {
+                        document.getElementById('chats-view').classList.add('active');
+                        updateChatsList();
+                    } else if (target === 'my-profile-view') {
+                        document.getElementById('my-profile-view').classList.add('active');
                     }
                     tg.HapticFeedback.selectionChanged();
                 });
             });
-
-            updateChatsList();
         });
-    </script>
-</body>
-</html>
-            padding: 10px 15px; border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            z-index: 1000; font-size: 14px; font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-    <div class="user-info" id="user-info">در حال دریافت اطلاعات کاربر...</div>
-    <div id="map"></div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
-        const user = tg.initDataUnsafe?.user;
-        const userInfoDiv = document.getElementById('user-info');
-        
-        if (user && user.first_name) {
-            userInfoDiv.innerText = `سلام، ${user.first_name}!`;
-        } else {
-            userInfoDiv.innerText = `سلام، کاربر عزیز!`;
-        }
-
-        const map = L.map('map').setView([35.6892, 51.3890], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                map.setView([lat, lng], 15);
-                L.marker([lat, lng]).addTo(map).bindPopup('موقعیت شما').openPopup();
-            }, (error) => {
-                console.error('GPS Error:', error);
-            });
-        }
     </script>
 </body>
 </html>
