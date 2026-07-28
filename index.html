@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نقشه زنده - Radar CyberX</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; font-family: Tahoma, sans-serif; }
+        #map { height: 100vh; width: 100vw; }
+        .user-info {
+            position: absolute;
+            top: 10px; right: 10px; background: white;
+            padding: 10px 15px; border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000; font-size: 14px; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="user-info" id="user-info">در حال دریافت اطلاعات کاربر...</div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const user = tg.initDataUnsafe?.user;
+        const userInfoDiv = document.getElementById('user-info');
+        
+        if (user && user.first_name) {
+            userInfoDiv.innerText = `سلام، ${user.first_name}!`;
+        } else {
+            userInfoDiv.innerText = `سلام، کاربر عزیز!`;
+        }
+
+        const map = L.map('map').setView([35.6892, 51.3890], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                map.setView([lat, lng], 15);
+                L.marker([lat, lng]).addTo(map).bindPopup('موقعیت شما').openPopup();
+            }, (error) => {
+                console.error('GPS Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
