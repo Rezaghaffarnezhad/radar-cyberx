@@ -140,7 +140,6 @@
             display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: #fff; overflow: hidden;
         }
 
-        /* استایل اختصاصی پنل چت کاملاً الگو گرفته از تلگرام */
         .chat-container { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; position: relative; }
         .chat-messages-box { 
             flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; 
@@ -294,8 +293,8 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // آدرس سرور پایتون خود را اینجا وارد کنید (مثلا آدرس Serveo یا هاست شما)
-        const SERVER_URL = "https://your-python-server-ip-or-domain.com";
+        // آدرس فعال سروئو شما
+        const SERVER_URL = "https://9ea0191e2cfaaef6-5-121-123-107.serveousercontent.com";
 
         let tg = window.Telegram.WebApp;
         tg.expand();
@@ -407,7 +406,6 @@
             .catch(err => console.log("Chat fetch error:", err));
         }
 
-        // ارسال پیام با دکمه یا کلید Enter
         function sendChatMessage() {
             let input = document.getElementById('chat-input-text');
             let text = input.value.trim();
@@ -532,7 +530,7 @@
             }).addTo(map);
             syncLocation();
             setInterval(syncLocation, 3000);
-            setInterval(fetchPublicMessages, 2000); // به‌روزرسانی آنی پیام‌ها هر ۲ ثانیه
+            setInterval(fetchPublicMessages, 2000);
         }
 
         document.getElementById('gps-btn').addEventListener('click', () => {
