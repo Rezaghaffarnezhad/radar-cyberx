@@ -34,7 +34,6 @@
         .view-panel { display: none; flex: 1; flex-direction: column; overflow-y: auto; padding: 12px; box-sizing: border-box; }
         .view-panel.active { display: flex; }
 
-        /* تب‌بار پایین به سبک تلگرام */
         .telegram-tabbar {
             position: fixed; bottom: 0; left: 0; right: 0; z-index: 1010;
             background: var(--tg-bg-glass); backdrop-filter: blur(20px);
@@ -49,7 +48,6 @@
         .tab-item i { font-size: 18px; margin-bottom: 3px; }
         .tab-item.active { color: var(--accent-blue); }
 
-        /* استایل لیست کاربران */
         .user-card {
             background: var(--tg-bg-glass); border: 1px solid var(--tg-border-glass);
             border-radius: 14px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;
@@ -66,7 +64,6 @@
         .user-meta h4 { margin: 0 0 3px 0; font-size: 14px; color: #fff; }
         .user-meta span { font-size: 11px; color: var(--tg-theme-hint-color); }
 
-        /* استایل بخش چت */
         .chat-messages-box {
             flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 10px;
         }
@@ -96,7 +93,6 @@
             border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px;
         }
 
-        /* پنل پروفایل من */
         .my-profile-box {
             background: var(--tg-bg-glass); border: 1px solid var(--tg-border-glass);
             border-radius: 20px; padding: 24px; text-align: center; backdrop-filter: blur(20px);
@@ -107,7 +103,6 @@
 
     <div class="app-container">
         
-        <!-- تب اول: چت عمومی -->
         <div id="chat-view" class="view-panel active">
             <div class="chat-messages-box" id="chat-messages">
                 <div style="color: var(--tg-theme-hint-color); font-size: 13px; text-align: center; margin-top: 50px;">در حال بارگذاری پیام‌ها...</div>
@@ -118,7 +113,6 @@
             </div>
         </div>
 
-        <!-- تب دوم: افراد آنلاین -->
         <div id="users-view" class="view-panel">
             <h3 style="font-size: 15px; margin: 0 0 12px 4px; color: #fff;">کاربران حاضر در شبکه</h3>
             <div id="users-list-container">
@@ -126,7 +120,6 @@
             </div>
         </div>
 
-        <!-- تب سوم: پروفایل من -->
         <div id="profile-view" class="view-panel" style="align-items: center; justify-content: center;">
             <div class="my-profile-box" style="width: 100%; max-width: 320px;">
                 <div class="user-avatar" id="my-profile-avatar" style="width: 70px; height: 70px; margin: 0 auto 12px auto; font-size: 26px;">C</div>
@@ -138,7 +131,6 @@
             </div>
         </div>
 
-        <!-- منوی پایین (تب‌بار) -->
         <nav class="telegram-tabbar">
             <a class="tab-item active" data-target="chat-view"><i class="fas fa-comments"></i><span>چت عمومی</span></a>
             <a class="tab-item" data-target="users-view"><i class="fas fa-users"></i><span>کاربران آنلاین</span></a>
@@ -148,8 +140,8 @@
     </div>
 
     <script>
-        // آدرس سرور (اگر از سروئو استفاده می‌کنید، لینک فعلی را جایگزین کنید)
-        const SERVER_URL = "https://a0dc5d84119789de-5-121-123-107.serveousercontent.com";
+        // آدرس جدید و فعال سروئو
+        const SERVER_URL = "https://1340fe2c4624fd18-5-121-123-107.serveousercontent.com";
 
         let tg = window.Telegram.WebApp;
         tg.expand();
@@ -170,7 +162,6 @@
             if (user.photo_url) myPhotoUrl = user.photo_url;
         }
 
-        // تنظیم اطلاعات پروفایل در بخش مربوطه
         let avatarEl = document.getElementById('my-profile-avatar');
         if (myPhotoUrl) {
             avatarEl.innerHTML = `<img src="${myPhotoUrl}">`;
@@ -180,7 +171,6 @@
         document.getElementById('my-profile-name').innerText = myName;
         document.getElementById('my-profile-username').innerText = myUsername;
 
-        // تابع ارسال مشخصات خود به سرور و دریافت لیست افراد آنلاین
         function heartbeat() {
             fetch(SERVER_URL + '/api/connect', {
                 method: 'POST',
@@ -201,7 +191,6 @@
             .catch(err => console.log("Connection error:", err));
         }
 
-        // رندر کردن لیست کاربران آنلاین در تب دوم
         function renderUsersList(users) {
             let container = document.getElementById('users-list-container');
             container.innerHTML = '';
@@ -229,7 +218,6 @@
                     <span style="font-size: 11px; color: var(--accent-online);">● آنلاین</span>
                 `;
                 
-                // کلیک روی کاربر برای باز کردن چت خصوصی تلگرام با او
                 card.addEventListener('click', () => {
                     if (user.username && user.username !== '@user' && user.username !== '@guest') {
                         let cleanUser = user.username.replace('@', '');
@@ -243,7 +231,6 @@
             });
         }
 
-        // دریافت پیام‌های چت عمومی
         function fetchMessages() {
             fetch(SERVER_URL + '/api/chat')
             .then(res => res.json())
@@ -281,7 +268,6 @@
             .catch(err => console.log("Chat error:", err));
         }
 
-        // ارسال پیام در چت
         function sendMessage() {
             let input = document.getElementById('chat-input');
             let text = input.value.trim();
@@ -313,7 +299,6 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-        // مدیریت تب‌های برنامه
         document.querySelectorAll('.tab-item').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -328,7 +313,6 @@
             });
         });
 
-        // لوپ‌های زمانی برای بروزرسانی خودکار
         heartbeat();
         fetchMessages();
         setInterval(heartbeat, 3000);
