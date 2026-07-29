@@ -17,6 +17,8 @@
             --tg-border-glass: rgba(255, 255, 255, 0.08);
             --accent-blue: #3390ec;
             --accent-online: #4bb34b;
+            --msg-out: #2b5278;
+            --msg-in: #182533;
         }
 
         body {
@@ -138,13 +140,41 @@
             display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: #fff; overflow: hidden;
         }
 
-        .chat-container { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
-        .chat-messages-box { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px; }
-        .chat-msg-card { background: var(--tg-bg-glass); border: 1px solid var(--tg-border-glass); border-radius: 14px; padding: 10px 14px; max-width: 85%; }
-        .chat-msg-card.my-msg { background: rgba(51, 144, 236, 0.2); align-self: flex-end; border-color: rgba(51, 144, 236, 0.4); }
-        .chat-input-row { display: flex; gap: 8px; margin-top: 10px; padding-bottom: 10px; }
-        .chat-input { flex: 1; background: var(--tg-bg-glass); border: 1px solid var(--tg-border-glass); border-radius: 12px; padding: 10px 14px; color: #fff; font-size: 13px; outline: none; }
-        .chat-send-btn { background: var(--accent-blue); border: none; color: #fff; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; }
+        /* استایل اختصاصی پنل چت کاملاً الگو گرفته از تلگرام */
+        .chat-container { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; position: relative; }
+        .chat-messages-box { 
+            flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; 
+            padding: 10px 4px 20px 4px; box-sizing: border-box; 
+        }
+        
+        .tg-msg-bubble {
+            max-width: 78%; padding: 8px 12px 6px 12px; border-radius: 16px; position: relative;
+            font-size: 14px; line-height: 1.4; word-break: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .tg-msg-bubble.incoming {
+            background-color: var(--msg-in); align-self: flex-start;
+            border-bottom-left-radius: 4px; color: #fff;
+        }
+        .tg-msg-bubble.outgoing {
+            background-color: var(--msg-out); align-self: flex-end;
+            border-bottom-right-radius: 4px; color: #fff;
+        }
+        
+        .msg-sender-name { font-size: 12px; font-weight: bold; color: var(--accent-blue); margin-bottom: 2px; }
+        .msg-time-info { font-size: 10px; color: rgba(255,255,255,0.5); float: left; margin-top: 4px; margin-right: 6px; }
+        
+        .chat-input-row { 
+            display: flex; align-items: center; gap: 8px; margin-top: 6px; 
+            background: var(--tg-bg-glass); border: 1px solid var(--tg-border-glass); 
+            border-radius: 24px; padding: 6px 12px; backdrop-filter: blur(20px);
+        }
+        .chat-input { 
+            flex: 1; background: transparent; border: none; color: #fff; font-size: 14px; outline: none; padding: 6px 0;
+        }
+        .chat-send-btn { 
+            background: var(--accent-blue); border: none; color: #fff; width: 36px; height: 36px; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; 
+        }
 
         .profile-card-box {
             background: var(--tg-bg-glass); border: 1px solid var(--tg-border-glass);
@@ -203,12 +233,11 @@
 
     <div id="chats-view" class="app-view-panel">
         <div class="chat-container">
-            <h3 style="font-size: 15px; margin: 5px 0 12px 0; color: #fff;">چت عمومی کاربران</h3>
             <div class="chat-messages-box" id="public-chat-messages">
-                <div style="color: var(--tg-theme-hint-color); font-size: 13px; text-align: center; margin-top: 40px;">هنوز پیامی ارسال نشده است.</div>
+                <div style="color: var(--tg-theme-hint-color); font-size: 13px; text-align: center; margin-top: 40px;">هنوز پیامی ارسال نشده است. اولین پیام را ارسال کنید!</div>
             </div>
             <div class="chat-input-row">
-                <input type="text" id="chat-input-text" class="chat-input" placeholder="نوشتن پیام عمومی...">
+                <input type="text" id="chat-input-text" class="chat-input" placeholder="پیام...">
                 <button class="chat-send-btn tg-tap" id="send-chat-btn"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
@@ -265,6 +294,9 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // آدرس سرور پایتون خود را اینجا وارد کنید (مثلا آدرس Serveo یا هاست شما)
+        const SERVER_URL = "https://your-python-server-ip-or-domain.com";
+
         let tg = window.Telegram.WebApp;
         tg.expand();
 
@@ -310,7 +342,7 @@
         const profileSheet = document.getElementById('profile-sheet');
 
         function syncLocation() {
-            fetch('https://your-python-server-ip-or-domain.com/api/update_location', {
+            fetch(SERVER_URL + '/api/update_location', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -339,41 +371,49 @@
         }
 
         function fetchPublicMessages() {
-            fetch('https://your-python-server-ip-or-domain.com/api/public_chat')
+            fetch(SERVER_URL + '/api/public_chat')
             .then(res => res.json())
             .then(data => {
                 let chatBox = document.getElementById('public-chat-messages');
-                if (data.messages && data.messages.length > 0) {
+                if (data.messages) {
+                    if (data.messages.length === 0) {
+                        chatBox.innerHTML = `<div style="color: var(--tg-theme-hint-color); font-size: 13px; text-align: center; margin-top: 40px;">هنوز پیامی ارسال نشده است. اولین پیام را ارسال کنید!</div>`;
+                        return;
+                    }
+                    
+                    let isScrolledToBottom = chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 50;
+                    
                     chatBox.innerHTML = '';
                     data.messages.forEach(msg => {
                         let isMe = String(msg.user_id) === String(myId);
-                        let card = document.createElement('div');
-                        card.className = `chat-msg-card ${isMe ? 'my-msg' : ''}`;
+                        let bubble = document.createElement('div');
+                        bubble.className = `tg-msg-bubble ${isMe ? 'outgoing' : 'incoming'}`;
                         
-                        let avatarHtml = msg.photo_url 
-                            ? `<img src="${msg.photo_url}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; vertical-align: middle; margin-left: 6px;">`
-                            : '';
-
-                        card.innerHTML = `
-                            <div style="font-size: 11px; color: var(--accent-blue); margin-bottom: 4px; font-weight: bold;">
-                                ${avatarHtml}${msg.name} <span style="font-size: 9px; color: var(--tg-theme-hint-color); float: left;">${msg.time}</span>
-                            </div>
-                            <div style="font-size: 13px; color: #fff; word-break: break-word;">${msg.text}</div>
+                        let senderHeader = !isMe ? `<div class="msg-sender-name">${msg.name}</div>` : '';
+                        
+                        bubble.innerHTML = `
+                            ${senderHeader}
+                            <div style="word-break: break-word;">${msg.text}</div>
+                            <span class="msg-time-info">${msg.time}</span>
                         `;
-                        chatBox.appendChild(card);
+                        chatBox.appendChild(bubble);
                     });
-                    chatBox.scrollTop = chatBox.scrollHeight;
+
+                    if (isScrolledToBottom) {
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    }
                 }
             })
             .catch(err => console.log("Chat fetch error:", err));
         }
 
-        document.getElementById('send-chat-btn').addEventListener('click', () => {
+        // ارسال پیام با دکمه یا کلید Enter
+        function sendChatMessage() {
             let input = document.getElementById('chat-input-text');
             let text = input.value.trim();
             if (!text) return;
 
-            fetch('https://your-python-server-ip-or-domain.com/api/public_chat', {
+            fetch(SERVER_URL + '/api/public_chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -389,8 +429,18 @@
                     input.value = '';
                     fetchPublicMessages();
                     tg.HapticFeedback.impactOccurred('light');
+                    let chatBox = document.getElementById('public-chat-messages');
+                    chatBox.scrollTop = chatBox.scrollHeight;
                 }
-            });
+            })
+            .catch(err => alert("خطا در ارسال پیام. بررسی کنید سرور در دسترس باشد."));
+        }
+
+        document.getElementById('send-chat-btn').addEventListener('click', sendChatMessage);
+        document.getElementById('chat-input-text').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
         });
 
         function updateMapAndPeopleList(users) {
@@ -482,7 +532,7 @@
             }).addTo(map);
             syncLocation();
             setInterval(syncLocation, 3000);
-            setInterval(fetchPublicMessages, 2500);
+            setInterval(fetchPublicMessages, 2000); // به‌روزرسانی آنی پیام‌ها هر ۲ ثانیه
         }
 
         document.getElementById('gps-btn').addEventListener('click', () => {
