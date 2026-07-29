@@ -138,7 +138,6 @@
             display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: #fff; overflow: hidden;
         }
 
-        /* استایل‌های بخش چت عمومی */
         .chat-container { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
         .chat-messages-box { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px; }
         .chat-msg-card { background: var(--tg-bg-glass); border: 1px solid var(--tg-border-glass); border-radius: 14px; padding: 10px 14px; max-width: 85%; }
@@ -195,7 +194,6 @@
         <button class="floating-action-btn tg-tap" id="gps-btn" title="موقعیت من"><i class="fas fa-crosshairs"></i></button>
     </div>
 
-    <!-- پنل افراد -->
     <div id="people-view" class="app-view-panel">
         <h3 style="font-size: 16px; margin: 5px 0 14px 0; color: #fff;">افراد آنلاین در محدوده</h3>
         <div id="nearby-users-list">
@@ -203,12 +201,11 @@
         </div>
     </div>
 
-    <!-- پنل جدید چت عمومی شعاع رادار -->
     <div id="chats-view" class="app-view-panel">
         <div class="chat-container">
-            <h3 style="font-size: 15px; margin: 5px 0 12px 0; color: #fff;">چت عمومی (شعاع مشترک رادار)</h3>
+            <h3 style="font-size: 15px; margin: 5px 0 12px 0; color: #fff;">چت عمومی کاربران</h3>
             <div class="chat-messages-box" id="public-chat-messages">
-                <div style="color: var(--tg-theme-hint-color); font-size: 13px; text-align: center; margin-top: 40px;">هنوز پیامی ارسال نشده است. اولین پیام را شما بفرستید!</div>
+                <div style="color: var(--tg-theme-hint-color); font-size: 13px; text-align: center; margin-top: 40px;">هنوز پیامی ارسال نشده است.</div>
             </div>
             <div class="chat-input-row">
                 <input type="text" id="chat-input-text" class="chat-input" placeholder="نوشتن پیام عمومی...">
@@ -217,7 +214,6 @@
         </div>
     </div>
 
-    <!-- پنل پروفایل من -->
     <div id="my-profile-view" class="app-view-panel">
         <div class="profile-card-box">
             <div style="width: 76px; height: 76px; background: linear-gradient(135deg, #3390ec, #1b6ac9); border-radius: 50%; margin: 0 auto 12px auto; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; color: #fff; box-shadow: 0 4px 20px rgba(51, 144, 236, 0.4); overflow: hidden;" id="my-profile-avatar-box">CX</div>
@@ -342,7 +338,6 @@
             .catch(err => console.log("Sync error:", err));
         }
 
-        // دریافت پیام‌های چت عمومی به صورت زنده
         function fetchPublicMessages() {
             fetch('https://your-python-server-ip-or-domain.com/api/public_chat')
             .then(res => res.json())
@@ -373,7 +368,6 @@
             .catch(err => console.log("Chat fetch error:", err));
         }
 
-        // ارسال پیام به چت عمومی
         document.getElementById('send-chat-btn').addEventListener('click', () => {
             let input = document.getElementById('chat-input-text');
             let text = input.value.trim();
@@ -488,7 +482,7 @@
             }).addTo(map);
             syncLocation();
             setInterval(syncLocation, 3000);
-            setInterval(fetchPublicMessages, 2500); // به‌روزرسانی زنده پیام‌های چت عمومی هر 2.5 ثانیه
+            setInterval(fetchPublicMessages, 2500);
         }
 
         document.getElementById('gps-btn').addEventListener('click', () => {
