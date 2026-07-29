@@ -42,7 +42,6 @@
         .search-input-box { display: flex; align-items: center; gap: 12px; color: var(--tg-theme-hint-color); font-size: 14px; }
         .search-input-box i { color: var(--accent-blue); font-size: 16px; }
 
-        /* بنر اعلام عمومی ورود افراد جدید */
         .announcement-banner {
             position: absolute; top: 76px; left: 14px; right: 14px; z-index: 1008;
             background: rgba(51, 144, 236, 0.2); backdrop-filter: blur(15px);
@@ -139,6 +138,15 @@
             display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: #fff; overflow: hidden;
         }
 
+        /* استایل‌های بخش چت عمومی */
+        .chat-container { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
+        .chat-messages-box { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px; }
+        .chat-msg-card { background: var(--tg-bg-glass); border: 1px solid var(--tg-border-glass); border-radius: 14px; padding: 10px 14px; max-width: 85%; }
+        .chat-msg-card.my-msg { background: rgba(51, 144, 236, 0.2); align-self: flex-end; border-color: rgba(51, 144, 236, 0.4); }
+        .chat-input-row { display: flex; gap: 8px; margin-top: 10px; padding-bottom: 10px; }
+        .chat-input { flex: 1; background: var(--tg-bg-glass); border: 1px solid var(--tg-border-glass); border-radius: 12px; padding: 10px 14px; color: #fff; font-size: 13px; outline: none; }
+        .chat-send-btn { background: var(--accent-blue); border: none; color: #fff; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; }
+
         .profile-card-box {
             background: var(--tg-bg-glass); border: 1px solid var(--tg-border-glass);
             border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 16px; backdrop-filter: blur(20px);
@@ -181,13 +189,13 @@
         <div class="user-avatar-badge" id="my-initials-badge">CX</div>
     </div>
 
-    <!-- بنر اعلام عمومی زنده -->
     <div id="announcement-banner" class="announcement-banner"></div>
 
     <div class="map-floating-controls">
         <button class="floating-action-btn tg-tap" id="gps-btn" title="موقعیت من"><i class="fas fa-crosshairs"></i></button>
     </div>
 
+    <!-- پنل افراد -->
     <div id="people-view" class="app-view-panel">
         <h3 style="font-size: 16px; margin: 5px 0 14px 0; color: #fff;">افراد آنلاین در محدوده</h3>
         <div id="nearby-users-list">
@@ -195,28 +203,21 @@
         </div>
     </div>
 
-    <div class="dating-profile-sheet" id="profile-sheet">
-        <div class="sheet-indicator"></div>
-        <div class="profile-header-info">
-            <div class="profile-big-avatar" id="sheet-avatar">U</div>
-            <div class="profile-text-details">
-                <h3 id="sheet-name">نام کاربر</h3>
-                <span class="distance-tag" id="sheet-distance">فاصله: نامشخص</span>
-                <p style="color: var(--accent-online); margin: 0; font-size: 12px;">● آنلاین در محدوده</p>
+    <!-- پنل جدید چت عمومی شعاع رادار -->
+    <div id="chats-view" class="app-view-panel">
+        <div class="chat-container">
+            <h3 style="font-size: 15px; margin: 5px 0 12px 0; color: #fff;">چت عمومی (شعاع مشترک رادار)</h3>
+            <div class="chat-messages-box" id="public-chat-messages">
+                <div style="color: var(--tg-theme-hint-color); font-size: 13px; text-align: center; margin-top: 40px;">هنوز پیامی ارسال نشده است. اولین پیام را شما بفرستید!</div>
+            </div>
+            <div class="chat-input-row">
+                <input type="text" id="chat-input-text" class="chat-input" placeholder="نوشتن پیام عمومی...">
+                <button class="chat-send-btn tg-tap" id="send-chat-btn"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
-        <div class="profile-bio-box" id="sheet-bio">آماده تبادل نظر و ارتباط در شبکه CyberX</div>
-        <div class="profile-actions-row">
-            <button class="telegram-btn btn-primary-tg tg-tap" id="start-chat-btn"><i class="fas fa-paper-plane"></i> ارسال پیام</button>
-            <button class="telegram-btn btn-secondary-tg tg-tap" id="close-sheet-btn">بستن</button>
-        </div>
     </div>
 
-    <div id="chats-view" class="app-view-panel">
-        <h3 style="font-size: 15px; margin: 5px 0 12px 0; color: #fff;">گفتگوهای فعال</h3>
-        <div style="color: var(--tg-theme-hint-color); font-size: 13px; text-align: center; margin-top: 40px;">هنوز پیامی ارسال یا دریافت نشده است.</div>
-    </div>
-
+    <!-- پنل پروفایل من -->
     <div id="my-profile-view" class="app-view-panel">
         <div class="profile-card-box">
             <div style="width: 76px; height: 76px; background: linear-gradient(135deg, #3390ec, #1b6ac9); border-radius: 50%; margin: 0 auto 12px auto; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; color: #fff; box-shadow: 0 4px 20px rgba(51, 144, 236, 0.4); overflow: hidden;" id="my-profile-avatar-box">CX</div>
@@ -242,10 +243,27 @@
         </div>
     </div>
 
+    <div class="dating-profile-sheet" id="profile-sheet">
+        <div class="sheet-indicator"></div>
+        <div class="profile-header-info">
+            <div class="profile-big-avatar" id="sheet-avatar">U</div>
+            <div class="profile-text-details">
+                <h3 id="sheet-name">نام کاربر</h3>
+                <span class="distance-tag" id="sheet-distance">فاصله: نامشخص</span>
+                <p style="color: var(--accent-online); margin: 0; font-size: 12px;">● آنلاین در محدوده</p>
+            </div>
+        </div>
+        <div class="profile-bio-box" id="sheet-bio">آماده تبادل نظر و ارتباط در شبکه CyberX</div>
+        <div class="profile-actions-row">
+            <button class="telegram-btn btn-primary-tg tg-tap" id="start-private-chat-btn"><i class="fas fa-paper-plane"></i> ارسال پیام شخصی</button>
+            <button class="telegram-btn btn-secondary-tg tg-tap" id="close-sheet-btn">بستن</button>
+        </div>
+    </div>
+
     <nav class="telegram-tabbar">
         <a href="#" class="tab-item active" data-target="map-view"><i class="fas fa-map"></i><span>نقشه</span></a>
         <a href="#" class="tab-item" data-target="people-view"><i class="fas fa-users"></i><span>افراد</span></a>
-        <a href="#" class="tab-item" data-target="chats-view"><i class="fas fa-comment-alt"></i><span>چت‌ها</span></a>
+        <a href="#" class="tab-item" data-target="chats-view"><i class="fas fa-comments"></i><span>چت عمومی</span></a>
         <a href="#" class="tab-item" data-target="my-profile-view"><i class="fas fa-user"></i><span>پروفایل</span></a>
     </nav>
 
@@ -262,7 +280,6 @@
         let stealthModeActive = false;
         let selectedTargetUser = null;
 
-        // دریافت اطلاعات واقعی پروفایل تلگرام
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             const user = tg.initDataUnsafe.user;
             myId = user.id;
@@ -274,7 +291,6 @@
             if (user.photo_url) myPhotoUrl = user.photo_url;
         }
 
-        // اعمال اطلاعات در بخش‌های مختلف فرانت‌اند
         let badgeEl = document.getElementById('my-initials-badge');
         let profileAvatarBox = document.getElementById('my-profile-avatar-box');
 
@@ -298,7 +314,7 @@
         const profileSheet = document.getElementById('profile-sheet');
 
         function syncLocation() {
-            fetch('https://your-python-server-ip-or-domain.com/api/update_location', { // توجه: آدرس سرور پایتون خود را اینجا وارد کنید
+            fetch('https://your-python-server-ip-or-domain.com/api/update_location', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -313,20 +329,75 @@
             })
             .then(res => res.json())
             .then(data => {
-                // نمایش بنر اعلام عمومی ورود کاربر جدید
                 let banner = document.getElementById('announcement-banner');
                 if (data.announcement) {
                     banner.innerText = data.announcement;
                     banner.style.display = 'block';
                     setTimeout(() => { banner.style.display = 'none'; }, 5000);
                 }
-
                 if (data.users) {
                     updateMapAndPeopleList(data.users);
                 }
             })
             .catch(err => console.log("Sync error:", err));
         }
+
+        // دریافت پیام‌های چت عمومی به صورت زنده
+        function fetchPublicMessages() {
+            fetch('https://your-python-server-ip-or-domain.com/api/public_chat')
+            .then(res => res.json())
+            .then(data => {
+                let chatBox = document.getElementById('public-chat-messages');
+                if (data.messages && data.messages.length > 0) {
+                    chatBox.innerHTML = '';
+                    data.messages.forEach(msg => {
+                        let isMe = String(msg.user_id) === String(myId);
+                        let card = document.createElement('div');
+                        card.className = `chat-msg-card ${isMe ? 'my-msg' : ''}`;
+                        
+                        let avatarHtml = msg.photo_url 
+                            ? `<img src="${msg.photo_url}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; vertical-align: middle; margin-left: 6px;">`
+                            : '';
+
+                        card.innerHTML = `
+                            <div style="font-size: 11px; color: var(--accent-blue); margin-bottom: 4px; font-weight: bold;">
+                                ${avatarHtml}${msg.name} <span style="font-size: 9px; color: var(--tg-theme-hint-color); float: left;">${msg.time}</span>
+                            </div>
+                            <div style="font-size: 13px; color: #fff; word-break: break-word;">${msg.text}</div>
+                        `;
+                        chatBox.appendChild(card);
+                    });
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+            })
+            .catch(err => console.log("Chat fetch error:", err));
+        }
+
+        // ارسال پیام به چت عمومی
+        document.getElementById('send-chat-btn').addEventListener('click', () => {
+            let input = document.getElementById('chat-input-text');
+            let text = input.value.trim();
+            if (!text) return;
+
+            fetch('https://your-python-server-ip-or-domain.com/api/public_chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: myId,
+                    name: myName,
+                    photo_url: myPhotoUrl,
+                    text: text
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    input.value = '';
+                    fetchPublicMessages();
+                    tg.HapticFeedback.impactOccurred('light');
+                }
+            });
+        });
 
         function updateMapAndPeopleList(users) {
             let peopleListContainer = document.getElementById('nearby-users-list');
@@ -417,6 +488,7 @@
             }).addTo(map);
             syncLocation();
             setInterval(syncLocation, 3000);
+            setInterval(fetchPublicMessages, 2500); // به‌روزرسانی زنده پیام‌های چت عمومی هر 2.5 ثانیه
         }
 
         document.getElementById('gps-btn').addEventListener('click', () => {
@@ -426,7 +498,7 @@
 
         document.getElementById('close-sheet-btn').addEventListener('click', () => profileSheet.classList.remove('open'));
 
-        document.getElementById('start-chat-btn').addEventListener('click', () => {
+        document.getElementById('start-private-chat-btn').addEventListener('click', () => {
             if (selectedTargetUser && selectedTargetUser.username) {
                 let cleanUsername = selectedTargetUser.username.replace('@', '');
                 window.open(`https://t.me/${cleanUsername}`, '_blank');
