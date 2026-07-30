@@ -3,17 +3,18 @@ import math
 import os
 from flask import Flask, jsonify, render_template, request
 
+# تنظیم پوشه جاری برای خواندن فایل index.html
 app = Flask(__name__, template_folder=".")
 
-# پایگاه داده در حافظه برای کاربران آنلاین و چت‌ها
+# پایگاه داده در حافظه
 users_db = {}
 chats_db = [
     {
         "id": 1,
         "sender": "سیستم مرکزی",
         "message": (
-            "به شبکه رادار و ارتباط زنده خوش آمدید. پیام‌ها برای کاربران شعاع"
-            " ۱۰ کیلومتری قابل مشاهده است."
+            "به شبکه رادار و ارتباط زنده خوش آمدید. پیام‌ها برای کاربران شعاع ۱۰"
+            " کیلومتری قابل مشاهده است."
         ),
         "time": datetime.now().strftime("%H:%M"),
         "is_system": True,
