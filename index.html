@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پلتفرم اجتماعی زنده</title>
+    <title>سوپر اپلیکیشن اجتماعی زنده</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -22,56 +22,82 @@
 </head>
 <body class="relative flex flex-col h-full justify-between">
 
-    <!-- بخش اصلی محتوا (تب‌ها) -->
+    <!-- تب ۱: نقشه زنده -->
     <div id="view-map" class="view-section relative w-full h-full">
         <div id="map" class="map-container"></div>
         <div class="absolute top-4 left-4 right-4 z-10 glass p-3 rounded-2xl flex items-center justify-between shadow-lg">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
                 <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-                <span id="online-count" class="text-xs font-semibold tracking-wide">در حال اتصال...</span>
+                <span id="online-count" class="text-xs font-semibold">در حال اتصال...</span>
             </div>
-            <button onclick="switchTab('global-chat')" class="bg-blue-600/80 hover:bg-blue-600 px-3.5 py-1.5 rounded-xl text-xs font-semibold shadow transition">چت عمومی 🌐</button>
+            <div class="flex gap-2">
+                <button onclick="openMapNoteModal()" class="bg-indigo-600 px-3 py-1.5 rounded-xl text-xs font-semibold shadow">📍 ثبت یادداشت روی نقشه</button>
+            </div>
         </div>
     </div>
 
-    <!-- تب لیست کاربران آنلاین -->
-    <div id="view-users" class="view-section hidden absolute inset-0 pb-20 pt-4 px-4 overflow-y-auto z-10 bg-[#0d1117]">
-        <h2 class="font-bold text-lg mb-4">کاربران آنلاین در نزدیکی شما</h2>
+    <!-- تب ۲: روم‌های گفتگو و چت عمومی -->
+    <div id="view-chats" class="view-section hidden absolute inset-0 pb-20 pt-4 px-4 flex flex-col z-10 bg-[#0d1117]">
+        <h2 class="font-bold text-lg mb-3">روم‌های موضوعی و چت</h2>
+        <div class="flex gap-2 overflow-x-auto pb-2 shrink-0">
+            <button onclick="switchRoom('general')" id="room-btn-general" class="room-tab px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white shrink-0">🌐 عمومی</button>
+            <button onclick="switchRoom('dev')" id="room-btn-dev" class="room-tab px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 shrink-0">💻 برنامه‌نویسان</button>
+            <button onclick="switchRoom('hangout')" id="room-btn-hangout" class="room-tab px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 shrink-0">☕ کافه و دورهمی</button>
+            <button onclick="switchRoom('gamer')" id="room-btn-gamer" class="room-tab px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 shrink-0">🎮 گیمرها</button>
+        </div>
+        <div id="room-messages" class="flex-1 overflow-y-auto flex flex-col gap-3 p-3 glass rounded-2xl my-2"></div>
+        <div class="flex gap-2">
+            <input id="room-input" type="text" placeholder="نوشتن پیام در روم..." class="flex-1 bg-slate-900 px-4 py-3 rounded-2xl outline-none border border-slate-800 text-sm text-white">
+            <button onclick="sendRoomMessage()" class="bg-blue-600 px-5 rounded-2xl font-semibold text-sm shadow">ارسال</button>
+        </div>
+    </div>
+
+    <!-- تب ۳: کاربران آنلاین و تابلو اعلانات -->
+    <div id="view-community" class="view-section hidden absolute inset-0 pb-20 pt-4 px-4 overflow-y-auto z-10 bg-[#0d1117] flex flex-col gap-4">
+        <div class="flex justify-between items-center">
+            <h2 class="font-bold text-lg">جامعه محلی و اعلانات</h2>
+            <button onclick="openBoardModal()" class="bg-blue-600 px-3 py-1.5 rounded-xl text-xs font-semibold">➕ ثبت رویداد</button>
+        </div>
+        <div id="board-container" class="flex flex-col gap-3"></div>
+        <h3 class="font-bold text-md mt-2">کاربران آنلاین</h3>
         <div id="users-list-container" class="flex flex-col gap-3"></div>
     </div>
 
-    <!-- تب چت عمومی -->
-    <div id="view-global-chat" class="view-section hidden absolute inset-0 pb-20 pt-4 px-4 flex flex-col z-10 bg-[#0d1117]">
-        <div class="flex items-center justify-between mb-3">
-            <h2 class="font-bold text-lg">چت عمومی 🌐</h2>
-        </div>
-        <div id="global-chat-messages" class="flex-1 overflow-y-auto flex flex-col gap-3 p-2 glass rounded-2xl mb-3"></div>
-        <div class="flex gap-2">
-            <input id="global-chat-input" type="text" placeholder="پیام عمومی..." class="flex-1 bg-slate-900 px-4 py-3 rounded-2xl outline-none border border-slate-800 text-sm text-white focus:border-blue-500">
-            <button onclick="sendGlobalMessage()" class="bg-blue-600 px-5 rounded-2xl font-semibold text-sm shadow hover:bg-blue-500">ارسال</button>
-        </div>
-    </div>
-
-    <!-- تب پروفایل من -->
-    <div id="view-profile" class="view-section hidden absolute inset-0 pb-20 pt-6 px-6 overflow-y-auto z-10 bg-[#0d1117] flex flex-col gap-5">
-        <h2 class="font-bold text-xl">پروفایل من</h2>
-        <div class="glass p-5 rounded-3xl flex flex-col gap-4 items-center shadow-lg">
-            <div id="my-avatar" class="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-3xl font-bold text-white shadow-md">ک</div>
-            <div class="w-full flex flex-col gap-3">
+    <!-- تب ۴: پروفایل و استوری‌ها -->
+    <div id="view-profile" class="view-section hidden absolute inset-0 pb-20 pt-4 px-4 overflow-y-auto z-10 bg-[#0d1117] flex flex-col gap-4">
+        <h2 class="font-bold text-lg">پروفایل و استوری‌ها</h2>
+        <div class="glass p-4 rounded-3xl flex flex-col gap-3 shadow-lg">
+            <div class="flex items-center gap-3">
+                <div id="my-avatar" class="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-xl font-bold text-white">ک</div>
                 <div>
-                    <label class="text-xs text-slate-400 mb-1 block">نام نمایشی</label>
-                    <input id="input-my-name" type="text" class="w-full bg-slate-900 px-4 py-3 rounded-2xl outline-none border border-slate-800 text-sm text-white">
+                    <h3 id="profile-display-name" class="font-bold text-base">کاربر</h3>
+                    <p id="profile-badge" class="text-xs text-yellow-400 font-semibold mt-0.5">⭐ امتیاز: ۱۰ | تازه وارد</p>
                 </div>
-                <div>
-                    <label class="text-xs text-slate-400 mb-1 block">بیوگرافی (درباره من)</label>
-                    <textarea id="input-my-bio" rows="2" placeholder="مثلاً: عاشق برنامه‌نویسی و سفر..." class="w-full bg-slate-900 px-4 py-3 rounded-2xl outline-none border border-slate-800 text-sm text-white resize-none"></textarea>
-                </div>
-                <button onclick="saveProfile()" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl font-semibold shadow-lg hover:opacity-95 transition mt-2">ذخیره تغییرات</button>
             </div>
+            <div>
+                <label class="text-xs text-slate-400 mb-1 block">نام نمایشی</label>
+                <input id="input-my-name" type="text" class="w-full bg-slate-900 px-4 py-2.5 rounded-xl outline-none border border-slate-800 text-sm text-white">
+            </div>
+            <div>
+                <label class="text-xs text-slate-400 mb-1 block">بیوگرافی</label>
+                <textarea id="input-my-bio" rows="2" class="w-full bg-slate-900 px-4 py-2.5 rounded-xl outline-none border border-slate-800 text-sm text-white resize-none"></textarea>
+            </div>
+            <div class="flex items-center justify-between py-1">
+                <span class="text-xs text-slate-300">حالت روح (مخفی شدن لوکیشن روی نقشه)</span>
+                <input id="input-ghost-mode" type="checkbox" class="w-5 h-5 accent-blue-600">
+            </div>
+            <button onclick="saveProfile()" class="w-full py-3 bg-blue-600 rounded-xl font-semibold text-sm shadow">ذخیره پروفایل</button>
+        </div>
+
+        <div class="glass p-4 rounded-3xl flex flex-col gap-3">
+            <h4 class="font-bold text-sm">انتشار استوری جدید (۲۴ ساعته)</h4>
+            <input id="input-story-text" type="text" placeholder="الان کجایی یا چه حسی داری؟" class="w-full bg-slate-900 px-4 py-2.5 rounded-xl outline-none border border-slate-800 text-sm text-white">
+            <button onclick="postStory()" class="py-2.5 bg-indigo-600 rounded-xl font-semibold text-xs shadow">انتشار استوری</button>
+            <div id="stories-container" class="flex flex-col gap-2 mt-2"></div>
         </div>
     </div>
 
-    <!-- پنجره پی‌وی (چت خصوصی) -->
+    <!-- پنجره چت خصوصی (پی‌وی) -->
     <div id="chat-window" class="hidden absolute inset-0 bg-[#0d1117] z-50 flex flex-col pb-4">
         <div class="p-4 glass flex items-center gap-3 border-b border-slate-800">
             <button onclick="closeChat()" class="text-slate-300 text-xl px-2">←</button>
@@ -79,12 +105,37 @@
         </div>
         <div id="chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3"></div>
         <div class="p-4 glass flex gap-2 border-t border-slate-800">
-            <input id="chat-input" type="text" placeholder="نوشتن پیام..." class="flex-1 bg-slate-900/80 px-4 py-3 rounded-2xl outline-none border border-slate-800 text-sm text-white focus:border-blue-500">
-            <button onclick="sendPrivateMessage()" class="bg-blue-600 px-6 rounded-2xl font-semibold text-sm shadow hover:bg-blue-500">ارسال</button>
+            <input id="chat-input" type="text" placeholder="نوشتن پیام..." class="flex-1 bg-slate-900 px-4 py-3 rounded-2xl outline-none border border-slate-800 text-sm text-white">
+            <button onclick="sendPrivateMessage()" class="bg-blue-600 px-6 rounded-2xl font-semibold text-sm shadow">ارسال</button>
         </div>
     </div>
 
-    <!-- کادر اعلان (Toast) -->
+    <!-- مودال ثبت یادداشت روی نقشه -->
+    <div id="map-note-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+        <div class="glass p-5 rounded-3xl w-full max-w-sm flex flex-col gap-3">
+            <h3 class="font-bold text-base">گذاشتن یادداشت یا بطری روی نقشه</h3>
+            <textarea id="map-note-input" rows="3" placeholder="یک پیام یادگاری یا پاتوق اینجا بگذارید..." class="w-full bg-slate-900 p-3 rounded-xl text-sm text-white border border-slate-800 resize-none"></textarea>
+            <div class="flex gap-2">
+                <button onclick="submitMapNote()" class="flex-1 py-2.5 bg-blue-600 rounded-xl font-semibold text-xs">ثبت</button>
+                <button onclick="closeMapNoteModal()" class="flex-1 py-2.5 bg-slate-800 rounded-xl font-semibold text-xs text-slate-300">لغو</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال ثبت اعلانات محلی -->
+    <div id="board-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+        <div class="glass p-5 rounded-3xl w-full max-w-sm flex flex-col gap-3">
+            <h3 class="font-bold text-base">ثبت رویداد یا درخواست محلی</h3>
+            <input id="board-title-input" type="text" placeholder="عنوان (مثلاً دورهمی کافه)" class="w-full bg-slate-900 p-3 rounded-xl text-sm text-white border border-slate-800">
+            <textarea id="board-desc-input" rows="2" placeholder="توضیحات..." class="w-full bg-slate-900 p-3 rounded-xl text-sm text-white border border-slate-800 resize-none"></textarea>
+            <div class="flex gap-2">
+                <button onclick="submitBoardPost()" class="flex-1 py-2.5 bg-blue-600 rounded-xl font-semibold text-xs">ثبت در تابلو</button>
+                <button onclick="closeBoardModal()" class="flex-1 py-2.5 bg-slate-800 rounded-xl font-semibold text-xs text-slate-300">لغو</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- اعلان (Toast) -->
     <div id="toast" class="absolute top-20 left-4 right-4 z-50 transform -translate-y-20 opacity-0 pointer-events-none glass p-3.5 rounded-2xl border border-blue-500/30 shadow-xl flex items-center gap-3">
         <span class="text-xl">🔔</span>
         <div id="toast-text" class="text-xs font-medium text-slate-200">اعلان جدید</div>
@@ -96,13 +147,13 @@
             <span class="text-lg">🗺️</span>
             <span class="text-[10px] font-semibold">نقشه</span>
         </button>
-        <button onclick="switchTab('users')" id="nav-users" class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
-            <span class="text-lg">👥</span>
-            <span class="text-[10px] font-semibold">آنلاین‌ها</span>
-        </button>
-        <button onclick="switchTab('global-chat')" id="nav-global-chat" class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
+        <button onclick="switchTab('chats')" id="nav-chats" class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
             <span class="text-lg">💬</span>
-            <span class="text-[10px] font-semibold">چت عمومی</span>
+            <span class="text-[10px] font-semibold">روم‌ها</span>
+        </button>
+        <button onclick="switchTab('community')" id="nav-community" class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
+            <span class="text-lg">📢</span>
+            <span class="text-[10px] font-semibold">جامعه</span>
         </button>
         <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
             <span class="text-lg">👤</span>
@@ -118,6 +169,8 @@
         let tg = window.Telegram?.WebApp;
         let currentUser = null, selectedTargetUser = null;
         let map, markers = {};
+        let currentRoom = 'general';
+        let currentCoords = { lat: 35.6892, lng: 51.3890 };
 
         const user = tg?.initDataUnsafe?.user || { 
             id: Math.floor(Math.random() * 900000) + 100000, 
@@ -138,19 +191,16 @@
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
             document.getElementById(`view-${tabId}`).classList.remove('hidden');
 
-            ['map', 'users', 'global-chat', 'profile'].forEach(t => {
+            ['map', 'chats', 'community', 'profile'].forEach(t => {
                 const btn = document.getElementById(`nav-${t}`);
-                if(btn) {
-                    btn.classList.replace('text-blue-500', 'text-slate-400');
-                }
+                if(btn) btn.classList.replace('text-blue-500', 'text-slate-400');
             });
-            const activeBtn = document.getElementById(`nav-${tabId}`);
-            if(activeBtn) {
-                activeBtn.classList.replace('text-slate-400', 'text-blue-500');
-            }
+            document.getElementById(`nav-${tabId}`).classList.replace('text-slate-400', 'text-blue-500');
 
             if(tabId === 'map' && map) setTimeout(() => map.invalidateSize(), 200);
-            if(tabId === 'global-chat') loadGlobalMessages();
+            if(tabId === 'chats') loadRoomMessages();
+            if(tabId === 'community') { loadUsersList(); loadBoardPosts(); }
+            if(tabId === 'profile') loadStories();
         }
 
         async function init() {
@@ -160,8 +210,8 @@
                     telegram_id: user.id, 
                     name: user.first_name, 
                     username: user.username, 
-                    latitude: 35.6892 + (Math.random() - 0.5) * 0.02, 
-                    longitude: 51.3890 + (Math.random() - 0.5) * 0.02,
+                    latitude: currentCoords.lat + (Math.random() - 0.5) * 0.02, 
+                    longitude: currentCoords.lng + (Math.random() - 0.5) * 0.02,
                     last_seen: new Date() 
                 }, { onConflict: 'telegram_id' })
                 .select()
@@ -171,11 +221,21 @@
                 currentUser = data;
                 document.getElementById('input-my-name').value = currentUser.name || '';
                 document.getElementById('input-my-bio').value = currentUser.bio || '';
+                document.getElementById('input-ghost-mode').checked = currentUser.ghost_mode || false;
                 document.getElementById('my-avatar').textContent = (currentUser.name || 'ک').charAt(0);
+                document.getElementById('profile-display-name').textContent = currentUser.name;
+                document.getElementById('profile-badge').textContent = `⭐ امتیاز: ${currentUser.points || 10} | ${currentUser.badge || 'تازه وارد'}`;
             }
 
-            map = L.map('map', { zoomControl: false }).setView([35.6892, 51.3890], 13);
+            map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    currentCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    map.setView([currentCoords.lat, currentCoords.lng], 13);
+                });
+            }
 
             setInterval(fetchData, 4000);
             fetchData();
@@ -185,21 +245,10 @@
         async function fetchData() {
             const { data } = await supabaseClient.from('users').select('*');
             if (data) {
-                document.getElementById('online-count').textContent = `${data.length} نفر آنلاین`;
-                
-                // بروزرسانی لیست کاربران در تب آنلاین‌ها
-                document.getElementById('users-list-container').innerHTML = data.map(u => `
-                    <div onclick="openPrivateChat(${u.telegram_id}, '${u.name}')" class="glass p-3.5 rounded-2xl flex items-center gap-3 cursor-pointer hover:bg-slate-800 transition">
-                        <div class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white">${(u.name || 'ک').charAt(0)}</div>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-sm">${u.name || 'کاربر'}</h4>
-                            <p class="text-xs text-slate-400 mt-0.5">${u.bio || 'بدون بیوگرافی'}</p>
-                        </div>
-                        <span class="text-xs text-green-400 font-semibold">● آنلاین</span>
-                    </div>
-                `).join('');
+                const activeUsers = data.filter(u => !u.ghost_mode);
+                document.getElementById('online-count').textContent = `${activeUsers.length} نفر آنلاین`;
 
-                const existingIds = data.map(u => u.telegram_id);
+                const existingIds = activeUsers.map(u => u.telegram_id);
                 Object.keys(markers).forEach(id => {
                     if (!existingIds.includes(Number(id))) {
                         map.removeLayer(markers[id]);
@@ -207,7 +256,7 @@
                     }
                 });
 
-                data.forEach(u => {
+                activeUsers.forEach(u => {
                     if (u.telegram_id === currentUser?.telegram_id || !u.latitude || !u.longitude) return;
                     const initial = u.name ? u.name.charAt(0) : '?';
                     const html = `<div class="custom-marker">${initial}<div class="status-dot"></div></div>`;
@@ -222,18 +271,91 @@
                     }
                 });
             }
+
+            // لود پین‌ها و یادداشت‌های نقشه
+            const { data: notes } = await supabaseClient.from('map_notes').select('*');
+            if(notes) {
+                notes.forEach(n => {
+                    if(!markers['note_' + n.id]) {
+                        const marker = L.marker([n.latitude, n.longitude]).addTo(map);
+                        marker.bindPopup(`<b>${n.user_name}</b><br>${n.message}`);
+                        markers['note_' + n.id] = marker;
+                    }
+                });
+            }
         }
 
         async function saveProfile() {
             const name = document.getElementById('input-my-name').value.trim();
             const bio = document.getElementById('input-my-bio').value.trim();
+            const ghost_mode = document.getElementById('input-ghost-mode').checked;
             if (!name) return;
 
-            await supabaseClient.from('users').update({ name, bio }).eq('telegram_id', currentUser.telegram_id);
+            await supabaseClient.from('users').update({ name, bio, ghost_mode }).eq('telegram_id', currentUser.telegram_id);
             currentUser.name = name;
             currentUser.bio = bio;
+            currentUser.ghost_mode = ghost_mode;
             document.getElementById('my-avatar').textContent = name.charAt(0);
-            showToast("پروفایل با موفقیت ذخیره شد!");
+            document.getElementById('profile-display-name').textContent = name;
+            showToast("پروفایل به‌روزرسانی شد!");
+        }
+
+        function switchRoom(room) {
+            currentRoom = room;
+            ['general', 'dev', 'hangout', 'gamer'].forEach(r => {
+                const btn = document.getElementById(`room-btn-${r}`);
+                if(r === room) {
+                    btn.className = "room-tab px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white shrink-0";
+                } else {
+                    btn.className = "room-tab px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 shrink-0";
+                }
+            });
+            loadRoomMessages();
+        }
+
+        async function loadRoomMessages() {
+            const container = document.getElementById('room-messages');
+            const { data } = await supabaseClient.from('messages').select('*').eq('room_name', currentRoom).is('receiver_id', null).order('created_at', { ascending: true });
+
+            container.innerHTML = (data || []).map(m => `
+                <div class="max-w-[85%] p-3 rounded-2xl text-sm ${m.sender_id === currentUser.telegram_id ? 'bg-blue-600 self-end rounded-br-none' : 'bg-slate-800 self-start rounded-bl-none'}">
+                    <div class="text-[10px] text-blue-300 font-bold mb-1">${m.sender_name}</div>
+                    ${m.message}
+                </div>
+            `).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendRoomMessage() {
+            const input = document.getElementById('room-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            await supabaseClient.from('messages').insert([{
+                sender_id: currentUser.telegram_id,
+                sender_name: currentUser.name,
+                receiver_id: null,
+                room_name: currentRoom,
+                message
+            }]);
+            input.value = '';
+            loadRoomMessages();
+        }
+
+        async function loadUsersList() {
+            const { data } = await supabaseClient.from('users').select('*');
+            if(data) {
+                document.getElementById('users-list-container').innerHTML = data.map(u => `
+                    <div onclick="openPrivateChat(${u.telegram_id}, '${u.name}')" class="glass p-3.5 rounded-2xl flex items-center gap-3 cursor-pointer hover:bg-slate-800 transition">
+                        <div class="w-11 h-11 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white">${(u.name || 'ک').charAt(0)}</div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-sm">${u.name}</h4>
+                            <p class="text-xs text-slate-400 mt-0.5">${u.bio || 'بدون بیوگرافی'}</p>
+                        </div>
+                        <span class="text-xs text-green-400 font-semibold">● آنلاین</span>
+                    </div>
+                `).join('');
+            }
         }
 
         function openPrivateChat(targetId, targetName) {
@@ -261,19 +383,6 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        async function loadGlobalMessages() {
-            const container = document.getElementById('global-chat-messages');
-            const { data } = await supabaseClient.from('messages').select('*').is('receiver_id', null).order('created_at', { ascending: true });
-
-            container.innerHTML = (data || []).map(m => `
-                <div class="max-w-[85%] p-3 rounded-2xl text-sm ${m.sender_id === currentUser.telegram_id ? 'bg-blue-600 self-end rounded-br-none' : 'bg-slate-800 self-start rounded-bl-none'}">
-                    <div class="text-[10px] text-blue-300 font-bold mb-1">${m.sender_name || 'کاربر'}</div>
-                    ${m.message}
-                </div>
-            `).join('');
-            container.scrollTop = container.scrollHeight;
-        }
-
         async function sendPrivateMessage() {
             const input = document.getElementById('chat-input');
             const message = input.value.trim();
@@ -289,19 +398,73 @@
             loadPrivateMessages();
         }
 
-        async function sendGlobalMessage() {
-            const input = document.getElementById('global-chat-input');
-            const message = input.value.trim();
-            if (!message) return;
+        // استوری‌ها
+        async function postStory() {
+            const content = document.getElementById('input-story-text').value.trim();
+            if(!content) return;
+            await supabaseClient.from('stories').insert([{ user_id: currentUser.telegram_id, user_name: currentUser.name, content }]);
+            document.getElementById('input-story-text').value = '';
+            showToast("استوری منتشر شد!");
+            loadStories();
+        }
 
-            await supabaseClient.from('messages').insert([{
-                sender_id: currentUser.telegram_id,
-                sender_name: currentUser.name,
-                receiver_id: null,
+        async function loadStories() {
+            const { data } = await supabaseClient.from('stories').select('*').order('created_at', { ascending: false });
+            const container = document.getElementById('stories-container');
+            if(data) {
+                container.innerHTML = data.map(s => `
+                    <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs">
+                        <span class="font-bold text-blue-400">${s.user_name}:</span> ${s.content}
+                    </div>
+                `).join('');
+            }
+        }
+
+        // یادداشت روی نقشه
+        function openMapNoteModal() { document.getElementById('map-note-modal').classList.remove('hidden'); }
+        function closeMapNoteModal() { document.getElementById('map-note-modal').classList.add('hidden'); }
+        async function submitMapNote() {
+            const message = document.getElementById('map-note-input').value.trim();
+            if(!message) return;
+            await supabaseClient.from('map_notes').insert([{
+                user_id: currentUser.telegram_id,
+                user_name: currentUser.name,
+                latitude: currentCoords.lat + (Math.random() - 0.5) * 0.005,
+                longitude: currentCoords.lng + (Math.random() - 0.5) * 0.005,
                 message
             }]);
-            input.value = '';
-            loadGlobalMessages();
+            closeMapNoteModal();
+            showToast("یادداشت شما روی نقشه سنجاق شد!");
+            fetchData();
+        }
+
+        // تابلو اعلانات
+        function openBoardModal() { document.getElementById('board-modal').classList.remove('hidden'); }
+        function closeBoardModal() { document.getElementById('board-modal').classList.add('hidden'); }
+        async function submitBoardPost() {
+            const title = document.getElementById('board-title-input').value.trim();
+            const description = document.getElementById('board-desc-input').value.trim();
+            if(!title || !description) return;
+            await supabaseClient.from('board_posts').insert([{ user_id: currentUser.telegram_id, user_name: currentUser.name, title, description }]);
+            closeBoardModal();
+            showToast("رویداد شما ثبت شد!");
+            loadBoardPosts();
+        }
+
+        async function loadBoardPosts() {
+            const { data } = await supabaseClient.from('board_posts').select('*').order('created_at', { ascending: false });
+            const container = document.getElementById('board-container');
+            if(data) {
+                container.innerHTML = data.map(p => `
+                    <div class="glass p-3.5 rounded-2xl flex flex-col gap-1">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-bold text-sm text-blue-400">${p.title}</h4>
+                            <span class="text-[10px] text-slate-400">${p.user_name}</span>
+                        </div>
+                        <p class="text-xs text-slate-300">${p.description}</p>
+                    </div>
+                `).join('');
+            }
         }
 
         function initRealtime() {
@@ -309,13 +472,9 @@
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                     const m = payload.new;
                     if (m.sender_id !== currentUser?.telegram_id) {
-                        if (!m.receiver_id) {
-                            if (!document.getElementById('view-global-chat').classList.contains('hidden')) loadGlobalMessages();
-                            showToast(`پیام عمومی از ${m.sender_name}`);
-                        } else if (m.receiver_id === currentUser?.telegram_id) {
-                            if (!document.getElementById('chat-window').classList.contains('hidden') && selectedTargetUser?.telegram_id === m.sender_id) {
-                                loadPrivateMessages();
-                            }
+                        if (!m.receiver_id && m.room_name === currentRoom) loadRoomMessages();
+                        if (m.receiver_id === currentUser?.telegram_id) {
+                            if (!document.getElementById('chat-window').classList.contains('hidden') && selectedTargetUser?.telegram_id === m.sender_id) loadPrivateMessages();
                             showToast(`پی‌وی جدید از ${m.sender_name}`);
                         }
                     }
