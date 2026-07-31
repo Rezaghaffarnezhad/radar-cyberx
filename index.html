@@ -104,7 +104,7 @@
         </div>
     </div>
 
-    <!-- صفحه چت خصوصی (پی‌وی لحظه‌ای با سین شدن و ارسال زنده) -->
+    <!-- صفحه چت خصوصی (پی‌وی لحظه‌ای با دو تیک تفکیک‌شده ارسال و سین) -->
     <div id="chat-window" class="hidden absolute inset-0 tg-bg z-50 flex flex-col">
         <div class="tg-header px-3 py-2.5 flex items-center gap-3">
             <button onclick="closeChat()" class="text-slate-300 text-base px-2 py-1 rounded-lg hover:bg-white/5 transition">←</button>
@@ -420,7 +420,7 @@
             document.getElementById('chat-status').textContent = isTargetOnline ? 'آنلاین' : 'آفلاین';
             document.getElementById('chat-window').classList.remove('hidden');
             
-            // علامت‌زدن پیام‌های دریافتی از این مخاطب به عنوان «سین‌شده»
+            // علامت‌زدن پیام‌های دریافتی از این مخاطب به عنوان «سین‌شده» (تیک دوم پیام‌های ارسالی مخاطب به ما)
             await supabaseClient.from('messages')
                 .update({ is_read: true })
                 .eq('sender_id', targetId)
@@ -450,12 +450,25 @@
 
             container.innerHTML = (data || []).map(m => {
                 const isMe = m.sender_id === currentUser.telegram_id;
-                // وضعیت تیک پیام: تیک اول (ارسال شده) و تیک دوم آبی (سین شده)
-                const ticks = isMe ? `<span class="text-[10px] ml-1 ${m.is_read ? 'text-sky-400 font-bold' : 'text-slate-400'}">${m.is_read ? '✓✓' : '✓'}</span>` : '';
+                
+                // پیاده‌سازی تفکیک دو تیک: 
+                // تیک اول (✓): وقتی پیام ارسال شده باشد همیشه نمایش داده می‌شود.
+                // تیک دوم (✓): وقتی پیام سین شده باشد به رنگ آبی روشن می‌شود، در غیر این صورت کم‌رنگ می‌ماند.
+                let ticksHTML = '';
+                if (isMe) {
+                    const isRead = m.is_read;
+                    ticksHTML = `
+                        <span class="inline-flex items-center text-[10px] ml-1 select-none tracking-tighter">
+                            <span class="text-slate-300">✓</span>
+                            <span class="${isRead ? 'text-sky-400 font-bold -ml-1' : 'text-slate-400 opacity-60 -ml-1'}">✓</span>
+                        </span>
+                    `;
+                }
+
                 return `
                     <div class="max-w-[75%] px-3 py-2 rounded-xl text-xs flex flex-col ${isMe ? 'bg-[#2b5278] text-white self-end rounded-br-xs' : 'tg-card text-slate-200 self-start rounded-bl-xs'}">
                         <div>${m.message}</div>
-                        <div class="flex items-center justify-end mt-0.5">${ticks}</div>
+                        <div class="flex items-center justify-end mt-0.5">${ticksHTML}</div>
                     </div>
                 `;
             }).join('');
@@ -468,7 +481,6 @@
             if (!message || !selectedTargetUser || !currentUser) return;
 
             input.value = '';
-            // بررسی آنلاین بودن لحظه‌ای مخاطب برای تعیین وضعیت اولیه سین‌شدن
             const isTargetOnline = onlineUsersMap[selectedTargetUser.telegram_id] == true;
 
             await supabaseClient.from('messages').insert([{
@@ -476,7 +488,7 @@
                 sender_name: currentUser.name,
                 receiver_id: selectedTargetUser.telegram_id,
                 message,
-                is_read: isTargetOnline // اگر مخاطب داخل چت و آنلاین باشد، مستقیم سین در نظر گرفته شود
+                is_read: false // ابتدا ارسال شده (تیک اول) و پس از خوانده شدن مخاطب true می‌شود
             }]);
         }
 
@@ -497,7 +509,7 @@
                         (m.sender_id === targetId && m.receiver_id === currentUser.telegram_id)
                     ) {
                         loadPrivateMessages();
-                        // اگر پیام جدیدی از مخاطب رسید و ما در صفحه چت بودیم، آنی سین کن
+                        // اگر مخاطب پیام ما را دید، یا اگر ما پیام مخاطب را دیدیم آپدیت کن
                         if(m.sender_id === targetId && !m.is_read) {
                             supabaseClient.from('messages').update({ is_read: true }).eq('id', m.id).then();
                         }
@@ -540,9 +552,14 @@
                     }
                     if (selectedTargetUser && selectedTargetUser.telegram_id === m.sender_id) {
                         loadPrivateMessages();
-                        // سین‌شدن آنی پیام‌های دریافتی چون چت باز است
                         supabaseClient.from('messages').update({ is_read: true }).eq('id', m.id).then();
                     }
+                }
+            })
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, payload => {
+                const m = payload.new;
+                if (m && selectedTargetUser && (m.sender_id === currentUser.telegram_id || m.receiver_id === currentUser.telegram_id)) {
+                    loadPrivateMessages();
                 }
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
