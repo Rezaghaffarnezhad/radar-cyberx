@@ -17,7 +17,6 @@
         .tg-card { background: #17212b; border: 1px solid rgba(255,255,255,0.03); }
         .tg-header { background: #17212b; border-bottom: 1px solid #0e1621; }
         
-        /* کادرهای کاملاً شیشه‌ای‌شده و مدرن */
         .glass-box {
             background: rgba(23, 33, 43, 0.45);
             backdrop-filter: blur(18px);
@@ -28,7 +27,6 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
-        /* نشانگر موقعیت من: حذف کامل کادر مشکی و دایره‌ها، فقط پالس تمیز و دایره آبی دقیق */
         .my-exact-marker { position: relative; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
         .my-exact-pulse { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #3b82f6; opacity: 0.6; animation: custom-pulse 1.8s infinite; }
         .my-exact-core { position: relative; width: 12px; height: 12px; border-radius: 50%; background: #2563eb; border: 2px solid #fff; box-shadow: 0 0 10px rgba(59,130,246,0.9); z-index: 2; }
@@ -79,7 +77,6 @@
         }
         .telegram-back-btn:hover { background: rgba(255, 255, 255, 0.08); }
 
-        /* دکمه چت: دقیقاً دو سوم (66.6 درصد) داخل کادر پایین و یک‌سوم بیرون زده */
         .chat-3d-btn {
             width: 58px;
             height: 58px;
@@ -94,7 +91,7 @@
             cursor: pointer;
             transition: transform 0.15s ease, box-shadow 0.15s ease;
             position: absolute;
-            top: -19px; /* دو سوم داخل کادر و یک‌سوم بالا بیرون زده */
+            top: -19px;
             left: 50%;
             transform: translateX(-50%);
         }
@@ -106,7 +103,7 @@
 </head>
 <body class="relative flex flex-col h-full justify-between select-none">
 
-    <!-- صفحه استارت ربات تلگرام و دکمه ورود به اپ -->
+    <!-- صفحه استارت ربات تلگرام -->
     <div id="view-splash" class="view-section absolute inset-0 z-50 tg-bg flex flex-col items-center justify-center p-6 text-center">
         <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-4xl shadow-2xl mb-6 animate-bounce">
             🗺️
@@ -118,18 +115,13 @@
         </button>
     </div>
 
-    <!-- نقشه زنده (بک‌گراند اصلی) -->
+    <!-- نقشه زنده -->
     <div id="view-map" class="view-section hidden relative w-full h-full">
         <div id="map" class="map-container"></div>
         
-        <!-- هدر بالای صفحه -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3.5 py-2.5 rounded-2xl flex items-center justify-between shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <div onclick="openOnlineUsersModal()" class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#1f2c38]/80 cursor-pointer hover:bg-[#253646] transition">
-                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <span id="online-count" class="text-[11px] font-semibold text-emerald-400">0 آنلاین</span>
-                    </div>
                     <button onclick="toggleMapTheme()" class="w-8 h-8 rounded-xl flex items-center justify-center text-xs text-white bg-[#1f2c38]/80 hover:bg-slate-700 transition">🌓</button>
                 </div>
                 <div onclick="navigateTo('profile')" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
@@ -139,19 +131,10 @@
             </div>
         </div>
 
-        <!-- اهرم عمودی تنظیم شعاع -->
         <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center">
             <input id="radius-slider" type="range" min="0.5" max="25" step="0.5" value="5" oninput="onRadiusSliderChange(this.value)" class="vertical-slider-container accent-blue-600 cursor-pointer">
         </div>
 
-        <!-- دکمه بروزرسانی / دریافت لوکیشن جغرافیایی -->
-        <div class="absolute bottom-24 right-4 z-10">
-            <button onclick="requestUserLocation()" class="w-12 h-12 bg-white/90 hover:bg-white text-slate-700 rounded-full shadow-2xl flex items-center justify-center transition transform active:scale-95 border border-slate-200">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
-            </button>
-        </div>
-
-        <!-- کادر پایین شیشه‌ای‌تر با دکمه چت (دو سوم داخل کادر) -->
         <div class="absolute bottom-4 left-0 right-0 z-20 flex justify-center pointer-events-none">
             <div class="glass-box w-64 h-16 rounded-3xl flex items-center justify-center shadow-2xl pointer-events-auto relative">
                 <div onclick="openChatHubModal()" class="chat-3d-btn">
@@ -193,21 +176,8 @@
                 <label class="text-[11px] text-slate-400 mb-1 block">بیوگرافی (درباره من)</label>
                 <textarea id="input-my-bio" rows="2" class="w-full tg-input px-3.5 py-2.5 rounded-xl text-xs resize-none"></textarea>
             </div>
-            <div class="flex items-center justify-between py-1 px-1">
-                <span class="text-xs text-slate-300">حالت روح (مخفی شدن لوکیشن)</span>
-                <input id="input-ghost-mode" type="checkbox" class="w-4 h-4 accent-[#5288c1] cursor-pointer">
-            </div>
             <button onclick="saveProfile()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition shadow">ذخیره و به‌روزرسانی</button>
         </div>
-    </div>
-
-    <!-- مودال لیست افراد آنلاین -->
-    <div id="online-users-modal" class="hidden absolute inset-0 tg-bg z-40 flex flex-col">
-        <div class="tg-header px-4 py-3 flex items-center justify-between">
-            <h3 class="font-bold text-xs text-white">افراد آنلاین در شعاع</h3>
-            <button onclick="closeOnlineUsersModal()" class="text-slate-400 text-sm px-2 py-1 rounded-lg hover:bg-white/5 transition">✕</button>
-        </div>
-        <div id="online-users-list-container" class="flex-1 p-3 overflow-y-auto flex flex-col gap-1.5"></div>
     </div>
 
     <!-- مودال هاب چت -->
@@ -266,7 +236,6 @@
                 <span class="text-[10px] text-slate-400 font-bold">بیوگرافی</span>
                 <p id="modal-user-bio" class="text-xs text-slate-200">بدون بیوگرافی</p>
             </div>
-            <!-- رفتن به پیوی با کلیک روی ارسال پیام -->
             <button onclick="startChatFromProfile()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition shadow">ارسال پیام</button>
         </div>
     </div>
@@ -274,11 +243,9 @@
     <!-- صفحه چت -->
     <div id="chat-window" class="hidden absolute inset-0 tg-bg z-50 flex flex-col">
         <div class="tg-header px-3 py-2.5 flex items-center gap-3">
-            <!-- برگشت به قسمت چت (هاب چت) با کلیک روی بازگشت در کانال، گروه و پیوی -->
             <button onclick="backToChatHub()" class="telegram-back-btn">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             </button>
-            <!-- رفتن به پروفایل با کلیک روی پروفایل مخاطب در هدر چت پیوی -->
             <div class="flex-1 cursor-pointer flex items-center gap-2.5" onclick="openProfileFromChatHeader()">
                 <div id="chat-header-avatar" class="w-8 h-8 rounded-full bg-[#2b5278] flex items-center justify-center text-xs font-bold text-white overflow-hidden">?</div>
                 <div>
@@ -301,13 +268,44 @@
             <button onclick="cancelReply()" class="text-slate-400 text-xs px-1.5 py-0.5 hover:text-white">✕</button>
         </div>
 
-        <div id="chat-input-container" class="p-2.5 tg-card flex items-center gap-2">
-            <!-- گزینه ارسال فایل -->
-            <button onclick="document.getElementById('file-upload-input').click()" class="text-slate-400 hover:text-white p-1.5 transition text-lg" title="ارسال فایل">📎</button>
+        <!-- نوار ویرایش فعال -->
+        <div id="edit-preview-bar" class="hidden px-3 py-1.5 bg-[#17212b] border-t border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2 overflow-hidden">
+                <div class="w-1 h-7 bg-amber-500 rounded-full"></div>
+                <div class="text-[11px] truncate">
+                    <span class="text-amber-400 font-bold block">ویرایش پیام</span>
+                    <span id="edit-preview-text" class="text-slate-300">متن پیام...</span>
+                </div>
+            </div>
+            <button onclick="cancelEdit()" class="text-slate-400 text-xs px-1.5 py-0.5 hover:text-white">✕</button>
+        </div>
+
+        <div id="chat-input-container" class="p-2.5 tg-card flex items-center gap-2 relative">
+            <!-- منوی پیوست فایل الگوبرداری شده از تلگرام -->
+            <div class="relative">
+                <button onclick="toggleAttachMenu()" class="text-slate-400 hover:text-white p-1.5 transition text-lg" title="پیوست فایل">📎</button>
+                <div id="attach-menu" class="hidden absolute bottom-12 left-0 bg-[#17212b] border border-slate-700 rounded-2xl shadow-2xl p-2 flex flex-col gap-1 w-44 z-50">
+                    <button onclick="triggerFileSelect('image/*')" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs hover:bg-[#232e3c] text-slate-200 transition">📷 ارسال عکس</button>
+                    <button onclick="triggerFileSelect('video/*')" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs hover:bg-[#232e3c] text-slate-200 transition">🎥 ارسال ویدیو</button>
+                    <button onclick="triggerFileSelect('audio/*')" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs hover:bg-[#232e3c] text-slate-200 transition">🎵 ارسال موزیک</button>
+                    <button onclick="triggerFileSelect('*/*')" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs hover:bg-[#232e3c] text-slate-200 transition">📁 ارسال فایل</button>
+                </div>
+            </div>
             <input type="file" id="file-upload-input" class="hidden" onchange="handleFileUpload(event)">
             
             <input id="chat-input" onkeydown="if(event.key==='Enter') sendPrivateMessage()" type="text" placeholder="نوشتن پیام..." class="flex-1 tg-input px-3.5 py-2.5 rounded-xl text-xs">
-            <button onclick="sendPrivateMessage()" class="bg-[#2b5278] hover:bg-[#336394] px-5 py-2.5 rounded-xl font-medium text-xs text-white transition">ارسال</button>
+            
+            <!-- دکمه ارسال متغیر (پیام یا وویس) -->
+            <button id="send-btn" onclick="sendPrivateMessage()" class="bg-[#2b5278] hover:bg-[#336394] px-4 py-2.5 rounded-xl font-medium text-xs text-white transition">ارسال</button>
+        </div>
+    </div>
+
+    <!-- منوی عملیات پیام (کپی، ویرایش، حذف) -->
+    <div id="message-actions-modal" class="hidden absolute inset-0 bg-black/60 z-50 flex items-end justify-center" onclick="closeMessageActions()">
+        <div class="bg-[#17212b] w-full max-w-md rounded-t-3xl p-3 flex flex-col gap-1.5 border-t border-slate-700" onclick="event.stopPropagation()">
+            <button id="action-btn-copy" onclick="executeMessageAction('copy')" class="w-full py-3 px-4 text-right text-xs text-slate-200 hover:bg-[#232e3c] rounded-xl transition flex items-center gap-3">📋 کپی کردن متن</button>
+            <button id="action-btn-edit" onclick="executeMessageAction('edit')" class="w-full py-3 px-4 text-right text-xs text-slate-200 hover:bg-[#232e3c] rounded-xl transition flex items-center gap-3">✏️ ویرایش پیام</button>
+            <button id="action-btn-delete" onclick="executeMessageAction('delete')" class="w-full py-3 px-4 text-right text-xs text-red-400 hover:bg-[#232e3c] rounded-xl transition flex items-center gap-3">🗑️ حذف پیام</button>
         </div>
     </div>
 
@@ -316,7 +314,7 @@
         <img id="avatar-fullscreen-img" src="" class="max-w-full max-h-full rounded-2xl object-contain shadow-2xl">
     </div>
 
-    <!-- اعلان Toastی -->
+    <!-- اعلان Toast -->
     <div id="toast" class="absolute top-16 left-3 right-3 z-50 transform -translate-y-20 opacity-0 pointer-events-none tg-card px-3.5 py-2.5 rounded-xl border border-[#5288c1]/30 shadow-xl flex items-center gap-2.5">
         <span class="text-sm">🔔</span>
         <div id="toast-text" class="text-xs font-semibold text-white">اعلان جدید</div>
@@ -343,8 +341,8 @@
         let isDarkMap = false;
         let navigationHistory = ['splash'];
         let replyingToMessage = null;
-        let backButtonPressCount = 0;
-        let backButtonTimer = null;
+        let editingMessage = null;
+        let selectedMessageForAction = null;
 
         const user = tg?.initDataUnsafe?.user || { 
             id: Math.floor(Math.random() * 900000) + 100000, 
@@ -359,7 +357,6 @@
             setTimeout(() => { toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none'); }, 2000);
         }
 
-        // ورود از استارت ربات تلگرام
         async function enterAppFromSplash() {
             navigateTo('map');
             initAppAfterSplash();
@@ -376,57 +373,43 @@
             if(viewId === 'map' && map) setTimeout(() => map.invalidateSize(), 50);
         }
 
-        // برگشت به صفحه قبل با زدن دکمه بازگشت موبایل / خروج با دوبار کلیک
         window.addEventListener('popstate', (e) => {
             handleMobileBackButton();
         });
 
         function handleMobileBackButton() {
-            // بررسی اگر پنجره چت باز است
             const chatWindow = document.getElementById('chat-window');
             if(!chatWindow.classList.contains('hidden')) {
                 backToChatHub();
                 return;
             }
 
-            // بررسی اگر هاب چت باز است
             const chatHub = document.getElementById('chat-hub-modal');
             if(!chatHub.classList.contains('hidden')) {
                 closeChatHubModal();
                 return;
             }
 
-            // بررسی اگر پروفایل مخاطب باز است
             const userProfileModal = document.getElementById('user-profile-modal');
             if(!userProfileModal.classList.contains('hidden')) {
                 closeUserProfileModal();
                 return;
             }
 
-            // بررسی اگر لیست افراد آنلاین باز است
-            const onlineModal = document.getElementById('online-users-modal');
-            if(!onlineModal.classList.contains('hidden')) {
-                closeOnlineUsersModal();
+            const profileView = document.getElementById('view-profile');
+            if(!profileView.classList.contains('hidden')) {
+                navigateTo('map');
                 return;
             }
 
-            // در صفحه نقشه یا استارت: خروج از برنامه با دوبار کلیک دکمه بازگشت
-            backButtonPressCount++;
-            if(backButtonPressCount === 1) {
-                showToast("برای خروج از برنامه دوباره دکمه بازگشت را بزنید");
-                clearTimeout(backButtonTimer);
-                backButtonTimer = setTimeout(() => { backButtonPressCount = 0; }, 2000);
-            } else if(backButtonPressCount === 2) {
-                if(tg) tg.close();
-                else window.close();
-            }
+            if(tg) tg.close();
+            else window.close();
         }
 
         function goBack() {
             handleMobileBackButton();
         }
 
-        // برگشت به قسمت چت (هاب چت) با کلیک روی بازگشت در داخل کانال، گروه و پیوی
         function backToChatHub() {
             document.getElementById('chat-window').classList.add('hidden');
             openChatHubModal();
@@ -477,8 +460,7 @@
             return `آخرین بازدید در ${date.toLocaleDateString('fa-IR')} ساعت ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
         }
 
-        // دریافت لوکیشن جغرافیایی کاربر
-        function requestUserLocation() {
+        async function initAppAfterSplash() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
                     currentCoords.lat = position.coords.latitude;
@@ -487,16 +469,9 @@
                     renderMyMarker();
                     updateRadiusCircleOnMap();
                     updateMyLocation(currentCoords.lat, currentCoords.lng);
-                    showToast("موقعیت با موفقیت دریافت شد");
-                }, error => {
-                    showToast("خطا در دریافت موقعیت. استفاده از موقعیت پیش‌فرض");
-                }, { enableHighAccuracy: true });
-            } else {
-                showToast("مرورگر شما از موقعیت مکانی پشتیبانی نمی‌کند");
+                }, () => {}, { enableHighAccuracy: true });
             }
-        }
 
-        async function initAppAfterSplash() {
             map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 13);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
@@ -524,7 +499,6 @@
             document.getElementById('input-my-name').value = currentUser.name || '';
             document.getElementById('input-my-username').value = currentUser.username || '';
             document.getElementById('input-my-bio').value = currentUser.bio || '';
-            document.getElementById('input-ghost-mode').checked = currentUser.ghost_mode || false;
             
             const savedAvatar = localStorage.getItem('saved_user_avatar_' + user.id);
             if(savedAvatar) {
@@ -561,7 +535,6 @@
 
         function renderMyMarker() {
             if(!map) return;
-            // حذف کامل نشانگر مشکی و استفاده صرفاً از دایره آبی و پالس متحرک
             const html = `
                 <div class="my-exact-marker">
                     <div class="my-exact-pulse"></div>
@@ -587,7 +560,7 @@
         async function fetchUsersData() {
             const { data } = await supabaseClient.from('users').select('*');
             if (data) {
-                let activeUsers = data.filter(u => !u.ghost_mode);
+                let activeUsers = data;
                 if (activeRadiusKm > 0) {
                     activeUsers = activeUsers.filter(u => {
                         if (!u.latitude || !u.longitude) return false;
@@ -596,8 +569,6 @@
                 }
                 
                 activeUsersGlobalList = activeUsers;
-                const onlineCountNum = Object.keys(onlineUsersMap).length || activeUsers.length;
-                document.getElementById('online-count').textContent = `${onlineCountNum} آنلاین`;
 
                 const existingIds = activeUsers.map(u => u.telegram_id);
                 Object.keys(markers).forEach(id => {
@@ -628,32 +599,6 @@
             }
         }
 
-        function openOnlineUsersModal() {
-            const container = document.getElementById('online-users-list-container');
-            const otherUsers = activeUsersGlobalList.filter(u => u.telegram_id !== currentUser?.telegram_id);
-            
-            container.innerHTML = otherUsers.length ? otherUsers.map(u => {
-                const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : (u.name || 'ک').charAt(0);
-                return `
-                    <div onclick="closeOnlineUsersModal(); openUserProfile(${u.telegram_id})" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
-                        <div class="relative w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden">
-                            ${avatarInner}
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-xs text-white">${u.name}</h4>
-                            <p class="text-[10px] text-emerald-400 mt-0.5">آنلاین در شعاع</p>
-                        </div>
-                    </div>
-                `;
-            }).join('') : '<div class="text-center text-xs text-slate-400 py-6">کاربر دیگری در این شعاع آنلاین نیست</div>';
-
-            document.getElementById('online-users-modal').classList.remove('hidden');
-        }
-
-        function closeOnlineUsersModal() {
-            document.getElementById('online-users-modal').classList.add('hidden');
-        }
-
         async function handleAvatarUpload(event) {
             const file = event.target.files[0];
             if(!file || !currentUser) return;
@@ -675,14 +620,12 @@
             const name = document.getElementById('input-my-name').value.trim();
             const username = document.getElementById('input-my-username').value.trim();
             const bio = document.getElementById('input-my-bio').value.trim();
-            const ghost_mode = document.getElementById('input-ghost-mode').checked;
             if (!name) return;
 
-            await supabaseClient.from('users').update({ name, username, bio, ghost_mode }).eq('telegram_id', currentUser.telegram_id);
+            await supabaseClient.from('users').update({ name, username, bio }).eq('telegram_id', currentUser.telegram_id);
             currentUser.name = name;
             currentUser.username = username;
             currentUser.bio = bio;
-            currentUser.ghost_mode = ghost_mode;
             updateMyAvatarUI();
             renderMyMarker();
             showToast("پروفایل ذخیره شد");
@@ -779,11 +722,10 @@
             const savedAvatar = localStorage.getItem('saved_user_avatar_' + currentUser.telegram_id) || currentUser?.avatar_url;
             if(savedAvatar) {
                 document.getElementById('avatar-fullscreen-img').src = savedAvatar;
-                document.getElementById('avatar-modal').classList.remove('hidden');
+                document.getElementById('avatar-modal').classList.add('hidden');
             }
         }
 
-        // رفتن به پیوی با کلیک روی ارسال پیام در پروفایل مخاطب
         function startChatFromProfile() {
             if(!selectedTargetUser) return;
             closeUserProfileModal();
@@ -791,7 +733,6 @@
             openPrivateChat(selectedTargetUser.telegram_id, selectedTargetUser.name);
         }
 
-        // رفتن به پروفایل با کلیک روی پروفایل مخاطب (در هدر چت پیوی)
         function openProfileFromChatHeader() {
             if(currentChatType === 'pv' && selectedTargetUser) {
                 openUserProfile(selectedTargetUser.telegram_id);
@@ -828,14 +769,13 @@
             initRealtimeChatChannel();
         }
 
-        // ارسال پیام در گروه عمومی
         function openGroupChat(roomName, title) {
             currentChatType = 'group';
             currentChatTargetId = roomName;
             selectedTargetUser = null;
 
             document.getElementById('chat-title').textContent = title;
-            document.getElementById('chat-lastseen').textContent = 'گروه عمومی (پیام‌های خارج از شعاع پاک می‌شوند)';
+            document.getElementById('chat-lastseen').textContent = 'گروه عمومی';
             document.getElementById('chat-header-avatar').textContent = '🌐';
             document.getElementById('chat-input-container').classList.remove('hidden');
 
@@ -873,15 +813,7 @@
             }
 
             const { data } = await query.order('created_at', { ascending: true });
-
             let filteredMessages = data || [];
-            if (currentChatType === 'group') {
-                filteredMessages = filteredMessages.filter(m => {
-                    if (m.sender_id === currentUser.telegram_id) return true;
-                    const senderUser = activeUsersGlobalList.find(u => u.telegram_id === m.sender_id);
-                    return senderUser !== undefined;
-                });
-            }
 
             container.innerHTML = filteredMessages.map(m => {
                 const isMe = m.sender_id === currentUser.telegram_id;
@@ -890,19 +822,15 @@
                     const isRead = m.is_read;
                     ticksHTML = `
                         <span class="inline-flex items-center text-[10px] ml-1 select-none tracking-tighter">
-                            <span class="text-slate-300">✓</span>
-                            <span class="${isRead ? 'text-sky-400 font-bold -ml-1' : 'text-slate-400 opacity-60 -ml-1'}">✓</span>
+                            <span class="${isRead ? 'text-sky-400 font-bold' : 'text-slate-300'}">✓</span>
+                            <span class="${isRead ? 'text-sky-400 font-bold -ml-1' : 'hidden'}">✓</span>
                         </span>
                     `;
                 }
 
-                // نمایش زمان پیام
                 const msgTime = new Date(m.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const editedMark = m.is_edited ? '<span class="text-[8px] text-slate-400 ml-1">ویرایش‌شده</span>' : '';
                 
-                // لایک پیام (قلب)
-                const isLiked = m.liked ? '❤️' : '';
-                
-                // ریپلای پیام در صورت وجود
                 let replyBlock = '';
                 if(m.reply_to) {
                     replyBlock = `
@@ -914,16 +842,15 @@
                 }
 
                 return `
-                    <div data-id="${m.id}" data-sender="${m.sender_name || 'کاربر'}" data-text="${m.message}" 
-                         ondblclick="toggleLikeMessage('${m.id}', ${!!m.liked})" 
+                    <div onclick="openMessageActions('${m.id}', '${m.message}', ${isMe})" 
                          ontouchstart="handleTouchStart(event, '${m.id}', '${m.sender_name || 'کاربر'}', '${m.message}')"
                          ontouchend="handleTouchEnd(event)"
                          class="max-w-[80%] px-3 py-2 rounded-xl text-xs flex flex-col ${isMe ? 'chat-bubble-out self-end' : 'chat-bubble-in self-start'} relative group cursor-pointer">
                         ${currentChatType !== 'pv' && !isMe ? `<div class="text-[10px] text-[#5288c1] font-bold mb-0.5">${m.sender_name || 'کاربر'}</div>` : ''}
                         ${replyBlock}
                         <div>${m.message}</div>
-                        <div class="flex items-center justify-end gap-1.5 mt-0.5">
-                            <span class="text-[9px] text-slate-300 opacity-80">${isLiked}</span>
+                        <div class="flex items-center justify-end gap-1 mt-0.5">
+                            ${editedMark}
                             <span class="text-[9px] text-slate-300 opacity-80">${msgTime}</span>
                             ${ticksHTML}
                         </div>
@@ -933,13 +860,50 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // لایک پیام با دوبار کلیک
-        async function toggleLikeMessage(msgId, currentLikedState) {
-            await supabaseClient.from('messages').update({ liked: !currentLikedState }).eq('id', msgId);
-            loadMessages();
+        // منوی عملیات پیام (کپی، ویرایش، حذف)
+        function openMessageActions(id, text, isMe) {
+            selectedMessageForAction = { id, text, isMe };
+            const editBtn = document.getElementById('action-btn-edit');
+            if (isMe) {
+                editBtn.classList.remove('hidden');
+            } else {
+                editBtn.classList.add('hidden');
+            }
+            document.getElementById('message-actions-modal').classList.remove('hidden');
         }
 
-        // ریپلای با کشیدن پیام (Swipe to reply یا لمس طولانی در موبایل)
+        function closeMessageActions() {
+            document.getElementById('message-actions-modal').classList.add('hidden');
+        }
+
+        async function executeMessageAction(action) {
+            if(!selectedMessageForAction) return;
+            const { id, text, isMe } = selectedMessageForAction;
+            closeMessageActions();
+
+            if(action === 'copy') {
+                navigator.clipboard.writeText(text);
+                showToast("متن با موفقیت کپی شد");
+            } else if(action === 'edit' && isMe) {
+                editingMessage = { id, text };
+                document.getElementById('edit-preview-text').textContent = text;
+                document.getElementById('edit-preview-bar').classList.remove('hidden');
+                document.getElementById('chat-input').value = text;
+                document.getElementById('chat-input').focus();
+            } else if(action === 'delete') {
+                await supabaseClient.from('messages').delete().eq('id', id);
+                showToast("پیام حذف شد");
+                loadMessages();
+            }
+        }
+
+        function cancelEdit() {
+            editingMessage = null;
+            document.getElementById('edit-preview-bar').classList.add('hidden');
+            document.getElementById('chat-input').value = '';
+        }
+
+        // ریپلای با کشیدن پیام به سمت داخل
         let touchStartX = 0;
         let activeMsgIdForSwipe = null;
         function handleTouchStart(e, id, sender, text) {
@@ -949,8 +913,7 @@
         function handleTouchEnd(e) {
             if(!touchStartX || !activeMsgIdForSwipe) return;
             let touchEndX = e.changedTouches[0].clientX;
-            if(touchEndX - touchStartX > 70) {
-                // کشیدن به سمت راست برای ریپلای
+            if(touchEndX - touchStartX > 60) {
                 setReplyTarget(activeMsgIdForSwipe.id, activeMsgIdForSwipe.sender, activeMsgIdForSwipe.text);
             }
             touchStartX = 0;
@@ -970,7 +933,18 @@
             document.getElementById('reply-preview-bar').classList.add('hidden');
         }
 
-        // گزينه ارسال فایل
+        function toggleAttachMenu() {
+            const menu = document.getElementById('attach-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function triggerFileSelect(acceptType) {
+            const fileInput = document.getElementById('file-upload-input');
+            fileInput.accept = acceptType;
+            fileInput.click();
+            toggleAttachMenu();
+        }
+
         async function handleFileUpload(event) {
             const file = event.target.files[0];
             if(!file || !currentUser) return;
@@ -978,7 +952,7 @@
             const reader = new FileReader();
             reader.onload = async function(e) {
                 const fileDataUrl = e.target.result;
-                const fileMessageText = `📁 فایل ارسال شد: ${file.name} <br><a href="${fileDataUrl}" download="${file.name}" class="text-sky-300 underline text-[10px]">دانلود فایل</a>`;
+                let fileMessageText = `📁 فایل ارسال شد: ${file.name} <br><a href="${fileDataUrl}" download="${file.name}" class="text-sky-300 underline text-[10px]">دانلود فایل</a>`;
                 
                 let payload = {
                     sender_id: currentUser.telegram_id,
@@ -995,7 +969,7 @@
                 }
 
                 await supabaseClient.from('messages').insert([payload]);
-                showToast("فایل با موفقیت ارسال شد");
+                showToast("فایل ارسال شد");
             };
             reader.readAsDataURL(file);
         }
@@ -1006,6 +980,15 @@
             if (!message || !currentUser) return;
 
             input.value = '';
+
+            if (editingMessage) {
+                await supabaseClient.from('messages').update({ message: message, is_edited: true }).eq('id', editingMessage.id);
+                cancelEdit();
+                showToast("پیام ویرایش شد");
+                loadMessages();
+                return;
+            }
+
             let payload = {
                 sender_id: currentUser.telegram_id,
                 sender_name: currentUser.name,
@@ -1068,13 +1051,6 @@
                     await globalChannel.track({ online_at: new Date().toISOString() });
                 }
             });
-
-            const savedAvatar = localStorage.getItem('saved_user_avatar_' + user.id);
-            if(savedAvatar && currentUser) {
-                currentUser.avatar_url = savedAvatar;
-                updateMyAvatarUI();
-                renderMyMarker();
-            }
         }
     </script>
 </body>
