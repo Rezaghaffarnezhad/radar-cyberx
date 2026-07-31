@@ -54,11 +54,11 @@
         </div>
     </div>
 
-    <!-- تب ۲: روم‌های گفتگو (کامل و زنده) -->
+    <!-- تب ۲: روم‌های گفتگو -->
     <div id="view-chats" class="view-section hidden absolute inset-0 pb-16 pt-3 px-3 flex flex-col z-10 tg-bg">
         <div class="flex items-center justify-between mb-2 px-1">
             <h2 class="font-bold text-xs text-slate-400">گروه‌ها و روم‌های زنده</h2>
-            <span id="room-online-indicator" class="text-[10px] text-emerald-400">● زنده</span>
+            <span id="room-status" class="text-[10px] text-emerald-400 font-medium">● آنلاین</span>
         </div>
         <div class="flex gap-1.5 overflow-x-auto pb-2 shrink-0 no-scrollbar">
             <button onclick="switchRoom('general')" id="room-btn-general" class="room-tab px-3.5 py-1.5 rounded-xl text-xs font-medium transition shrink-0 bg-[#2b5278] text-white">🌐 عمومی</button>
@@ -68,7 +68,7 @@
         </div>
         <div id="room-messages" class="flex-1 overflow-y-auto flex flex-col gap-2 p-3 tg-card rounded-2xl my-1"></div>
         <div class="flex gap-1.5 mt-1">
-            <input id="room-input" onkeydown="if(event.key==='Enter') sendRoomMessage()" type="text" placeholder="پیام در روم..." class="flex-1 tg-input px-3.5 py-2.5 rounded-xl text-xs">
+            <input id="room-input" oninput="handleRoomTyping()" onkeydown="if(event.key==='Enter') sendRoomMessage()" type="text" placeholder="پیام در روم..." class="flex-1 tg-input px-3.5 py-2.5 rounded-xl text-xs">
             <button onclick="sendRoomMessage()" class="bg-[#2b5278] hover:bg-[#336394] px-5 rounded-xl font-medium text-xs text-white transition">ارسال</button>
         </div>
     </div>
@@ -105,7 +105,7 @@
         </div>
     </div>
 
-    <!-- صفحه چت خصوصی (پی‌وی لحظه‌ای با دو تیک تفکیک‌شده ارسال و سین) -->
+    <!-- صفحه چت خصوصی (پی‌وی لحظه‌ای) -->
     <div id="chat-window" class="hidden absolute inset-0 tg-bg z-50 flex flex-col">
         <div class="tg-header px-3 py-2.5 flex items-center gap-3">
             <button onclick="closeChat()" class="text-slate-300 text-base px-2 py-1 rounded-lg hover:bg-white/5 transition">←</button>
@@ -116,7 +116,7 @@
         </div>
         <div id="chat-messages" class="flex-1 p-3 overflow-y-auto flex flex-col gap-2"></div>
         <div class="p-2.5 tg-card flex gap-2">
-            <input id="chat-input" oninput="handleTypingEvent()" onkeydown="if(event.key==='Enter') sendPrivateMessage()" type="text" placeholder="نوشتن پیام..." class="flex-1 tg-input px-3.5 py-2.5 rounded-xl text-xs">
+            <input id="chat-input" oninput="handlePrivateTyping()" onkeydown="if(event.key==='Enter') sendPrivateMessage()" type="text" placeholder="نوشتن پیام..." class="flex-1 tg-input px-3.5 py-2.5 rounded-xl text-xs">
             <button onclick="sendPrivateMessage()" class="bg-[#2b5278] hover:bg-[#336394] px-5 rounded-xl font-medium text-xs text-white transition">ارسال</button>
         </div>
     </div>
@@ -183,8 +183,8 @@
         let currentRoom = 'general';
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
         let activeRadiusKm = 0;
-        let typingTimeout = null;
-        let activeChannel = null;
+        let roomTypingTimeout = null, privateTypingTimeout = null;
+        let activePrivateChannel = null;
         let globalChannel = null;
         let onlineUsersMap = {};
 
@@ -215,7 +215,7 @@
             });
 
             if(tabId === 'map' && map) setTimeout(() => map.invalidateSize(), 150);
-            if(tabId === 'chats') loadRoomMessages();
+            if(tabId === 'chats') { loadRoomMessages(); markRoomMessagesAsRead(); }
             if(tabId === 'community') loadUsersList();
         }
 
@@ -363,6 +363,17 @@
                 }
             });
             loadRoomMessages();
+            markRoomMessagesAsRead();
+        }
+
+        async function markRoomMessagesAsRead() {
+            if(!currentUser) return;
+            await supabaseClient.from('messages')
+                .update({ is_read: true })
+                .eq('room_name', currentRoom)
+                .is('receiver_id', null)
+                .neq('sender_id', currentUser.telegram_id)
+                .eq('is_read', false);
         }
 
         async function loadRoomMessages() {
@@ -375,10 +386,22 @@
 
             container.innerHTML = (data || []).map(m => {
                 const isMe = m.sender_id === currentUser?.telegram_id;
+                let ticksHTML = '';
+                if (isMe) {
+                    const isRead = m.is_read;
+                    ticksHTML = `
+                        <span class="inline-flex items-center text-[10px] ml-1 select-none tracking-tighter">
+                            <span class="text-slate-300">✓</span>
+                            <span class="${isRead ? 'text-sky-400 font-bold -ml-1' : 'text-slate-400 opacity-60 -ml-1'}">✓</span>
+                        </span>
+                    `;
+                }
+
                 return `
                     <div class="max-w-[85%] px-3 py-2 rounded-xl text-xs flex flex-col ${isMe ? 'bg-[#2b5278] text-white self-end rounded-br-xs' : 'tg-card text-slate-200 self-start rounded-bl-xs'}">
                         <div class="text-[10px] text-[#5288c1] font-bold mb-0.5">${m.sender_name || 'کاربر'}</div>
                         <div>${m.message}</div>
+                        <div class="flex items-center justify-end mt-0.5">${ticksHTML}</div>
                     </div>
                 `;
             }).join('');
@@ -397,8 +420,13 @@
                 receiver_id: null,
                 room_name: currentRoom,
                 message,
-                is_read: true
+                is_read: false
             }]);
+        }
+
+        function handleRoomTyping() {
+            if(!globalChannel) return;
+            globalChannel.send({ type: 'broadcast', event: 'room_typing', payload: { sender_id: currentUser.telegram_id, sender_name: currentUser.name, room: currentRoom } });
         }
 
         async function loadUsersList() {
@@ -443,9 +471,9 @@
         function closeChat() { 
             document.getElementById('chat-window').classList.add('hidden'); 
             selectedTargetUser = null;
-            if(activeChannel) {
-                supabaseClient.removeChannel(activeChannel);
-                activeChannel = null;
+            if(activePrivateChannel) {
+                supabaseClient.removeChannel(activePrivateChannel);
+                activePrivateChannel = null;
             }
         }
 
@@ -495,16 +523,16 @@
             }]);
         }
 
-        function handleTypingEvent() {
-            if(!activeChannel || !selectedTargetUser) return;
-            activeChannel.send({ type: 'broadcast', event: 'typing', payload: { sender_id: currentUser.telegram_id } });
+        function handlePrivateTyping() {
+            if(!activePrivateChannel || !selectedTargetUser) return;
+            activePrivateChannel.send({ type: 'broadcast', event: 'typing', payload: { sender_id: currentUser.telegram_id } });
         }
 
         function initRealtimePrivateChat(targetId) {
-            if(activeChannel) supabaseClient.removeChannel(activeChannel);
+            if(activePrivateChannel) supabaseClient.removeChannel(activePrivateChannel);
             const channelName = `chat_pv_${Math.min(currentUser.telegram_id, targetId)}_${Math.max(currentUser.telegram_id, targetId)}`;
             
-            activeChannel = supabaseClient.channel(channelName)
+            activePrivateChannel = supabaseClient.channel(channelName)
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
                     const m = payload.new || payload.old;
                     if (
@@ -520,8 +548,8 @@
                 .on('broadcast', { event: 'typing' }, payload => {
                     if (payload.payload.sender_id === targetId) {
                         document.getElementById('chat-status').textContent = 'در حال تایپ...';
-                        clearTimeout(typingTimeout);
-                        typingTimeout = setTimeout(() => { 
+                        clearTimeout(privateTypingTimeout);
+                        privateTypingTimeout = setTimeout(() => { 
                             const isOnline = onlineUsersMap[targetId] == true;
                             document.getElementById('chat-status').textContent = isOnline ? 'آنلاین' : 'آفلاین'; 
                         }, 2000);
@@ -535,39 +563,41 @@
 
             globalChannel = supabaseClient.channel('global-app-sync', {
                 config: {
-                    presence: {
-                        key: String(currentUser.telegram_id),
-                    },
+                    presence: { key: String(currentUser.telegram_id) },
                 },
             })
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
                 const m = payload.new;
                 if (!m) return;
 
-                // دریافت پیام جدید روم عمومی/گروهی
+                // مدیریت پیام‌های روم عمومی
                 if (!m.receiver_id && m.room_name === currentRoom) {
                     loadRoomMessages();
+                    if (!document.getElementById('view-chats').classList.contains('hidden') && m.sender_id !== currentUser?.telegram_id) {
+                        markRoomMessagesAsRead();
+                    }
                 }
 
+                // اعلان و مدیریت پیام خصوصی
                 if (m.receiver_id === currentUser?.telegram_id) {
-                    if (m.sender_id !== currentUser?.telegram_id) {
+                    if (m.sender_id !== currentUser?.telegram_id && payload.eventType === 'INSERT') {
                         showToast(`پیام جدید از ${m.sender_name}`);
                     }
                     if (selectedTargetUser && selectedTargetUser.telegram_id === m.sender_id) {
                         loadPrivateMessages();
-                        supabaseClient.from('messages').update({ is_read: true }).eq('id', m.id).then();
+                        if(!m.is_read) {
+                            supabaseClient.from('messages').update({ is_read: true }).eq('id', m.id).then();
+                        }
                     }
                 }
             })
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, payload => {
-                const m = payload.new;
-                if (m) {
-                    if(!m.receiver_id && m.room_name === currentRoom) {
-                        loadRoomMessages();
-                    }
-                    if (selectedTargetUser && (m.sender_id === currentUser.telegram_id || m.receiver_id === currentUser.telegram_id)) {
-                        loadPrivateMessages();
-                    }
+            .on('broadcast', { event: 'room_typing' }, payload => {
+                if (payload.payload.room === currentRoom && payload.payload.sender_id !== currentUser?.telegram_id) {
+                    document.getElementById('room-status').textContent = `${payload.payload.sender_name} در حال تایپ...`;
+                    clearTimeout(roomTypingTimeout);
+                    roomTypingTimeout = setTimeout(() => {
+                        document.getElementById('room-status').textContent = '● آنلاین';
+                    }, 2000);
                 }
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
