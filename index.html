@@ -364,13 +364,17 @@
             if (!message || !currentUser) return;
 
             input.value = '';
-            await supabaseClient.from('messages').insert([{
+            const { data } = await supabaseClient.from('messages').insert([{
                 sender_id: currentUser.telegram_id,
                 sender_name: currentUser.name,
                 receiver_id: null,
                 room_name: currentRoom,
                 message
-            }]);
+            }]).select().single();
+
+            if(data) {
+                loadRoomMessages();
+            }
         }
 
         async function loadUsersList() {
@@ -430,12 +434,16 @@
             if (!message || !selectedTargetUser || !currentUser) return;
 
             input.value = '';
-            await supabaseClient.from('messages').insert([{
+            const { data } = await supabaseClient.from('messages').insert([{
                 sender_id: currentUser.telegram_id,
                 sender_name: currentUser.name,
                 receiver_id: selectedTargetUser.telegram_id,
                 message
-            }]);
+            }]).select().single();
+
+            if (data) {
+                loadPrivateMessages();
+            }
         }
 
         function handleTypingEvent() {
@@ -468,12 +476,10 @@
                     const m = payload.new;
                     if (!m) return;
 
-                    // به‌روزرسانی خودکار روم‌های عمومی
                     if (!m.receiver_id && m.room_name === currentRoom) {
                         loadRoomMessages();
                     }
 
-                    // اعلان و به‌روزرسانی پیام خصوصی در صورت باز بودن پی‌وی
                     if (m.receiver_id === currentUser?.telegram_id) {
                         if (m.sender_id !== currentUser?.telegram_id) {
                             showToast(`پیام جدید از ${m.sender_name}`);
