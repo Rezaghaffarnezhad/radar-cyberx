@@ -403,6 +403,7 @@
 
         function closeChat() { 
             document.getElementById('chat-window').classList.add('hidden'); 
+            selectedTargetUser = null;
             if(activeChannel) supabaseClient.removeChannel(activeChannel);
         }
 
@@ -461,21 +462,32 @@
         }
 
         function initRealtimeGlobal() {
-            supabaseClient.channel('global-changes')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+            supabaseClient.channel('global-app-sync')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
                     const m = payload.new;
+                    if (!m) return;
+
+                    // اگر در تب روم‌های گفتگو هستیم و پیام مربوط به روم فعلی است
                     if (!m.receiver_id && m.room_name === currentRoom) {
-                        loadRoomMessages();
+                        if(document.getElementById('view-chats').classList.contains('hidden') === false) {
+                            loadRoomMessages();
+                        }
                     }
+
+                    // اگر پیام خصوصی برای ما آمده است
                     if (m.receiver_id === currentUser?.telegram_id) {
-                        showToast(`پیام از ${m.sender_name}`);
-                        if(selectedTargetUser && selectedTargetUser.telegram_id === m.sender_id) {
+                        if (m.sender_id !== currentUser?.telegram_id) {
+                            showToast(`پیام جدید از ${m.sender_name}`);
+                        }
+                        // اگر هم‌اکنون صفحه چت خصوصی با این فرستنده باز است، فوراً پیام‌ها را بارگذاری کن
+                        if (selectedTargetUser && selectedTargetUser.telegram_id === m.sender_id) {
                             loadPrivateMessages();
                         }
                     }
                 })
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
-                    fetchData();
+                    fetchData(); // به‌روزرسانی لوکیشن روی نقشه
+                    // اگر در تب مخاطبین هستیم، لیست را آنی رندر کن
                     if(!document.getElementById('view-community').classList.contains('hidden')) {
                         loadUsersList();
                     }
