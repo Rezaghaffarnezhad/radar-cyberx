@@ -1,250 +1,815 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radar CyberX</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body {
-            background-color: #0b0f19;
-            color: #00ffcc;
-            font-family: 'Courier New', monospace;
-            margin: 0;
-            padding: 0;
-            direction: rtl;
-        }
-        #app-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            max-width: 480px;
-            margin: 0 auto;
-            border-left: 1px solid #1f293d;
-            border-right: 1px solid #1f293d;
-        }
-        .cyber-header {
-            background: #111827;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #00ffcc;
-        }
-        .badge-secure {
-            background: #00ffcc;
-            color: #0b0f19;
-            padding: 2px 8px;
-            font-size: 12px;
-            font-weight: bold;
-            border-radius: 4px;
-        }
-        .view-panel {
-            display: none;
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        .view-panel.active {
-            display: flex;
-            flex-direction: column;
-        }
-        .radar-screen {
-            width: 250px;
-            height: 250px;
-            border: 2px solid #00ffcc;
-            border-radius: 50%;
-            margin: 40px auto;
-            position: relative;
-            background: radial-gradient(circle, rgba(0,255,204,0.1) 0%, rgba(11,15,25,0.9) 80%);
-            overflow: hidden;
-        }
-        .radar-sweep {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 125px;
-            height: 125px;
-            background: linear-gradient(45deg, rgba(0,255,204,0.5) 0%, transparent 100%);
-            transform-origin: top left;
-            animation: sweep 4s linear infinite;
-        }
-        @keyframes sweep {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .radar-controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-        .radar-controls button, .profile-card button, .chat-input-area button {
-            background: #111827;
-            color: #00ffcc;
-            border: 1px solid #00ffcc;
-            padding: 8px 15px;
-            cursor: pointer;
-            font-family: inherit;
-            border-radius: 4px;
-        }
-        .cyber-nav {
-            display: flex;
-            background: #111827;
-            border-top: 1px solid #1f293d;
-        }
-        .nav-btn {
-            flex: 1;
-            background: none;
-            border: none;
-            color: #8892b0;
-            padding: 15px;
-            cursor: pointer;
-            font-family: inherit;
-            font-weight: bold;
-        }
-        .nav-btn.active {
-            color: #00ffcc;
-            border-top: 2px solid #00ffcc;
-        }
-        .profile-card input, .profile-card textarea, .chat-input-area input {
-            width: 100%;
-            background: #111827;
-            border: 1px solid #1f293d;
-            color: #fff;
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            font-family: inherit;
-            box-sizing: border-box;
-        }
-        .chat-box {
-            flex: 1;
-            border: 1px solid #1f293d;
-            padding: 10px;
-            margin-bottom: 10px;
-            overflow-y: auto;
-            background: #080c14;
-        }
-        .chat-input-area {
-            display: flex;
-            gap: 10px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Telegram Advanced Mini App</title>
+<!-- Telegram WebApp SDK -->
+<script src="[https://telegram.org/js/telegram-web-app.js](https://telegram.org/js/telegram-web-app.js)"></script>
+<!-- Google Fonts - Vazirmatn -->
+<link href="[https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap](https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap)" rel="stylesheet">
+<style>
+:root {
+--tg-theme-bg-color: #ffffff;
+--tg-theme-text-color: #222222;
+--tg-theme-hint-color: #999999;
+--tg-theme-link-color: #2481cc;
+--tg-theme-button-color: #2481cc;
+--tg-theme-button-text-color: #ffffff;
+--tg-theme-secondary-bg-color: #f1f1f1;
+--surface-color: rgba(255, 255, 255, 0.85);
+--border-color: rgba(0, 0, 0, 0.08);
+--shadow-color: rgba(0, 0, 0, 0.05);
+--danger-color: #ff3b30;
+--success-color: #34c759;
+--warning-color: #ffcc00;
+--radius-sm: 8px;
+--radius-md: 14px;
+--radius-lg: 24px;
+--transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+[data-theme="dark"] {
+--tg-theme-bg-color: #181818;
+--tg-theme-text-color: #f5f5f7;
+--tg-theme-hint-color: #8e8e93;
+--tg-theme-link-color: #0a84ff;
+--tg-theme-button-color: #0a84ff;
+--tg-theme-button-text-color: #ffffff;
+--tg-theme-secondary-bg-color: #2c2c2e;
+--surface-color: rgba(44, 44, 46, 0.85);
+--border-color: rgba(255, 255, 255, 0.1);
+--shadow-color: rgba(0, 0, 0, 0.3);
+}
+* {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+font-family: 'Vazirmatn', sans-serif;
+-webkit-tap-highlight-color: transparent;
+user-select: none;
+}
+body {
+background-color: var(--tg-theme-bg-color);
+color: var(--tg-theme-text-color);
+overflow: hidden;
+height: 100vh;
+width: 100vw;
+display: flex;
+flex-direction: column;
+direction: rtl;
+}
+#app {
+display: flex;
+flex-direction: column;
+height: 100%;
+width: 100%;
+position: relative;
+overflow: hidden;
+}
+/* Header Component */
+header {
+height: 60px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 0 16px;
+background-color: var(--tg-theme-secondary-bg-color);
+border-bottom: 1px solid var(--border-color);
+z-index: 100;
+backdrop-filter: blur(10px);
+}
+.header-title {
+font-size: 18px;
+font-weight: 600;
+}
+.icon-btn {
+background: none;
+border: none;
+color: var(--tg-theme-text-color);
+font-size: 20px;
+cursor: pointer;
+padding: 8px;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: var(--transition);
+}
+.icon-btn:active {
+background-color: var(--border-color);
+transform: scale(0.92);
+}
+/* Views Container */
+.views-container {
+flex: 1;
+position: relative;
+overflow: hidden;
+}
+.view {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+overflow-y: auto;
+overflow-x: hidden;
+padding: 16px;
+display: none;
+flex-direction: column;
+gap: 16px;
+animation: fadeIn 0.3s ease forwards;
+}
+.view.active {
+display: flex;
+}
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+/* Bottom Navigation */
+.bottom-nav {
+height: 70px;
+background-color: var(--tg-theme-secondary-bg-color);
+border-top: 1px solid var(--border-color);
+display: flex;
+align-items: center;
+justify-content: space-around;
+z-index: 100;
+backdrop-filter: blur(10px);
+padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-item {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+background: none;
+border: none;
+color: var(--tg-theme-hint-color);
+font-size: 11px;
+gap: 4px;
+cursor: pointer;
+flex: 1;
+height: 100%;
+transition: var(--transition);
+}
+.nav-item.active {
+color: var(--tg-theme-link-color);
+}
+.nav-item svg {
+width: 24px;
+height: 24px;
+fill: currentColor;
+}
+/* Drawer Menu */
+.drawer-overlay {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(0,0,0,0.5);
+z-index: 1000;
+opacity: 0;
+pointer-events: none;
+transition: var(--transition);
+backdrop-filter: blur(4px);
+}
+.drawer-overlay.open {
+opacity: 1;
+pointer-events: auto;
+}
+.drawer {
+position: fixed;
+top: 0;
+right: -300px;
+width: 280px;
+height: 100%;
+background-color: var(--tg-theme-bg-color);
+z-index: 1001;
+box-shadow: -5px 0 25px var(--shadow-color);
+transition: var(--transition);
+display: flex;
+flex-direction: column;
+padding: 24px 16px;
+gap: 20px;
+overflow-y: auto;
+}
+.drawer.open {
+right: 0;
+}
+.drawer-header {
+display: flex;
+align-items: center;
+gap: 12px;
+padding-bottom: 16px;
+border-bottom: 1px solid var(--border-color);
+}
+.avatar {
+width: 50px;
+height: 50px;
+border-radius: 50%;
+background-color: var(--tg-theme-link-color);
+color: #fff;
+display: flex;
+align-items: center;
+justify-content: center;
+font-weight: 700;
+font-size: 20px;
+}
+.drawer-menu-list {
+display: flex;
+flex-direction: column;
+gap: 8px;
+}
+.drawer-menu-item {
+display: flex;
+align-items: center;
+gap: 12px;
+padding: 12px;
+border-radius: var(--radius-sm);
+background: none;
+border: none;
+color: var(--tg-theme-text-color);
+font-size: 15px;
+cursor: pointer;
+text-align: right;
+transition: var(--transition);
+}
+.drawer-menu-item:active {
+background-color: var(--tg-theme-secondary-bg-color);
+}
+/* Components: Cards, Buttons, Inputs */
+.card {
+background-color: var(--surface-color);
+border: 1px solid var(--border-color);
+border-radius: var(--radius-md);
+padding: 16px;
+box-shadow: 0 4px 15px var(--shadow-color);
+backdrop-filter: blur(10px);
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+.btn {
+background-color: var(--tg-theme-button-color);
+color: var(--tg-theme-button-text-color);
+border: none;
+border-radius: var(--radius-sm);
+padding: 12px 20px;
+font-size: 15px;
+font-weight: 600;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+transition: var(--transition);
+box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.btn:active {
+transform: scale(0.97);
+opacity: 0.9;
+}
+.btn-secondary {
+background-color: var(--tg-theme-secondary-bg-color);
+color: var(--tg-theme-text-color);
+}
+.input-group {
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+.input-group label {
+font-size: 13px;
+color: var(--tg-theme-hint-color);
+}
+.input-field {
+background-color: var(--tg-theme-secondary-bg-color);
+border: 1px solid var(--border-color);
+border-radius: var(--radius-sm);
+padding: 12px;
+color: var(--tg-theme-text-color);
+font-size: 15px;
+outline: none;
+transition: var(--transition);
+}
+.input-field:focus {
+border-color: var(--tg-theme-link-color);
+}
+/* Splash Screen */
+#splash-screen {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background-color: var(--tg-theme-bg-color);
+z-index: 9999;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 20px;
+transition: opacity 0.5s ease;
+}
+.spinner {
+width: 40px;
+height: 40px;
+border: 3px solid var(--border-color);
+border-top-color: var(--tg-theme-link-color);
+border-radius: 50%;
+animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+to { transform: rotate(360deg); }
+}
+/* Toast / Snackbar */
+.toast-container {
+position: fixed;
+bottom: 90px;
+left: 50%;
+transform: translateX(-50%);
+z-index: 2000;
+display: flex;
+flex-direction: column;
+gap: 8px;
+pointer-events: none;
+width: 90%;
+max-width: 400px;
+}
+.toast {
+background-color: rgba(0,0,0,0.85);
+color: #fff;
+padding: 12px 20px;
+border-radius: var(--radius-sm);
+font-size: 14px;
+text-align: center;
+animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+backdrop-filter: blur(5px);
+}
+@keyframes toastIn {
+from { opacity: 0; transform: translateY(20px); }
+to { opacity: 1; transform: translateY(0); }
+}
+@keyframes toastOut {
+to { opacity: 0; transform: translateY(-10px); }
+}
+/* Skeleton Loading */
+.skeleton {
+background: linear-gradient(90deg, var(--tg-theme-secondary-bg-color) 25%, var(--border-color) 50%, var(--tg-theme-secondary-bg-color) 75%);
+background-size: 200% 100%;
+animation: shimmer 1.5s infinite;
+border-radius: var(--radius-sm);
+}
+@keyframes shimmer {
+0% { background-position: 200% 0; }
+100% { background-position: -200% 0; }
+}
+/* Accordion */
+.accordion-item {
+border: 1px solid var(--border-color);
+border-radius: var(--radius-sm);
+overflow: hidden;
+}
+.accordion-header {
+padding: 12px 16px;
+background-color: var(--tg-theme-secondary-bg-color);
+cursor: pointer;
+display: flex;
+justify-content: space-between;
+align-items: center;
+font-weight: 500;
+}
+.accordion-body {
+padding: 0 16px;
+max-height: 0;
+overflow: hidden;
+transition: max-height 0.3s ease, padding 0.3s ease;
+}
+.accordion-item.open .accordion-body {
+padding: 16px;
+max-height: 200px;
+}
+/* Tabs */
+.tabs-header {
+display: flex;
+background-color: var(--tg-theme-secondary-bg-color);
+border-radius: var(--radius-sm);
+padding: 4px;
+}
+.tab-btn {
+flex: 1;
+background: none;
+border: none;
+padding: 8px;
+font-size: 14px;
+color: var(--tg-theme-hint-color);
+cursor: pointer;
+border-radius: 6px;
+transition: var(--transition);
+}
+.tab-btn.active {
+background-color: var(--tg-theme-bg-color);
+color: var(--tg-theme-text-color);
+box-shadow: 0 2px 8px var(--shadow-color);
+}
+.tab-content {
+display: none;
+}
+.tab-content.active {
+display: block;
+}
+/* Modal */
+.modal-overlay {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(0,0,0,0.5);
+z-index: 1500;
+display: flex;
+align-items: center;
+justify-content: center;
+opacity: 0;
+pointer-events: none;
+transition: var(--transition);
+backdrop-filter: blur(5px);
+}
+.modal-overlay.open {
+opacity: 1;
+pointer-events: auto;
+}
+.modal {
+background-color: var(--tg-theme-bg-color);
+width: 90%;
+max-width: 400px;
+border-radius: var(--radius-lg);
+padding: 24px;
+display: flex;
+flex-direction: column;
+gap: 16px;
+box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+transform: scale(0.9);
+transition: var(--transition);
+}
+.modal-overlay.open .modal {
+transform: scale(1);
+}
+/* Chat Styles */
+.chat-list-item {
+display: flex;
+align-items: center;
+gap: 12px;
+padding: 10px;
+border-radius: var(--radius-sm);
+cursor: pointer;
+transition: var(--transition);
+}
+.chat-list-item:active {
+background-color: var(--tg-theme-secondary-bg-color);
+}
+.chat-bubble {
+max-width: 75%;
+padding: 10px 14px;
+border-radius: var(--radius-md);
+font-size: 14px;
+position: relative;
+word-break: break-word;
+}
+.chat-bubble.incoming {
+background-color: var(--tg-theme-secondary-bg-color);
+align-self: flex-start;
+border-bottom-left-radius: 4px;
+}
+.chat-bubble.outgoing {
+background-color: var(--tg-theme-link-color);
+color: #fff;
+align-self: flex-end;
+border-bottom-right-radius: 4px;
+}
+</style>
 </head>
 <body>
-    <div id="app-container">
-        <header class="cyber-header">
-            <h1>RADAR CYBERX</h1>
-            <span class="badge-secure">SECURE</span>
-        </header>
-
-        <main>
-            <section id="radar-view" class="view-panel active">
-                <div class="radar-screen">
-                    <div class="radar-sweep"></div>
-                </div>
-                <div class="radar-controls">
-                    <button onclick="triggerScan('1km')">باند ۱ ک.م</button>
-                    <button onclick="triggerScan('5km')">باند ۵ ک.م</button>
-                    <button onclick="triggerScan('10km')">باند ۱۰ ک.م</button>
-                </div>
-            </section>
-
-            <section id="chat-view" class="view-panel">
-                <div id="chat-messages" class="chat-box"></div>
-                <div class="chat-input-area">
-                    <input type="text" id="msg-input" placeholder="پیام سایبری خود را بنویسید...">
-                    <button onclick="sendChatMessage()">ارسال</button>
-                </div>
-            </section>
-
-            <section id="profile-view" class="view-panel">
-                <div class="profile-card">
-                    <input type="text" id="profile-name" placeholder="نام عامل (Agent Name)">
-                    <textarea id="profile-bio" placeholder="بیوگرافی یا وضعیت..."></textarea>
-                    <label style="display:block; margin-bottom:15px;">
-                        <input type="checkbox" id="ghost-mode-toggle"> حالت روح (استتار کامل)
-                    </label>
-                    <button onclick="saveProfile()" style="width:100%;">ذخیره پروفایل</button>
-                </div>
-            </section>
-        </main>
-
-        <nav class="cyber-nav">
-            <button onclick="switchTab('radar', this)" class="nav-btn active">رادار</button>
-            <button onclick="switchTab('chat', this)" class="nav-btn">ارتباطات</button>
-            <button onclick="switchTab('profile', this)" class="nav-btn">پروفایل</button>
-        </nav>
-    </div>
-
-    <script>
-        let currentUserId = "agent_" + Math.floor(Math.random() * 10000);
-
-        function switchTab(tabName, element) {
-            document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-
-            if (tabName === 'radar') {
-                document.getElementById('radar-view').classList.add('active');
-            } else if (tabName === 'chat') {
-                document.getElementById('chat-view').classList.add('active');
-                loadMessages();
-            } else if (tabName === 'profile') {
-                document.getElementById('profile-view').classList.add('active');
-            }
-            element.classList.add('active');
-        }
-
-        function triggerScan(band) {
-            fetch('/api/radar/scan', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: currentUserId, lat: 35.6892, lng: 51.3890, frequency_band: band, is_cloaked: false })
-            })
-            .then(res => res.json())
-            .then(data => alert(`اسکن روی ${data.frequency_band} انجام شد. اهداف یافت شده: ${data.targets.length}`));
-        }
-
-        function saveProfile() {
-            const name = document.getElementById('profile-name').value;
-            const bio = document.getElementById('profile-bio').value;
-            const ghostMode = document.getElementById('ghost-mode-toggle').checked;
-
-            fetch('/api/profile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: currentUserId, name, bio, ghost_mode: ghostMode })
-            })
-            .then(res => res.json())
-            .then(() => alert("پروفایل به‌روزرسانی شد!"));
-        }
-
-        function sendChatMessage() {
-            const textInput = document.getElementById('msg-input');
-            if (!textInput.value) return;
-
-            fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sender: currentUserId, type: 'public', text: textInput.value })
-            })
-            .then(() => { textInput.value = ''; loadMessages(); });
-        }
-
-        function loadMessages() {
-            fetch(`/api/chat?type=public&user_id=${currentUserId}`)
-            .then(res => res.json())
-            .then(data => {
-                const chatBox = document.getElementById('chat-messages');
-                chatBox.innerHTML = '';
-                data.messages.forEach(msg => {
-                    const div = document.createElement('div');
-                    div.style.marginBottom = "8px";
-                    div.innerHTML = `<span style="color:#00ffcc">${msg.sender}:</span> ${msg.text}`;
-                    chatBox.appendChild(div);
-                });
-            });
-        }
-    </script>
+<div id="splash-screen">
+<div class="avatar" style="width: 80px; height: 80px; font-size: 32px;">TC</div>
+<h2>CyberX Mini App</h2>
+<div class="spinner"></div>
+</div>
+<div id="app">
+<!-- Header -->
+<header>
+<button class="icon-btn" id="drawer-toggle">
+<svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+</button>
+<div class="header-title" id="page-title">خانه</div>
+<button class="icon-btn" id="theme-toggle">
+<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.38 5.38 0 01-4.4 2.26 5.4 5.4 0 01-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+</button>
+</header>
+<!-- Views Container -->
+<div class="views-container">
+<!-- Splash View (Internal Placeholder) -->
+<div class="view" id="view-splash">
+<div class="card">
+<h3>خوش آمدید</h3>
+<p>در حال بارگذاری اطلاعات اولیه برنامه...</p>
+</div>
+</div>
+<!-- Login View -->
+<div class="view" id="view-login">
+<div class="card" style="margin-top: auto; margin-bottom: auto;">
+<h3>ورود به سیستم</h3>
+<p>لطفاً حساب کاربری تلگرام خود را متصل کنید.</p>
+<div class="input-group">
+<label>نام کاربری</label>
+<input type="text" class="input-field" id="login-username" placeholder="مثال: @username">
+</div>
+<button class="btn" id="btn-login">تایید و ورود</button>
+</div>
+</div>
+<!-- Home View -->
+<div class="view active" id="view-home">
+<div class="card">
+<h3 id="welcome-user">سلام، کاربر عزیز</h3>
+<p>به پیشرفته‌ترین مینی اپ تلگرام خوش آمدید. از منوی زیر یا قابلیت‌های بالا برای کاوش استفاده کنید.</p>
+<button class="btn" onclick="app.showToast('عملیات با موفقیت انجام شد!')">تست هش‌فیدبک و توست</button>
+</div>
+<div class="card">
+<h4>آمار سریع</h4>
+<div style="display: flex; gap: 10px; justify-content: space-between;">
+<div>بازدید: <strong>۱,۴۲۰</strong></div>
+<div>امتیاز: <strong>۸۵۰</strong></div>
+<div>سطح: <strong>طلایی</strong></div>
+</div>
+</div>
+</div>
+<!-- Profile View -->
+<div class="view" id="view-profile">
+<div class="card" style="align-items: center; text-align: center;">
+<div class="avatar" id="profile-avatar" style="width: 80px; height: 80px; font-size: 32px;">U</div>
+<h3 id="profile-name">کاربر تلگرام</h3>
+<p id="profile-username" style="color: var(--tg-theme-hint-color);">@username</p>
+<button class="btn btn-secondary" style="width: 100%;">ویرایش پروفایل</button>
+</div>
+</div>
+<!-- Wallet View -->
+<div class="view" id="view-wallet">
+<div class="card" style="background: linear-gradient(135deg, #2481cc, #0a84ff); color: #fff;">
+<p>موجودی کل</p>
+<h2 style="font-size: 28px;">$ 1,250.00</h2>
+<p style="font-size: 12px; opacity: 0.8;">بروزرسانی شده چند لحظه پیش</p>
+</div>
+<div style="display: flex; gap: 10px;">
+<button class="btn" style="flex: 1;">واریز</button>
+<button class="btn btn-secondary" style="flex: 1;">برداشت</button>
+</div>
+</div>
+<!-- Settings View -->
+<div class="view" id="view-settings">
+<div class="card">
+<h4>تنظیمات عمومی</h4>
+<div style="display: flex; justify-content: space-between; align-items: center;">
+<span>حالت تاریک</span>
+<input type="checkbox" id="settings-dark-mode" style="width: 20px; height: 20px;">
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center;">
+<span>اعلان‌ها</span>
+<input type="checkbox" checked style="width: 20px; height: 20px;">
+</div>
+</div>
+</div>
+<!-- Notifications View -->
+<div class="view" id="view-notifications">
+<div class="card">
+<h4>اعلان‌ها</h4>
+<p style="color: var(--tg-theme-hint-color); font-size: 13px;">هیچ اعلان جدیدی وجود ندارد.</p>
+</div>
+</div>
+<!-- Statistics View -->
+<div class="view" id="view-statistics">
+<div class="card">
+<h4>نمودار فعالیت</h4>
+<canvas id="stats-canvas" width="300" height="150" style="width: 100%; height: auto;"></canvas>
+</div>
+</div>
+<!-- Search View -->
+<div class="view" id="view-search">
+<div class="input-group">
+<input type="text" class="input-field" placeholder="جستجو در میان آیتم‌ها...">
+</div>
+<div class="card">
+<p style="text-align: center; color: var(--tg-theme-hint-color);">نتیجه‌ای یافت نشد</p>
+</div>
+</div>
+<!-- Chat List View -->
+<div class="view" id="view-chatlist">
+<div class="chat-list-item" onclick="app.switchView('chatview')">
+<div class="avatar">پ</div>
+<div style="flex: 1;">
+<strong>پشتیبانی آنلاین</strong>
+<p style="font-size: 12px; color: var(--tg-theme-hint-color);">آخرین پیام ارسال شده...</p>
+</div>
+</div>
+</div>
+<!-- Chat View -->
+<div class="view" id="view-chatview" style="display: flex; flex-direction: column; justify-content: space-between;">
+<div style="display: flex; flex-direction: column; gap: 10px; flex: 1; overflow-y: auto;">
+<div class="chat-bubble incoming">سلام! چطور می‌توانم کمکتان کنم؟</div>
+<div class="chat-bubble outgoing">سلام، سوالی داشتم در خصوص کیف پول.</div>
+</div>
+<div style="display: flex; gap: 8px; margin-top: 10px;">
+<input type="text" class="input-field" style="flex: 1;" placeholder="پیام خود را بنویسید...">
+<button class="btn" style="padding: 0 16px;">ارسال</button>
+</div>
+</div>
+<!-- Contacts View -->
+<div class="view" id="view-contacts">
+<div class="card">
+<h4>مخاطبین</h4>
+<p style="color: var(--tg-theme-hint-color); font-size: 13px;">لیستی ثبت نشده است.</p>
+</div>
+</div>
+<!-- History View -->
+<div class="view" id="view-history">
+<div class="card">
+<h4>تاریخچه تراکنش‌ها</h4>
+<p style="color: var(--tg-theme-hint-color); font-size: 13px;">تراکنشی یافت نشد.</p>
+</div>
+</div>
+<!-- About View -->
+<div class="view" id="view-about">
+<div class="card" style="text-align: center;">
+<h3>درباره ما</h3>
+<p>نسخه ۱.۰.۰ تولید شده با استانداردهای مدرن تلگرام.</p>
+</div>
+</div>
+<!-- Help View -->
+<div class="view" id="view-help">
+<div class="card">
+<h4>راهنما و پشتیبانی</h4>
+<div class="accordion-item">
+<div class="accordion-header" onclick="this.parentElement.classList.toggle('open')">
+<span>چگونه موجودی را افزایش دهیم؟</span>
+<span>+</span>
+</div>
+<div class="accordion-body">
+<p>از بخش کیف پول روی دکمه واریز کلیک کنید.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Error Page -->
+<div class="view" id="view-error">
+<div class="card" style="text-align: center; margin-top: auto; margin-bottom: auto;">
+<h3 style="color: var(--danger-color);">خطایی رخ داد</h3>
+<p>متأسفانه ارتباط با سرور برقرار نشد.</p>
+<button class="btn" onclick="app.switchView('home')">بازگشت به خانه</button>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation -->
+<nav class="bottom-nav">
+<button class="nav-item active" data-target="home">
+<svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+<span>خانه</span>
+</button>
+<button class="nav-item" data-target="wallet">
+<svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+<span>کیف پول</span>
+</button>
+<button class="nav-item" data-target="chatlist">
+<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+<span>پیام‌ها</span>
+</button>
+<button class="nav-item" data-target="profile">
+<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+<span>پروفایل</span>
+</button>
+</nav>
+</div>
+<!-- Drawer Menu -->
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<div class="drawer" id="drawer">
+<div class="drawer-header">
+<div class="avatar">TC</div>
+<div>
+<h4 id="drawer-name">کاربر</h4>
+<p style="font-size: 12px; color: var(--tg-theme-hint-color);">عضو ویژه</p>
+</div>
+</div>
+<div class="drawer-menu-list">
+<button class="drawer-menu-item" onclick="app.switchView('statistics'); app.toggleDrawer();">آمار و تحلیل</button>
+<button class="drawer-menu-item" onclick="app.switchView('settings'); app.toggleDrawer();">تنظیمات</button>
+<button class="drawer-menu-item" onclick="app.switchView('about'); app.toggleDrawer();">درباره ما</button>
+<button class="drawer-menu-item" onclick="app.switchView('help'); app.toggleDrawer();">راهنما</button>
+</div>
+</div>
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+<script>
+class TelegramMiniApp {
+constructor() {
+this.tg = window.Telegram?.WebApp;
+this.currentView = 'home';
+this.initTelegramSDK();
+this.initEventListeners();
+this.initCanvasChart();
+}
+initTelegramSDK() {
+if (this.tg) {
+this.tg.ready();
+this.tg.expand();
+if (this.tg.colorScheme === 'dark') {
+document.documentElement.setAttribute('data-theme', 'dark');
+}
+const user = this.tg.initDataUnsafe?.user;
+if (user) {
+document.getElementById('welcome-user').innerText = سلام، ${user.first_name || 'کاربر'};
+document.getElementById('profile-name').innerText = ${user.first_name || ''} ${user.last_name || ''};
+document.getElementById('profile-username').innerText = user.username ? @${user.username} : '';
+document.getElementById('drawer-name').innerText = user.first_name || 'کاربر';
+const initials = (user.first_name?.[0] || 'U').toUpperCase();
+document.querySelectorAll('.avatar').forEach(el => el.innerText = initials);
+}
+}
+// Hide Splash Screen after 1s
+setTimeout(() => {
+const splash = document.getElementById('splash-screen');
+splash.style.opacity = '0';
+setTimeout(() => splash.remove(), 500);
+}, 1000);
+}
+initEventListeners() {
+// Navigation
+document.querySelectorAll('.nav-item').forEach(btn => {
+btn.addEventListener('click', (e) => {
+const target = btn.getAttribute('data-target');
+this.switchView(target);
+document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+btn.classList.add('active');
+});
+});
+// Drawer
+document.getElementById('drawer-toggle').addEventListener('click', () => this.toggleDrawer());
+document.getElementById('drawer-overlay').addEventListener('click', () => this.toggleDrawer());
+// Theme Toggle
+document.getElementById('theme-toggle').addEventListener('click', () => {
+const current = document.documentElement.getAttribute('data-theme');
+const next = current === 'dark' ? 'light' : 'dark';
+if (next === 'dark') {
+document.documentElement.setAttribute('data-theme', 'dark');
+} else {
+document.documentElement.removeAttribute('data-theme');
+}
+});
+}
+switchView(viewId) {
+document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+const targetView = document.getElementById(view-${viewId});
+if (targetView) {
+targetView.classList.add('active');
+this.currentView = viewId;
+document.getElementById('page-title').innerText = viewId.charAt(0).toUpperCase() + viewId.slice(1);
+if (this.tg?.HapticFeedback) {
+this.tg.HapticFeedback.impactOccurred('light');
+}
+}
+}
+toggleDrawer() {
+document.getElementById('drawer').classList.toggle('open');
+document.getElementById('drawer-overlay').classList.toggle('open');
+}
+showToast(message) {
+const container = document.getElementById('toast-container');
+const toast = document.createElement('div');
+toast.className = 'toast';
+toast.innerText = message;
+container.appendChild(toast);
+setTimeout(() => toast.remove(), 3000);
+if (this.tg?.HapticFeedback) {
+this.tg.HapticFeedback.notificationOccurred('success');
+}
+}
+initCanvasChart() {
+const canvas = document.getElementById('stats-canvas');
+if (!canvas) return;
+const ctx = canvas.getContext('2d');
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+ctx.strokeStyle = '#2481cc';
+ctx.lineWidth = 3;
+ctx.beginPath();
+ctx.moveTo(10, 120);
+ctx.lineTo(60, 90);
+ctx.lineTo(110, 100);
+ctx.lineTo(160, 50);
+ctx.lineTo(210, 70);
+ctx.lineTo(260, 30);
+ctx.stroke();
+}
+}
+const app = new TelegramMiniApp();
+</script>
 </body>
 </html>
