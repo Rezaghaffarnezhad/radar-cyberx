@@ -1,327 +1,302 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GeoConnect - شبکه اجتماعی مکان‌محور</title>
+    <title>Live Social Map - Telegram Mini App</title>
+    
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- FontAwesome Icons -->
+    
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts (Vazirmatn) -->
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --bg-color: #0f172a;
-            --surface-color: rgba(30, 41, 59, 0.7);
-            --surface-solid: #1e293b;
-            --text-color: #f8fafc;
-            --text-secondary: #94a3b8;
-            --primary-color: #6366f1;
-            --primary-hover: #4f46e5;
-            --accent-color: #10b981;
-            --danger-color: #ef4444;
-            --border-color: rgba(255, 255, 255, 0.1);
-            --glass-blur: blur(16px);
-            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
-
-        .light-theme {
-            --bg-color: #f1f5f9;
-            --surface-color: rgba(255, 255, 255, 0.8);
-            --surface-solid: #ffffff;
-            --text-color: #0f172a;
-            --text-secondary: #64748b;
-            --primary-color: #4f46e5;
-            --primary-hover: #4338ca;
-            --accent-color: #059669;
-            --danger-color: #dc2626;
-            --border-color: rgba(0, 0, 0, 0.1);
-            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+            --tg-theme-bg-color: #0d1117;
+            --tg-theme-text-color: #f0f6fc;
+            --tg-theme-hint-color: #8b949e;
+            --tg-theme-link-color: #58a6ff;
+            --tg-theme-button-color: #238636;
+            --tg-theme-button-text-color: #ffffff;
+            --glass-bg: rgba(22, 27, 34, 0.75);
+            --glass-border: rgba(240, 246, 252, 0.1);
+            --badge-green: #3fb950;
+            --badge-blue: #58a6ff;
+            --badge-yellow: #d29922;
+            --badge-purple: #bc8cff;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Vazirmatn', sans-serif;
+            font-family: 'Inter', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
+        body, html {
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            flex-direction: column;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
         }
 
         #app {
-            position: relative;
             width: 100%;
             height: 100%;
+            position: relative;
             display: flex;
             flex-direction: column;
         }
 
-        /* Loading Screen */
-        #loading-screen {
+        .screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: var(--bg-color);
+            z-index: 10;
             display: flex;
             flex-direction: column;
+            background: var(--tg-theme-bg-color);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .screen.hidden {
+            transform: translateY(100%);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* SCREEN 1: Telegram Entry */
+        #welcome-screen {
             justify-content: center;
             align-items: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease;
+            padding: 24px;
+            text-align: center;
+            background: radial-gradient(circle at center, #161b22 0%, #0d1117 100%);
         }
 
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid var(--border-color);
-            border-top: 4px solid var(--primary-color);
+        .welcome-content {
+            max-width: 380px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo-container {
+            width: 88px;
+            height: 88px;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+            background: linear-gradient(135deg, #238636, #2ea043);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 38px;
+            color: white;
+            box-shadow: 0 0 35px rgba(35, 134, 54, 0.4);
+            margin-bottom: 4px;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .welcome-title {
+            font-size: 26px;
+            font-weight: 700;
         }
 
-        /* Map Container */
+        .welcome-subtitle {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color);
+        }
+
+        .user-card-preview {
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-align: left;
+        }
+
+        .avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--tg-theme-link-color);
+            background-color: #30363d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .user-info h4 {
+            font-size: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .user-info p {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color);
+        }
+
+        .verified-badge {
+            color: var(--tg-theme-link-color);
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(35, 134, 54, 0.3);
+            transition: transform 0.1s ease;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        /* SCREEN 2: MAIN MAP */
+        #map-screen {
+            position: relative;
+        }
+
         #map {
             width: 100%;
             height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
+            background: #0d1117;
         }
 
-        /* UI Overlays */
-        .glass-panel {
-            background: var(--surface-color);
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
-            border-radius: 20px;
-        }
-
-        /* Top Bar */
-        .top-bar {
+        .map-header {
             position: absolute;
-            top: 15px;
-            left: 15px;
-            right: 15px;
-            z-index: 10;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            z-index: 1000;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 15px;
+            pointer-events: none;
         }
 
-        .user-mini-profile {
+        .floating-pill {
+            padding: 8px 14px;
+            border-radius: 20px;
             display: flex;
             align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            pointer-events: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .map-controls-right {
+            position: absolute;
+            right: 16px;
+            top: 80px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
             gap: 10px;
         }
 
-        .user-avatar {
-            width: 40px;
-            height: 40px;
+        .map-btn {
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--primary-color);
-        }
-
-        .top-actions {
+            border: none;
             display: flex;
-            gap: 10px;
-        }
-
-        .icon-btn {
-            background: var(--surface-solid);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
+            align-items: center;
             justify-content: center;
-            align-items: center;
+            font-size: 18px;
+            color: white;
             cursor: pointer;
-            transition: background 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            transition: transform 0.1s;
         }
 
-        .icon-btn:active {
-            transform: scale(0.95);
+        .map-btn:active {
+            transform: scale(0.92);
         }
 
-        /* Bottom Navigation */
+        /* Bottom Nav Bar */
         .bottom-nav {
             position: absolute;
-            bottom: 20px;
-            left: 15px;
-            right: 15px;
-            z-index: 10;
+            bottom: 24px;
+            left: 16px;
+            right: 16px;
+            height: 64px;
+            border-radius: 20px;
+            z-index: 1000;
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
         }
 
         .nav-item {
+            background: none;
+            border: none;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 4px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 11px;
+            color: var(--tg-theme-hint-color);
             cursor: pointer;
+            font-size: 11px;
+            font-weight: 500;
             transition: color 0.2s;
-        }
-
-        .nav-item.active {
-            color: var(--primary-color);
         }
 
         .nav-item i {
             font-size: 20px;
         }
 
-        /* Bottom Sheet / Modal Profile */
-        .bottom-sheet {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            background: var(--surface-solid);
-            border-top-left-radius: 24px;
-            border-top-right-radius: 24px;
-            padding: 20px;
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-            max-height: 80vh;
-            overflow-y: auto;
+        .nav-item.active, .nav-item:hover {
+            color: var(--tg-theme-link-color);
         }
 
-        .bottom-sheet.open {
-            transform: translateY(0);
-        }
-
-        .sheet-handle {
-            width: 40px;
-            height: 4px;
-            background: var(--border-color);
-            border-radius: 2px;
-            margin: 0 auto 15px auto;
-        }
-
-        .profile-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .profile-header img {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid var(--primary-color);
-        }
-
-        .profile-info h3 {
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .profile-info p {
-            color: var(--text-secondary);
-            font-size: 13px;
-        }
-
-        .profile-bio {
-            font-size: 14px;
-            margin-bottom: 20px;
-            line-height: 1.6;
-            color: var(--text-secondary);
-        }
-
-        .tags-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-
-        .tag {
-            background: rgba(99, 102, 241, 0.15);
-            color: var(--primary-color);
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .action-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 14px;
-            font-weight: 600;
-            font-size: 14px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-color);
-        }
-
-        .btn:active {
-            transform: scale(0.98);
-        }
-
-        /* Custom Map Markers */
+        /* Leaflet Marker */
         .custom-marker {
             position: relative;
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            border: 3px solid var(--primary-color);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 2px solid white;
             overflow: hidden;
-            background: var(--surface-solid);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            background: #30363d;
         }
 
         .custom-marker img {
@@ -332,341 +307,770 @@
 
         .status-dot {
             position: absolute;
-            bottom: 2px;
-            right: 2px;
-            width: 10px;
-            height: 10px;
-            background: var(--accent-color);
-            border: 2px solid white;
+            bottom: 0;
+            right: 0;
+            width: 11px;
+            height: 11px;
             border-radius: 50%;
+            border: 2px solid #161b22;
         }
 
-        /* Chat Window Overlay */
-        #chat-window {
+        .status-green { background: var(--badge-green); }
+        .status-blue { background: var(--badge-blue); }
+        .status-yellow { background: var(--badge-yellow); }
+        .status-purple { background: var(--badge-purple); }
+
+        /* Drawers & Modals */
+        .drawer {
             position: absolute;
-            top: 0;
+            bottom: 0;
             left: 0;
             width: 100%;
-            height: 100%;
-            background: var(--bg-color);
-            z-index: 200;
+            max-height: 85vh;
+            border-radius: 24px 24px 0 0;
+            z-index: 2000;
             display: flex;
             flex-direction: column;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.6);
         }
 
-        #chat-window.open {
-            transform: translateX(0);
+        .drawer.open {
+            transform: translateY(0);
         }
 
-        .chat-header {
-            padding: 15px;
-            background: var(--surface-solid);
+        .drawer-header {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .drawer-header h3 {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--tg-theme-hint-color);
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .drawer-body {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: calc(85vh - 60px);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .badge-pill {
+            font-size: 11px;
+            padding: 4px 9px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .pill-green { background: rgba(63, 185, 80, 0.15); color: var(--badge-green); }
+        .pill-blue { background: rgba(88, 166, 255, 0.15); color: var(--badge-blue); }
+        .pill-yellow { background: rgba(210, 153, 34, 0.15); color: var(--badge-yellow); }
+        .pill-purple { background: rgba(188, 140, 255, 0.15); color: var(--badge-purple); }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            background: rgba(255, 255, 255, 0.06);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .action-buttons button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 15px;
-            border-bottom: 1px solid var(--border-color);
+            justify-content: center;
+            gap: 8px;
         }
 
+        /* Chat Layout */
         .chat-messages {
             flex: 1;
-            padding: 15px;
+            height: 280px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
+            padding-right: 4px;
         }
 
-        .message {
-            max-width: 75%;
+        .chat-bubble {
+            max-width: 80%;
             padding: 10px 14px;
-            border-radius: 16px;
+            border-radius: 14px;
             font-size: 14px;
-            line-height: 1.4;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
         }
 
-        .message.incoming {
-            background: var(--surface-solid);
+        .chat-bubble.incoming {
+            background: rgba(255, 255, 255, 0.07);
             align-self: flex-start;
             border-bottom-left-radius: 4px;
         }
 
-        .message.outgoing {
-            background: var(--primary-color);
-            color: white;
+        .chat-bubble.outgoing {
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
             align-self: flex-end;
             border-bottom-right-radius: 4px;
         }
 
+        .chat-bubble .sender {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--tg-theme-link-color);
+        }
+
         .chat-input-area {
-            padding: 15px;
-            background: var(--surface-solid);
             display: flex;
-            align-items: center;
-            gap: 10px;
-            border-top: 1px solid var(--border-color);
+            gap: 8px;
+            margin-top: 8px;
         }
 
         .chat-input-area input {
             flex: 1;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border-color);
-            padding: 10px 15px;
-            border-radius: 20px;
-            color: var(--text-color);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--glass-border);
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
             outline: none;
+        }
+
+        .chat-input-area button {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: none;
+            background: var(--tg-theme-button-color);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Settings Layout */
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .setting-group label {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color);
+            font-weight: 500;
+        }
+
+        .segmented-control {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .segmented-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 8px 4px;
+            border-radius: 8px;
+            color: var(--tg-theme-hint-color);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .segmented-btn.active {
+            background: var(--tg-theme-button-color);
+            color: white;
+        }
+
+        /* Leaflet Dark Filter */
+        .leaflet-layer,
+        .leaflet-control-zoom-in,
+        .leaflet-control-zoom-out,
+        .leaflet-control-attribution {
+            filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(88%);
+        }
+        .leaflet-container {
+            background-color: #0d1117 !important;
         }
     </style>
 </head>
 <body>
 
-    <div id="app">
-        <!-- Loading Screen -->
-        <div id="loading-screen">
-            <div class="spinner"></div>
-            <h2>در حال بارگذاری GeoConnect...</h2>
-            <p style="color: var(--text-secondary); margin-top: 8px; font-size: 13px;">برقراری ارتباط امن با سرور</p>
-        </div>
-
-        <!-- Top Bar -->
-        <div class="top-bar glass-panel">
-            <div class="user-mini-profile">
-                <img id="user-avatar" src="https://via.placeholder.com/150" alt="Avatar" class="user-avatar">
-                <div>
-                    <h4 id="user-name" style="font-size: 14px; font-weight: 600;">کاربر مهمان</h4>
-                    <span style="font-size: 11px; color: var(--accent-color);"><i class="fa-solid fa-circle" style="font-size: 8px;"></i> آنلاین</span>
+<div id="app">
+    <!-- SCREEN 1: Telegram Entry -->
+    <div id="welcome-screen" class="screen">
+        <div class="welcome-content">
+            <div class="logo-container">
+                <i class="fa-solid fa-earth-americas"></i>
+            </div>
+            <div>
+                <h1 class="welcome-title">Live Social Map</h1>
+                <p class="welcome-subtitle">Discover real people around you</p>
+            </div>
+            
+            <div class="user-card-preview glass">
+                <div id="welcome-avatar" class="avatar">U</div>
+                <div class="user-info">
+                    <h4 id="welcome-name">Loading... <i class="fa-solid fa-circle-check verified-badge"></i></h4>
+                    <p id="welcome-username">@username</p>
                 </div>
             </div>
-            <div class="top-actions">
-                <button class="icon-btn" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="theme-icon"></i></button>
-                <button class="icon-btn" onclick="centerMapToUser()"><i class="fa-solid fa-location-crosshairs"></i></button>
+
+            <button class="btn-primary" id="enter-map-btn">Enter Map</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 2: MAIN MAP -->
+    <div id="map-screen" class="screen hidden">
+        <div class="map-header">
+            <div class="floating-pill glass">
+                <i class="fa-solid fa-circle" style="color: var(--badge-green); font-size: 8px;"></i>
+                <span id="map-city-name">Central City</span>
+            </div>
+            <div class="floating-pill glass">
+                <i class="fa-solid fa-users" style="color: var(--tg-theme-link-color);"></i>
+                <span id="online-count">20 online</span>
             </div>
         </div>
 
-        <!-- Map -->
+        <div class="map-controls-right">
+            <button class="map-btn glass" id="btn-locate" title="My Location"><i class="fa-solid fa-location-crosshairs"></i></button>
+            <button class="map-btn glass" id="btn-search-place" title="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+
         <div id="map"></div>
 
-        <!-- Bottom Navigation -->
-        <div class="bottom-nav glass-panel">
-            <div class="nav-item active" onclick="switchNav(this)">
-                <i class="fa-solid fa-map"></i>
-                <span>نقشه</span>
-            </div>
-            <div class="nav-item" onclick="openNearbyList()">
-                <i class="fa-solid fa-users"></i>
-                <span>اطراف</span>
-            </div>
-            <div class="nav-item" onclick="openChatList()">
-                <i class="fa-solid fa-comments"></i>
-                <span>گفتگوها</span>
-            </div>
-            <div class="nav-item" onclick="openProfile()">
-                <i class="fa-solid fa-user"></i>
-                <span>پروفایل</span>
-            </div>
+        <div class="bottom-nav glass">
+            <button class="nav-item active" data-target="map"><i class="fa-solid fa-map"></i><span>Map</span></button>
+            <button class="nav-item" data-target="chat"><i class="fa-solid fa-comments"></i><span>Chat</span></button>
+            <button class="nav-item" data-target="profile"><i class="fa-solid fa-user"></i><span>Profile</span></button>
+            <button class="nav-item" data-target="settings"><i class="fa-solid fa-gear"></i><span>Settings</span></button>
         </div>
+    </div>
 
-        <!-- User Profile Bottom Sheet -->
-        <div id="profile-sheet" class="bottom-sheet">
-            <div class="sheet-handle" onclick="closeProfileSheet()"></div>
-            <div class="profile-header">
-                <img id="sheet-avatar" src="https://via.placeholder.com/150" alt="User">
-                <div class="profile-info">
-                    <h3 id="sheet-name">نام کاربر</h3>
-                    <p id="sheet-distance"><i class="fa-solid fa-location-dot"></i> ۲۵۰ متر از شما</p>
-                </div>
-            </div>
-            <p id="sheet-bio" class="profile-bio">سلام! من در GeoConnect هستم تا افراد جدید با علایق مشترک پیدا کنم.</p>
-            <div class="tags-container" id="sheet-tags">
-                <span class="tag">پایتون</span>
-                <span class="tag">تلگرام</span>
-                <span class="tag">هوش مصنوعی</span>
-            </div>
-            <div class="action-buttons">
-                <button class="btn" onclick="startChat()"><i class="fa-solid fa-comment-dots"></i> ارسال پیام</button>
-                <button class="btn btn-secondary" onclick="closeProfileSheet()"><i class="fa-solid fa-user-plus"></i> دوستی</button>
-            </div>
+    <!-- USER PROFILE POPUP DRAWER -->
+    <div id="drawer-user" class="drawer glass">
+        <div class="drawer-header">
+            <h3 id="popup-title">User Profile</h3>
+            <button class="close-btn" data-close="drawer-user"><i class="fa-solid fa-xmark"></i></button>
         </div>
-
-        <!-- Chat Window -->
-        <div id="chat-window">
-            <div class="chat-header">
-                <button class="icon-btn" onclick="closeChat()"><i class="fa-solid fa-arrow-right"></i></button>
-                <img id="chat-avatar" src="https://via.placeholder.com/150" class="user-avatar" style="width: 35px; height: 35px;">
+        <div class="drawer-body">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div id="popup-avatar" class="avatar" style="width: 60px; height: 60px; font-size: 22px;"></div>
                 <div>
-                    <h4 id="chat-name" style="font-size: 15px;">نام کاربر</h4>
-                    <span style="font-size: 11px; color: var(--text-secondary);">آخرین بازدید اخیراً</span>
+                    <h3 id="popup-name" style="font-size: 17px; display: flex; align-items: center; gap: 6px;">Name <i class="fa-solid fa-circle-check verified-badge" style="font-size: 12px;"></i></h3>
+                    <p id="popup-username" style="color: var(--tg-theme-hint-color); font-size: 13px;">@username</p>
+                    <div id="popup-badge-container" style="margin-top: 6px;"></div>
                 </div>
             </div>
-            <div class="chat-messages" id="chat-messages">
-                <div class="message incoming">سلام! چطوری؟ نقشه رو تست می‌کنی؟</div>
-                <div class="message outgoing">سلام! بله، عالی و سریع کار می‌کنه.</div>
+            
+            <div style="font-size: 13px; color: var(--tg-theme-hint-color); display: flex; gap: 16px;">
+                <div><i class="fa-solid fa-location-dot"></i> <span id="popup-distance">0.5 km away</span></div>
             </div>
-            <div class="chat-input-area">
-                <button class="icon-btn"><i class="fa-solid fa-paperclip"></i></button>
-                <input type="text" id="message-input" placeholder="نوشتن پیام...">
-                <button class="icon-btn" style="background: var(--primary-color); color: white;" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+
+            <div class="setting-group">
+                <label>Bio</label>
+                <p id="popup-bio" style="font-size: 14px; line-height: 1.4;">Exploring the city and looking for tech meetups!</p>
+            </div>
+
+            <div class="setting-group">
+                <label>Interests</label>
+                <div class="tags-container" id="popup-interests"></div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-primary" id="popup-msg-btn" style="background: rgba(255,255,255,0.08);"><i class="fa-solid fa-paper-plane"></i> Message</button>
+                <button class="btn-primary" id="popup-profile-btn"><i class="fa-solid fa-user-shield"></i> Profile</button>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 4px;">
+                <button id="btn-report" style="flex:1; background:none; border:none; color:var(--tg-theme-hint-color); font-size:12px; cursor:pointer;"><i class="fa-solid fa-flag"></i> Report</button>
+                <button id="btn-block" style="flex:1; background:none; border:none; color:#f85149; font-size:12px; cursor:pointer;"><i class="fa-solid fa-ban"></i> Block</button>
             </div>
         </div>
     </div>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- SCREEN 3: PROFILE DRAWER -->
+    <div id="drawer-profile" class="drawer glass">
+        <div class="drawer-header">
+            <h3>My Telegram Profile</h3>
+            <button class="close-btn" data-close="drawer-profile"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="drawer-body">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div id="my-avatar" class="avatar" style="width: 60px; height: 60px; font-size: 22px;"></div>
+                <div>
+                    <h3 id="my-name" style="font-size: 17px; display: flex; align-items: center; gap: 6px;">Name <i class="fa-solid fa-circle-check verified-badge" style="font-size: 12px;"></i></h3>
+                    <p id="my-username" style="color: var(--tg-theme-hint-color); font-size: 13px;">@username</p>
+                    <span class="badge-pill pill-green" style="margin-top: 6px;"><i class="fa-solid fa-circle" style="font-size: 6px;"></i> Telegram Connected ✓</span>
+                </div>
+            </div>
 
-    <script>
-        // Telegram WebApp Initialization
-        const tg = window.Telegram.WebApp;
+            <div class="setting-group">
+                <label>Current Status</label>
+                <div class="tags-container">
+                    <span class="tag" style="background:var(--tg-theme-button-color); color:white;">☕ Coffee</span>
+                    <span class="tag">🎮 Gaming</span>
+                    <span class="tag">🎵 Music</span>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label>Bio</label>
+                <textarea id="my-bio-input" style="background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; color: white; font-size: 14px; outline: none; resize: none; height: 70px;">Digital nomad & Coffee enthusiast.</textarea>
+            </div>
+
+            <div class="setting-group">
+                <label>Location Visibility Mode</label>
+                <span id="my-vis-status" class="badge-pill pill-green">Live GPS Active</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 5: PUBLIC CHAT DRAWER -->
+    <div id="drawer-chat" class="drawer glass">
+        <div class="drawer-header">
+            <h3>Central City Chat</h3>
+            <button class="close-btn" data-close="drawer-chat"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="drawer-body">
+            <div class="chat-messages" id="chat-messages-container"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Type a message...">
+                <button id="chat-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 4: LOCATION SETTINGS DRAWER -->
+    <div id="drawer-settings" class="drawer glass">
+        <div class="drawer-header">
+            <h3>Location Settings</h3>
+            <button class="close-btn" data-close="drawer-settings"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="drawer-body">
+            <div class="setting-group">
+                <label>Location Type</label>
+                <div class="segmented-control" id="setting-loc-type">
+                    <button class="segmented-btn active" data-val="green">Live GPS</button>
+                    <button class="segmented-btn" data-val="blue">Manual</button>
+                    <button class="segmented-btn" data-val="yellow">Last Seen</button>
+                    <button class="segmented-btn" data-val="purple">Approx</button>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label>Discovery Radius</label>
+                <div class="segmented-control" id="setting-radius">
+                    <button class="segmented-btn active" data-val="1">1 km</button>
+                    <button class="segmented-btn" data-val="5">5 km</button>
+                    <button class="segmented-btn" data-val="10">10 km</button>
+                    <button class="segmented-btn" data-val="city">City</button>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label>Visibility Time</label>
+                <div class="segmented-control" id="setting-visibility">
+                    <button class="segmented-btn active" data-val="1h">1 hour</button>
+                    <button class="segmented-btn" data-val="today">Today</button>
+                    <button class="segmented-btn" data-val="always">Always</button>
+                    <button class="segmented-btn" data-val="hidden">Hidden</button>
+                </div>
+            </div>
+
+            <button class="btn-primary" id="save-settings-btn" style="margin-top: 6px;">Apply & Save Location</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Telegram WebApp SDK Initialization ---
+    let tg = window.Telegram?.WebApp;
+    let userData = {
+        id: 77889955,
+        first_name: "Alex",
+        username: "alex_explorer",
+        language_code: "en",
+        photo_url: ""
+    };
+
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         tg.ready();
         tg.expand();
+        userData = tg.initDataUnsafe.user;
+    }
 
-        // Apply Telegram Theme Colors
-        if (tg.colorScheme === 'light') {
-            document.body.classList.add('light-theme');
-            document.getElementById('theme-icon').className = 'fa-solid fa-sun';
-        }
+    // --- State Management ---
+    let appState = {
+        locationType: 'green',
+        radius: '5',
+        visibility: 'today',
+        manualPinActive: false
+    };
 
-        // Parse User Data from Telegram
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const user = tg.initDataUnsafe.user;
-            document.getElementById('user-name').textContent = user.first_name || 'کاربر تلگرام';
-            if (user.photo_url) {
-                document.getElementById('user-avatar').src = user.photo_url;
-            }
-        }
+    // 20 Demo Users
+    let fakeUsers = [
+        { id: 1, name: "Sophia", username: "sophia_ui", lat: 52.5200, lng: 13.4050, type: "green", bio: "Design system enthusiast 🎨", interests: ["UI/UX", "Art"], distance: "0.2 km" },
+        { id: 2, name: "Dmitry", username: "dmitry_dev", lat: 52.5230, lng: 13.4120, type: "blue", bio: "Rust & Go backend architect 💻", interests: ["Coding", "Linux"], distance: "0.8 km" },
+        { id: 3, name: "Elena", username: "elena_photo", lat: 52.5150, lng: 13.3980, type: "yellow", bio: "Capturing moments 📸", interests: ["Photography", "Travel"], distance: "1.4 km" },
+        { id: 4, name: "Marcus", username: "marcus_beats", lat: 52.5280, lng: 13.3950, type: "purple", bio: "Lo-fi producer and coffee lover ☕", interests: ["Music", "Coffee"], distance: "2.1 km" },
+        { id: 5, name: "Anna", username: "anna_crypto", lat: 52.5120, lng: 13.4180, type: "green", bio: "Web3 builder & trader ⚡", interests: ["Crypto", "Finance"], distance: "1.1 km" },
+        { id: 6, name: "Ivan", username: "ivan_fit", lat: 52.5310, lng: 13.4080, type: "blue", bio: "Crossfit coach & runner 🏃‍♂️", interests: ["Fitness", "Health"], distance: "1.8 km" },
+        { id: 7, name: "Olga", username: "olga_art", lat: 52.5180, lng: 13.3880, type: "yellow", bio: "Painter & gallery curator 🏛️", interests: ["Art", "History"], distance: "2.5 km" },
+        { id: 8, name: "Max", username: "max_gamer", lat: 52.5250, lng: 13.4220, type: "purple", bio: "Esports & game dev 🎮", interests: ["Gaming", "Tech"], distance: "1.9 km" },
+        { id: 9, name: "Katia", username: "katia_reads", lat: 52.5090, lng: 13.4010, type: "green", bio: "Bookworm & literature student 📚", interests: ["Books", "Writing"], distance: "2.8 km" },
+        { id: 10, name: "Leo", username: "leo_chef", lat: 52.5350, lng: 13.3900, type: "blue", bio: "Gastronomy enthusiast 🍳", interests: ["Cooking", "Wine"], distance: "3.2 km" },
+        { id: 11, name: "Nika", username: "nika_yoga", lat: 52.5140, lng: 13.4250, type: "yellow", bio: "Mindfulness & yoga 🧘‍♀️", interests: ["Yoga", "Nature"], distance: "2.0 km" },
+        { id: 12, name: "Zack", username: "zack_startup", lat: 52.5220, lng: 13.3820, type: "purple", bio: "Founder building SaaS 🚀", interests: ["Startup", "AI"], distance: "2.3 km" },
+        { id: 13, name: "Mila", username: "mila_dance", lat: 52.5050, lng: 13.4100, type: "green", bio: "Contemporary dancer 💃", interests: ["Dance", "Theater"], distance: "3.5 km" },
+        { id: 14, name: "Tom", username: "tom_cycles", lat: 52.5400, lng: 13.4150, type: "blue", bio: "Bicycle commuter & explorer 🚴‍♂️", interests: ["Cycling", "Maps"], distance: "4.1 km" },
+        { id: 15, name: "Lina", username: "lina_biolo", lat: 52.5100, lng: 13.3750, type: "yellow", bio: "Plant lover & ecologist 🌿", interests: ["Biology", "Eco"], distance: "3.0 km" },
+        { id: 16, name: "Sam", username: "sam_films", lat: 52.5270, lng: 13.4300, type: "purple", bio: "Indie filmmaker 🎥", interests: ["Film", "Directing"], distance: "2.9 km" },
+        { id: 17, name: "Vera", username: "vera_lingo", lat: 52.5020, lng: 13.3950, type: "green", bio: "Polyglot & translator 🌍", interests: ["Languages", "Culture"], distance: "3.8 km" },
+        { id: 18, name: "Dan", username: "dan_sec", lat: 52.5330, lng: 13.3780, type: "blue", bio: "Cybersecurity analyst 🛡️", interests: ["Security", "Math"], distance: "3.3 km" },
+        { id: 19, name: "Sasha", username: "sasha_vocal", lat: 52.5160, lng: 13.4350, type: "yellow", bio: "Jazz singer & musician 🎤", interests: ["Singing", "Jazz"], distance: "3.6 km" },
+        { id: 20, name: "Paul", username: "paul_astro", lat: 52.5450, lng: 13.4000, type: "purple", bio: "Stargazer & physics nerd 🔭", interests: ["Astronomy", "Science"], distance: "4.5 km" }
+    ];
 
-        // Initialize Map (Centered default on Tehran/Sample coordinates)
-        const defaultLat = 35.6892;
-        const defaultLng = 51.3890;
+    let chatMessages = [
+        { id: 1, sender: "Sophia", text: "Hey everyone! Anyone visiting the central tech park today?", time: "14:20" },
+        { id: 2, sender: "Dmitry", text: "Working remotely nearby, good coffee around ☕", time: "14:22" },
+        { id: 3, sender: "Alex (You)", text: "Heading there right now!", time: "14:25" }
+    ];
+
+    // --- Initialization ---
+    document.addEventListener("DOMContentLoaded", () => {
+        const firstName = userData.first_name || "Explorer";
+        const username = userData.username ? `@${userData.username}` : `@id_${userData.id}`;
         
-        const map = L.map('map', { zoomControl: false }).setView([defaultLat, defaultLng], 15);
+        document.getElementById('welcome-name').innerHTML = `${firstName} <i class="fa-solid fa-circle-check verified-badge"></i>`;
+        document.getElementById('welcome-username').textContent = username;
+        
+        const avatarEl = document.getElementById('welcome-avatar');
+        const myAvatarEl = document.getElementById('my-avatar');
+        
+        if (userData.photo_url) {
+            avatarEl.innerHTML = `<img src="${userData.photo_url}" style="width:100%; height:100%; border-radius:50%;">`;
+            myAvatarEl.innerHTML = `<img src="${userData.photo_url}" style="width:100%; height:100%; border-radius:50%;">`;
+        } else {
+            avatarEl.textContent = firstName.charAt(0).toUpperCase();
+            myAvatarEl.textContent = firstName.charAt(0).toUpperCase();
+        }
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+        document.getElementById('my-name').innerHTML = `${firstName} <i class="fa-solid fa-circle-check verified-badge"></i>`;
+        document.getElementById('my-username').textContent = username;
 
-        // Sample Nearby Users Data
-        const nearbyUsers = [
-            { id: 1, name: 'سارا احمدی', bio:طراح رابط کاربری و عاشق سفر، متمرکز روی پروژه‌های موبایل', lat: 35.6912, lng: 51.3870, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', tags: ['UI/UX', 'طراحی', 'سفر'] },
-            { id: 2, name: 'آریا رضایی', bio: 'توسعه‌دهنده بک‌اند و ربات‌های تلگرام با پایتون و Node.js', lat: 35.6872, lng: 51.3920, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', tags: ['Python', 'Backend', 'Bot'] },
-            { id: 3, name: 'نازنین مهدوی', bio: 'علاقه مند به هوش مصنوعی، نقشه‌کشی و تحلیل داده‌های مکانی', lat: 35.6922, lng: 51.3940, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', tags: ['GIS', 'AI', 'Python'] }
-        ];
+        document.getElementById('enter-map-btn').addEventListener('click', () => {
+            switchScreen('map-screen');
+            initMap();
+        });
 
-        // Add Markers to Map
-        nearbyUsers.forEach(user => {
-            const customIcon = L.divIcon({
-                className: 'custom-marker-container',
-                html: `<div class="custom-marker"><img src="${user.avatar}"><div class="status-dot"></div></div>`,
-                iconSize: [44, 44],
-                iconAnchor: [22, 22]
-            });
+        document.querySelectorAll('.bottom-nav .nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const target = item.getAttribute('data-target');
+                document.querySelectorAll('.bottom-nav .nav-item').forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
 
-            const marker = L.marker([user.lat, user.lng], { icon: customIcon }).addTo(map);
-            
-            marker.on('click', () => {
-                if (tg.HapticFeedback) {
-                    tg.HapticFeedback.impactOccurred('medium');
-                }
-                openProfileSheet(user);
+                if (target === 'map') closeAllDrawers();
+                if (target === 'chat') openDrawer('drawer-chat');
+                if (target === 'profile') openDrawer('drawer-profile');
+                if (target === 'settings') openDrawer('drawer-settings');
             });
         });
 
-        // GPS Location Tracking
-        if (navigator.geolocation) {
-            navigator.geolocation.watchPosition(position => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                // Update user location marker dynamically in real-time
-            }, error => {
-                console.error("GPS Error:", error);
-            }, { enableHighAccuracy: true });
-        }
-
-        // UI Interactions
-        setTimeout(() => {
-            const loadingScreen = document.getElementById('loading-screen');
-            loadingScreen.style.opacity = '0';
-            setTimeout(() => loadingScreen.remove(), 500);
-        }, 1000);
-
-        function toggleTheme() {
-            document.body.classList.toggle('light-theme');
-            const isLight = document.body.classList.contains('light-theme');
-            document.getElementById('theme-icon').className = isLight ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-        }
-
-        function centerMapToUser() {
-            if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
-            map.flyTo([defaultLat, defaultLng], 16, { duration: 1.5 });
-        }
-
-        function openProfileSheet(user) {
-            document.getElementById('sheet-avatar').src = user.avatar;
-            document.getElementById('sheet-name').textContent = user.name;
-            document.getElementById('sheet-bio').textContent = user.bio;
-            
-            const tagsContainer = document.getElementById('sheet-tags');
-            tagsContainer.innerHTML = '';
-            user.tags.forEach(tag => {
-                const span = document.createElement('span');
-                span.className = 'tag';
-                span.textContent = tag;
-                tagsContainer.appendChild(span);
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                closeDrawer(btn.getAttribute('data-close'));
+                resetNavActiveState();
             });
+        });
 
-            document.getElementById('profile-sheet').classList.add('open');
-        }
+        setupSegmentedControl('setting-loc-type', (val) => appState.locationType = val);
+        setupSegmentedControl('setting-radius', (val) => appState.radius = val);
+        setupSegmentedControl('setting-visibility', (val) => appState.visibility = val);
 
-        function closeProfileSheet() {
-            document.getElementById('profile-sheet').classList.remove('open');
-        }
+        document.getElementById('chat-send-btn').addEventListener('click', sendChatMessage);
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        });
 
-        function startChat() {
-            closeProfileSheet();
-            document.getElementById('chat-window').classList.add('open');
-        }
+        renderChatMessages();
 
-        function closeChat() {
-            document.getElementById('chat-window').classList.remove('open');
-        }
-
-        function sendMessage() {
-            const input = document.getElementById('message-input');
-            const text = input.value.trim();
-            if (!text) return;
-
-            const chatMessages = document.getElementById('chat-messages');
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'message outgoing';
-            msgDiv.textContent = text;
-            chatMessages.appendChild(msgDiv);
+        document.getElementById('save-settings-btn').addEventListener('click', () => {
+            closeDrawer('drawer-settings');
+            resetNavActiveState();
+            const visTextMap = { green: 'Live GPS Active', blue: 'Manual Location Active', yellow: 'Last Seen Active', purple: 'Approximate Location' };
+            document.getElementById('my-vis-status').textContent = visTextMap[appState.locationType] || 'Active';
             
-            input.value = '';
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            if (appState.locationType === 'blue') {
+                alert("Location settings saved! Tap anywhere on the map to pin your manual location.");
+                appState.manualPinActive = true;
+            } else {
+                alert("Location settings updated successfully.");
+            }
+        });
 
-            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-        }
+        document.getElementById('btn-locate').addEventListener('click', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    const latlng = [pos.coords.latitude, pos.coords.longitude];
+                    if (map && userMarker) {
+                        map.setView(latlng, 15);
+                        userMarker.setLatLng(latlng);
+                        alert("Centered to your real browser location!");
+                    }
+                }, () => {
+                    if (map && userMarker) map.setView(userMarker.getLatLng(), 15);
+                });
+            } else if (map && userMarker) {
+                map.setView(userMarker.getLatLng(), 15);
+            }
+        });
 
-        function switchNav(element) {
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            element.classList.add('active');
-        }
+        document.getElementById('btn-search-place').addEventListener('click', () => {
+            const query = prompt("Search city or location area:", "Central City");
+            if (query) {
+                document.getElementById('map-city-name').textContent = query;
+            }
+        });
 
-        function openNearbyList() {
-            if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
-            // Action to open nearby users list view
-        }
+        document.getElementById('btn-report').addEventListener('click', () => {
+            alert("User reported successfully. Thank you for keeping our community safe.");
+            closeAllDrawers();
+            resetNavActiveState();
+        });
 
-        function openChatList() {
-            if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
-            // Action to open recent chats list
-        }
+        document.getElementById('btn-block').addEventListener('click', () => {
+            alert("User blocked.");
+            closeAllDrawers();
+            resetNavActiveState();
+        });
 
-        function openProfile() {
-            if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
-            // Action to open user's own profile settings
+        setInterval(simulateRealtimeMovement, 3500);
+    });
+
+    // --- Helpers ---
+    function switchScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+        document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    function openDrawer(drawerId) {
+        closeAllDrawers();
+        document.getElementById(drawerId).classList.add('open');
+    }
+
+    function closeDrawer(drawerId) {
+        document.getElementById(drawerId).classList.remove('open');
+    }
+
+    function closeAllDrawers() {
+        document.querySelectorAll('.drawer').forEach(d => d.classList.remove('open'));
+    }
+
+    function resetNavActiveState() {
+        document.querySelectorAll('.bottom-nav .nav-item').forEach(nav => nav.classList.remove('active'));
+        document.querySelector('.bottom-nav .nav-item[data-target="map"]').classList.add('active');
+    }
+
+    function setupSegmentedControl(containerId, callback) {
+        const container = document.getElementById(containerId);
+        container.querySelectorAll('.segmented-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                container.querySelectorAll('.segmented-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                callback(btn.getAttribute('data-val'));
+            });
+        });
+    }
+
+    // --- Leaflet Map ---
+    let map = null;
+    let userMarker = null;
+    let markerLayers = {};
+
+    function initMap() {
+        if (map) return;
+
+        map = L.map('map', {
+            zoomControl: false,
+            attributionControl: false
+        }).setView([52.5200, 13.4050], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        const userHtml = `
+            <div class="custom-marker" style="border-color: var(--tg-theme-link-color);">
+                <div style="width:100%; height:100%; background:var(--tg-theme-button-color); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">${userData.first_name.charAt(0)}</div>
+                <div class="status-dot status-green"></div>
+            </div>
+        `;
+        const userIcon = L.divIcon({ html: userHtml, className: 'custom-div-icon', iconSize: [40, 40], iconAnchor: [20, 20] });
+        userMarker = L.marker([52.5200, 13.4050], { icon: userIcon }).addTo(map);
+
+        renderFakeMarkers();
+
+        map.on('click', (e) => {
+            if (appState.manualPinActive) {
+                userMarker.setLatLng(e.latlng);
+                appState.manualPinActive = false;
+                alert("Manual location saved on map!");
+            }
+        });
+    }
+
+    function renderFakeMarkers() {
+        Object.values(markerLayers).forEach(m => map.removeLayer(m));
+        markerLayers = {};
+
+        fakeUsers.forEach(user => {
+            let badgeClass = 'status-green';
+            if (user.type === 'blue') badgeClass = 'status-blue';
+            if (user.type === 'yellow') badgeClass = 'status-yellow';
+            if (user.type === 'purple') badgeClass = 'status-purple';
+
+            const html = `
+                <div class="custom-marker">
+                    <div style="width:100%; height:100%; background:#30363d; display:flex; align-items:center; justify-content:center; color:white; font-weight:600; font-size:14px;">${user.name.charAt(0)}</div>
+                    <div class="status-dot ${badgeClass}"></div>
+                </div>
+            `;
+            const icon = L.divIcon({ html: html, className: 'custom-div-icon', iconSize: [40, 40], iconAnchor: [20, 20] });
+
+            const marker = L.marker([user.lat, user.lng], { icon: icon }).addTo(map);
+            marker.on('click', () => openUserProfile(user));
+            markerLayers[user.id] = marker;
+        });
+    }
+
+    function openUserProfile(user) {
+        document.getElementById('popup-name').innerHTML = `${user.name} <i class="fa-solid fa-circle-check verified-badge" style="font-size: 12px;"></i>`;
+        document.getElementById('popup-username').textContent = `@${user.username}`;
+        document.getElementById('popup-bio').textContent = user.bio;
+        document.getElementById('popup-distance').textContent = `${user.distance} away`;
+        document.getElementById('popup-avatar').textContent = user.name.charAt(0);
+
+        const badgeContainer = document.getElementById('popup-badge-container');
+        let badgeHTML = '';
+        if (user.type === 'green') badgeHTML = `<span class="badge-pill pill-green"><i class="fa-solid fa-circle" style="font-size:6px;"></i> Live Location</span>`;
+        else if (user.type === 'blue') badgeHTML = `<span class="badge-pill pill-blue"><i class="fa-solid fa-circle" style="font-size:6px;"></i> Manual Location</span>`;
+        else if (user.type === 'yellow') badgeHTML = `<span class="badge-pill pill-yellow"><i class="fa-solid fa-circle" style="font-size:6px;"></i> Last Seen</span>`;
+        else if (user.type === 'purple') badgeHTML = `<span class="badge-pill pill-purple"><i class="fa-solid fa-circle" style="font-size:6px;"></i> Approximate</span>`;
+        badgeContainer.innerHTML = badgeHTML;
+
+        const tagsContainer = document.getElementById('popup-interests');
+        tagsContainer.innerHTML = user.interests.map(t => `<span class="tag">${t}</span>`).join('');
+
+        document.getElementById('popup-msg-btn').onclick = () => {
+            closeAllDrawers();
+            openDrawer('drawer-chat');
+        };
+        document.getElementById('popup-profile-btn').onclick = () => {
+            alert(`Opening verified Telegram profile for @${user.username}`);
+        };
+
+        openDrawer('drawer-user');
+    }
+
+    // --- Chat & Realtime Simulation ---
+    function renderChatMessages() {
+        const container = document.getElementById('chat-messages-container');
+        container.innerHTML = chatMessages.map(msg => {
+            const isMe = msg.sender.includes("You");
+            return `
+                <div class="chat-bubble ${isMe ? 'outgoing' : 'incoming'}">
+                    <span class="sender">${msg.sender}</span>
+                    <span>${msg.text}</span>
+                </div>
+            `;
+        }).join('');
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function sendChatMessage() {
+        const input = document.getElementById('chat-input');
+        const text = input.value.trim();
+        if (!text) return;
+
+        chatMessages.push({
+            id: chatMessages.length + 1,
+            sender: `${userData.first_name} (You)`,
+            text: text,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+
+        input.value = '';
+        renderChatMessages();
+    }
+
+    function simulateRealtimeMovement() {
+        fakeUsers.forEach(user => {
+            user.lat += (Math.random() - 0.5) * 0.0008;
+            user.lng += (Math.random() - 0.5) * 0.0008;
+
+            if (markerLayers[user.id]) {
+                markerLayers[user.id].setLatLng([user.lat, user.lng]);
+            }
+        });
+        
+        // Randomly adjust online count for live feeling
+        const onlineEl = document.getElementById('online-count');
+        if (onlineEl) {
+            const count = 18 + Math.floor(Math.random() * 5);
+            onlineEl.textContent = `${count} online`;
         }
-    </script>
+    }
+</script>
+
 </body>
 </html>
