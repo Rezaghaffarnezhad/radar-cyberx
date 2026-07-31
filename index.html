@@ -570,7 +570,6 @@
                 const m = payload.new;
                 if (!m) return;
 
-                // مدیریت پیام‌های روم عمومی
                 if (!m.receiver_id && m.room_name === currentRoom) {
                     loadRoomMessages();
                     if (!document.getElementById('view-chats').classList.contains('hidden') && m.sender_id !== currentUser?.telegram_id) {
@@ -578,7 +577,6 @@
                     }
                 }
 
-                // اعلان و مدیریت پیام خصوصی
                 if (m.receiver_id === currentUser?.telegram_id) {
                     if (m.sender_id !== currentUser?.telegram_id && payload.eventType === 'INSERT') {
                         showToast(`پیام جدید از ${m.sender_name}`);
@@ -633,12 +631,6 @@
                     await globalChannel.track({ online_at: new Date().toISOString() });
                 }
             });
-
-            setInterval(async () => {
-                if(currentUser) {
-                    await supabaseClient.from('users').update({ last_seen: new Date() }).eq('telegram_id', currentUser.telegram_id);
-                }
-            }, 5000);
         }
 
         function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); }
