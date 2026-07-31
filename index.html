@@ -104,7 +104,7 @@
         </div>
     </div>
 
-    <!-- صفحه چت خصوصی (پی‌وی لحظه‌ای) -->
+    <!-- صفحه چت خصوصی (پی‌وی لحظه‌ای با سین شدن و ارسال زنده) -->
     <div id="chat-window" class="hidden absolute inset-0 tg-bg z-50 flex flex-col">
         <div class="tg-header px-3 py-2.5 flex items-center gap-3">
             <button onclick="closeChat()" class="text-slate-300 text-base px-2 py-1 rounded-lg hover:bg-white/5 transition">←</button>
@@ -185,7 +185,7 @@
         let typingTimeout = null;
         let activeChannel = null;
         let globalChannel = null;
-        let onlineUsersMap = {}; // نگهداری لیست کاربران آنلاین لحظه‌ای از طریق Presence
+        let onlineUsersMap = {};
 
         const user = tg?.initDataUnsafe?.user || { 
             id: Math.floor(Math.random() * 900000) + 100000, 
@@ -275,8 +275,6 @@
             fetchUsersData();
             fetchNotesData();
             loadRoomMessages();
-
-            // فعال‌سازی ریل‌تایم سراسری همراه با سیستم حضور (Presence)
             initRealtimeGlobal();
         }
 
@@ -296,7 +294,6 @@
                     });
                 }
                 
-                // به‌روزرسانی تعداد بر اساس حضور لحظه‌ای وب‌سوکت
                 const onlineCountNum = Object.keys(onlineUsersMap).length || activeUsers.length;
                 document.getElementById('online-count').textContent = `${onlineCountNum} کاربر آنلاین`;
 
@@ -389,7 +386,8 @@
                 sender_name: currentUser.name,
                 receiver_id: null,
                 room_name: currentRoom,
-                message
+                message,
+                is_read: true
             }]);
         }
 
@@ -397,8 +395,7 @@
             const { data } = await supabaseClient.from('users').select('*');
             if(data) {
                 document.getElementById('users-list-container').innerHTML = data.map(u => {
-                    // بررسی وضعیت آنلاین بودن لحظه‌ای از طریق Presence یا چک کردن بازه زمانی کمتر از 20 ثانیه
-                    const isOnline = onlineUsersMap[u.telegram_id] || ((new Date() - new Date(u.last_seen)) < 20000);
+                    const isOnline = onlineUsersMap[u.telegram_id] == true;
                     return `
                         <div onclick="openPrivateChat(${u.telegram_id}, '${u.name}')" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
                             <div class="relative w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs">
@@ -423,6 +420,13 @@
             document.getElementById('chat-status').textContent = isTargetOnline ? 'آنلاین' : 'آفلاین';
             document.getElementById('chat-window').classList.remove('hidden');
             
+            // علامت‌زدن پیام‌های دریافتی از این مخاطب به عنوان «سین‌شده»
+            await supabaseClient.from('messages')
+                .update({ is_read: true })
+                .eq('sender_id', targetId)
+                .eq('receiver_id', currentUser.telegram_id)
+                .eq('is_read', false);
+
             loadPrivateMessages();
             initRealtimePrivateChat(targetId);
         }
@@ -444,11 +448,17 @@
                 .or(`and(sender_id.eq.${currentUser.telegram_id},receiver_id.eq.${selectedTargetUser.telegram_id}),and(sender_id.eq.${selectedTargetUser.telegram_id},receiver_id.eq.${currentUser.telegram_id})`)
                 .order('created_at', { ascending: true });
 
-            container.innerHTML = (data || []).map(m => `
-                <div class="max-w-[75%] px-3 py-2 rounded-xl text-xs ${m.sender_id === currentUser.telegram_id ? 'bg-[#2b5278] text-white self-end rounded-br-xs' : 'tg-card text-slate-200 self-start rounded-bl-xs'}">
-                    <div>${m.message}</div>
-                </div>
-            `).join('');
+            container.innerHTML = (data || []).map(m => {
+                const isMe = m.sender_id === currentUser.telegram_id;
+                // وضعیت تیک پیام: تیک اول (ارسال شده) و تیک دوم آبی (سین شده)
+                const ticks = isMe ? `<span class="text-[10px] ml-1 ${m.is_read ? 'text-sky-400 font-bold' : 'text-slate-400'}">${m.is_read ? '✓✓' : '✓'}</span>` : '';
+                return `
+                    <div class="max-w-[75%] px-3 py-2 rounded-xl text-xs flex flex-col ${isMe ? 'bg-[#2b5278] text-white self-end rounded-br-xs' : 'tg-card text-slate-200 self-start rounded-bl-xs'}">
+                        <div>${m.message}</div>
+                        <div class="flex items-center justify-end mt-0.5">${ticks}</div>
+                    </div>
+                `;
+            }).join('');
             container.scrollTop = container.scrollHeight;
         }
 
@@ -458,11 +468,15 @@
             if (!message || !selectedTargetUser || !currentUser) return;
 
             input.value = '';
+            // بررسی آنلاین بودن لحظه‌ای مخاطب برای تعیین وضعیت اولیه سین‌شدن
+            const isTargetOnline = onlineUsersMap[selectedTargetUser.telegram_id] == true;
+
             await supabaseClient.from('messages').insert([{
                 sender_id: currentUser.telegram_id,
                 sender_name: currentUser.name,
                 receiver_id: selectedTargetUser.telegram_id,
-                message
+                message,
+                is_read: isTargetOnline // اگر مخاطب داخل چت و آنلاین باشد، مستقیم سین در نظر گرفته شود
             }]);
         }
 
@@ -476,13 +490,17 @@
             const channelName = `chat_pv_${Math.min(currentUser.telegram_id, targetId)}_${Math.max(currentUser.telegram_id, targetId)}`;
             
             activeChannel = supabaseClient.channel(channelName)
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    const m = payload.new;
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
+                    const m = payload.new || payload.old;
                     if (
                         (m.sender_id === currentUser.telegram_id && m.receiver_id === targetId) ||
                         (m.sender_id === targetId && m.receiver_id === currentUser.telegram_id)
                     ) {
                         loadPrivateMessages();
+                        // اگر پیام جدیدی از مخاطب رسید و ما در صفحه چت بودیم، آنی سین کن
+                        if(m.sender_id === targetId && !m.is_read) {
+                            supabaseClient.from('messages').update({ is_read: true }).eq('id', m.id).then();
+                        }
                     }
                 })
                 .on('broadcast', { event: 'typing' }, payload => {
@@ -498,7 +516,6 @@
                 .subscribe();
         }
 
-        // ⭐ هسته مرکزی Realtime سراسری با پشتیبانی از سیستم Presence (وضعیت آنلاین/آفلاین آنی)
         function initRealtimeGlobal() {
             if(globalChannel) supabaseClient.removeChannel(globalChannel);
 
@@ -523,6 +540,8 @@
                     }
                     if (selectedTargetUser && selectedTargetUser.telegram_id === m.sender_id) {
                         loadPrivateMessages();
+                        // سین‌شدن آنی پیام‌های دریافتی چون چت باز است
+                        supabaseClient.from('messages').update({ is_read: true }).eq('id', m.id).then();
                     }
                 }
             })
@@ -545,7 +564,6 @@
                     onlineUsersMap[Number(key)] = true;
                 });
                 
-                // بروزرسانی آنی تعداد و لیست‌ها به محض تغییر وضعیت حضور کاربران
                 fetchUsersData();
                 if(!document.getElementById('view-community').classList.contains('hidden')) {
                     loadUsersList();
@@ -557,12 +575,10 @@
             })
             .subscribe(async (status) => {
                 if (status === 'SUBSCRIBED') {
-                    // اعلام حضور کاربر در شبکه
                     await globalChannel.track({ online_at: new Date().toISOString() });
                 }
             });
 
-            // ارسال پالس زنده (Heartbeat) هر 5 ثانیه برای استوار ماندن وضعیت آنلاین در دیتابیس
             setInterval(async () => {
                 if(currentUser) {
                     await supabaseClient.from('users').update({ last_seen: new Date() }).eq('telegram_id', currentUser.telegram_id);
