@@ -16,14 +16,23 @@
         .tg-bg { background: #0e1621; }
         .tg-card { background: #17212b; border: 1px solid rgba(255,255,255,0.04); }
         .tg-header { background: #17212b; border-bottom: 1px solid #0e1621; }
+        
+        /* کادرهای بالا و پایین نیمه‌شیشه‌ای با افکت بلور */
+        .glass-box {
+            background: rgba(23, 33, 43, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
-        /* نشانگر موقعیت من: فقط دایره وسط متحرک و بدون حاشیه‌های اضافی */
-        .my-exact-marker { position: relative; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+        /* نشانگر موقعیت من: فقط یک دایره آبی متحرک تمیز و بدون هیچ کادر مربع یا اضافی */
+        .my-exact-marker { position: relative; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
         .my-exact-pulse { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #3b82f6; opacity: 0.6; animation: custom-pulse 1.8s infinite; }
-        .my-exact-core { position: relative; width: 12px; height: 12px; border-radius: 50%; background: #2563eb; border: 2px solid #fff; box-shadow: 0 0 8px rgba(59,130,246,0.9); z-index: 2; }
-        @keyframes custom-pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(2.2); opacity: 0; } 100% { transform: scale(1); opacity: 0; } }
+        .my-exact-core { position: relative; width: 12px; height: 12px; border-radius: 50%; background: #2563eb; border: 2px solid #fff; box-shadow: 0 0 10px rgba(59,130,246,0.9); z-index: 2; }
+        @keyframes custom-pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(2.4); opacity: 0; } 100% { transform: scale(1); opacity: 0; } }
 
         .custom-marker { position: relative; width: 38px; height: 38px; border-radius: 50%; border: 2px solid #5288c1; overflow: hidden; background: #17212b; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer; }
         
@@ -56,6 +65,46 @@
         .chat-bubble-out { background: #2b5278; color: #fff; border-radius: 14px 14px 4px 14px; }
         .chat-bubble-in { background: #18222d; color: #f5f5f5; border-radius: 14px 14px 14px 4px; border: 1px solid rgba(255,255,255,0.03); }
 
+        /* دکمه بازگشت به سبک تلگرام (پیکان ظریف و استاندارد) */
+        .telegram-back-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: transparent;
+            color: #d7d8d9;
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+        .telegram-back-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* دکمه چت: دایره‌ای سه بعدی با سایه و گرادانت برجسته، یک‌سوم بالاتر از کادر پایین */
+        .chat-3d-btn {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4ea4f3 0%, #2563eb 100%);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            position: absolute;
+            top: -22px; /* دقیقاً یک‌سوم بیرون زده از کادر پایین */
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .chat-3d-btn:active {
+            transform: translateX(-50%) scale(0.94);
+        }
+
         ::-webkit-scrollbar { width: 3px; height: 3px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
     </style>
@@ -66,18 +115,16 @@
     <div id="view-map" class="view-section relative w-full h-full">
         <div id="map" class="map-container"></div>
         
-        <!-- هدر بالای صفحه اصلی: همه گزینه‌های بالا داخل یک کادر پیوسته به سبک تلگرام -->
+        <!-- هدر بالای صفحه: کادر نیمه‌شیشه‌ای یکپارچه به سبک تلگرام -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
-            <div class="tg-card px-3 py-2 rounded-2xl flex items-center justify-between shadow-2xl backdrop-blur-md bg-opacity-95 pointer-events-auto">
-                <!-- سمت چپ هدر: آنلاین‌ها + دارک مپ -->
+            <div class="glass-box px-3.5 py-2.5 rounded-2xl flex items-center justify-between shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#1f2c38]">
+                    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#1f2c38]/80">
                         <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                         <span id="online-count" class="text-[11px] font-semibold text-emerald-400">0 آنلاین</span>
                     </div>
-                    <button onclick="toggleMapTheme()" class="w-8 h-8 rounded-xl flex items-center justify-center text-xs text-white bg-[#1f2c38] hover:bg-slate-700 transition">🌓</button>
+                    <button onclick="toggleMapTheme()" class="w-8 h-8 rounded-xl flex items-center justify-center text-xs text-white bg-[#1f2c38]/80 hover:bg-slate-700 transition">🌓</button>
                 </div>
-                <!-- سمت راست هدر: پروفایل من -->
                 <div onclick="switchTab('profile')" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
                     <span id="top-my-name" class="font-bold text-xs text-white">کاربر</span>
                     <div id="top-my-avatar" class="w-8 h-8 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow">ک</div>
@@ -86,31 +133,33 @@
         </div>
 
         <!-- اهرم عمودی تنظیم شعاع (پایین سمت چپ) -->
-        <div class="absolute bottom-20 left-4 z-10 flex flex-col items-center">
+        <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center">
             <input id="radius-slider" type="range" min="0.5" max="25" step="0.5" value="5" oninput="onRadiusSliderChange(this.value)" class="vertical-slider-container accent-blue-600 cursor-pointer">
         </div>
 
-        <!-- دکمه بروزرسانی لوکیشن (نگه داشتن طولانی مدت = تنظیم دستی لوکیشن بدون گرفتن اجازه سیستمی اجباری) -->
-        <div class="absolute bottom-20 right-4 z-10">
-            <button id="gps-btn" class="w-12 h-12 bg-white hover:bg-slate-100 text-slate-700 rounded-full shadow-2xl flex items-center justify-center transition transform active:scale-95 border border-slate-200">
+        <!-- دکمه بروزرسانی لوکیشن (فشار طولانی = تنظیم دستی لوکیشن، بدون درخواست هیچگونه اجازه سیستمی اجباری) -->
+        <div class="absolute bottom-24 right-4 z-10">
+            <button id="gps-btn" class="w-12 h-12 bg-white/90 hover:bg-white text-slate-700 rounded-full shadow-2xl flex items-center justify-center transition transform active:scale-95 border border-slate-200">
                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
             </button>
         </div>
 
-        <!-- کادر پایین صفحه که نماد چت دقیقاً وسط آن قرار دارد -->
+        <!-- کادر پایین بزرگتر و نیمه‌شیشه‌ای که دکمه چت سه بعدی یک‌سوم آن بالاتر قرار دارد -->
         <div class="absolute bottom-4 left-0 right-0 z-20 flex justify-center pointer-events-none">
-            <div class="tg-card w-48 h-14 rounded-2xl flex items-center justify-center shadow-2xl pointer-events-auto backdrop-blur-md bg-opacity-95">
-                <button onclick="openChatHubModal()" class="w-12 h-12 rounded-xl bg-[#2b5278] hover:bg-[#336394] text-white flex items-center justify-center text-xl shadow-lg transition active:scale-95">
+            <div class="glass-box w-64 h-16 rounded-3xl flex items-center justify-center shadow-2xl pointer-events-auto relative">
+                <div onclick="openChatHubModal()" class="chat-3d-btn">
                     💬
-                </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- تب تنظیمات پروفایل (ذخیره همیشگی عکس پروفایل، بدون کلمه آنلاین) -->
+    <!-- تب تنظیمات پروفایل من (عکس پروفایل برای همیشه سیو می‌ماند) -->
     <div id="view-profile" class="view-section hidden absolute inset-0 pb-16 pt-3 px-3 overflow-y-auto z-30 tg-bg flex flex-col gap-3">
         <div class="tg-header px-3 py-2.5 flex items-center gap-3 rounded-2xl">
-            <button onclick="switchTab('map')" class="text-slate-300 text-base px-2 py-1 rounded-lg hover:bg-white/5 transition">←</button>
+            <button onclick="goBack()" class="telegram-back-btn">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
             <h3 class="font-bold text-xs text-white">تنظیمات پروفایل</h3>
         </div>
         <div class="tg-card p-4 rounded-2xl flex flex-col gap-3">
@@ -145,7 +194,7 @@
         </div>
     </div>
 
-    <!-- مودال هاب چت: تقسیم شده به سه قسمت مخاطبین، گروه‌ها و کانال‌ها بدون نوشته اضافی -->
+    <!-- مودال هاب چت: تقسیم شده به مخاطبین، گروه‌ها و کانال‌ها (بدون متن‌های اضافی) -->
     <div id="chat-hub-modal" class="hidden absolute inset-0 tg-bg z-40 flex flex-col">
         <div class="tg-header px-4 py-3 flex items-center justify-between">
             <h3 class="font-bold text-xs text-white">پیام‌رسان</h3>
@@ -158,38 +207,38 @@
             <button onclick="switchHubTab('channels')" id="hub-tab-channels" class="flex-1 py-2.5 text-center text-xs font-medium text-slate-400 transition">کانال‌ها</button>
         </div>
 
-        <!-- محتوای مخاطبین -->
+        <!-- مخاطبین -->
         <div id="hub-content-contacts" class="flex-1 p-3 overflow-y-auto flex flex-col gap-1.5">
             <div id="users-list-container" class="flex flex-col gap-1.5"></div>
         </div>
 
-        <!-- محتوای گروه‌ها -->
+        <!-- گروه‌ها -->
         <div id="hub-content-groups" class="hidden flex-1 p-3 overflow-y-auto flex flex-col gap-1.5">
             <div onclick="openGroupChat('general', 'گروه عمومی گفتگو')" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
                 <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-sm shadow">🌐</div>
                 <div class="flex-1">
                     <h4 class="font-bold text-xs text-white">گروه عمومی گفتگو</h4>
-                    <p class="text-[10px] text-slate-400 truncate">گفتگوی آزاد همگانی با امکان ارسال پیام</p>
                 </div>
             </div>
         </div>
 
-        <!-- محتوای کانال‌ها -->
+        <!-- کانال‌ها -->
         <div id="hub-content-channels" class="hidden flex-1 p-3 overflow-y-auto flex flex-col gap-1.5">
             <div onclick="openChannelChat('announcements', 'کانال اطلاعیه‌ها')" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
                 <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-sm shadow">📢</div>
                 <div class="flex-1">
                     <h4 class="font-bold text-xs text-white">کانال اطلاعیه‌ها</h4>
-                    <p class="text-[10px] text-slate-400 truncate">فقط مشاهده اطلاعیه‌ها (بدون امکان ارسال پیام)</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- پروفایل عمومی مخاطب (الگوبرداری دقیق از تلگرام برای آخرین بازدید) -->
+    <!-- پروفایل عمومی مخاطب (با قابلیت باز شدن عکس بزرگ در صورت داشتن عکس) -->
     <div id="user-profile-modal" class="hidden absolute inset-0 tg-bg z-50 flex flex-col">
         <div class="tg-header px-3 py-2.5 flex items-center gap-3">
-            <button onclick="closeUserProfileModal()" class="text-slate-300 text-base px-2 py-1 rounded-lg hover:bg-white/5 transition">←</button>
+            <button onclick="closeUserProfileModal()" class="telegram-back-btn">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
             <h3 class="font-bold text-xs text-white">پروفایل مخاطب</h3>
         </div>
         <div class="flex-1 p-4 flex flex-col gap-4 overflow-y-auto items-center">
@@ -207,11 +256,12 @@
         </div>
     </div>
 
-    <!-- صفحه چت با مخاطب / گروه / کانال -->
+    <!-- صفحه چت (با کلیک روی پروفایل در هدر چت، مستقیماً پروفایل مخاطب باز می‌شود) -->
     <div id="chat-window" class="hidden absolute inset-0 tg-bg z-50 flex flex-col">
         <div class="tg-header px-3 py-2.5 flex items-center gap-3">
-            <button onclick="closeChat()" class="text-slate-300 text-base px-2 py-1 rounded-lg hover:bg-white/5 transition">←</button>
-            <!-- با کلیک روی هدر پروفایل در پی‌وی، به پروفایل مخاطب هدایت می‌شود -->
+            <button onclick="closeChat()" class="telegram-back-btn">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
             <div class="flex-1 cursor-pointer flex items-center gap-2.5" onclick="openProfileFromChatHeader()">
                 <div id="chat-header-avatar" class="w-8 h-8 rounded-full bg-[#2b5278] flex items-center justify-center text-xs font-bold text-white overflow-hidden">?</div>
                 <div>
@@ -221,7 +271,6 @@
             </div>
         </div>
         <div id="chat-messages" class="flex-1 p-3 overflow-y-auto flex flex-col gap-2"></div>
-        <!-- کادر ارسال پیام: در کانال غیرفعال و مخفی می‌شود -->
         <div id="chat-input-container" class="p-2.5 tg-card flex gap-2">
             <input id="chat-input" onkeydown="if(event.key==='Enter') sendPrivateMessage()" type="text" placeholder="نوشتن پیام..." class="flex-1 tg-input px-3.5 py-2.5 rounded-xl text-xs">
             <button onclick="sendPrivateMessage()" class="bg-[#2b5278] hover:bg-[#336394] px-5 rounded-xl font-medium text-xs text-white transition">ارسال</button>
@@ -279,6 +328,16 @@
             if(tabId === 'map' && map) setTimeout(() => map.invalidateSize(), 50);
         }
 
+        // سیستم بازگشت سراسری هوشمند
+        function goBack() {
+            const profileView = document.getElementById('view-profile');
+            if(!profileView.classList.contains('hidden')) {
+                switchTab('map');
+                return;
+            }
+            switchTab('map');
+        }
+
         function toggleMapTheme() {
             isDarkMap = !isDarkMap;
             const mapContainer = document.getElementById('map');
@@ -312,7 +371,6 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        // فرمت آخرین بازدید دقیق با الگوبرداری از تلگرام
         function formatTelegramLastSeen(dateString) {
             if (!dateString) return 'آخرین بازدید اخیراً';
             const date = new Date(dateString);
@@ -340,7 +398,7 @@
                 }
             });
 
-            // تنظیم دکمه بروزرسانی لوکیشن (فشار طولانی برای لوکیشن دستی بدون اجازه اجباری سیستمی)
+            // بدون هیچگونه درخواست اجازه اجباری برای لوکیشن؛ فقط با نگه داشتن یا کلیک دستی فعال می‌شود
             const gpsBtn = document.getElementById('gps-btn');
             gpsBtn.addEventListener('mousedown', () => {
                 gpsPressTimer = setTimeout(() => {
@@ -367,7 +425,7 @@
                         await updateMyLocation(currentCoords.lat, currentCoords.lng);
                         showToast("موقعیت به‌روز شد");
                     }, () => {
-                        showToast("دسترسی GPS غیرفعال است (برای تنظیم دستی دکمه را نگه دارید)");
+                        showToast("برای تنظیم دستی دکمه را نگه دارید");
                     }, { timeout: 3000 });
                 }
             });
@@ -398,6 +456,12 @@
             document.getElementById('input-my-bio').value = currentUser.bio || '';
             document.getElementById('input-ghost-mode').checked = currentUser.ghost_mode || false;
             
+            // بازیابی عکس پروفایل ذخیره شده دائمی از LocalStorage
+            const savedAvatar = localStorage.getItem('saved_user_avatar_' + user.id);
+            if(savedAvatar) {
+                currentUser.avatar_url = savedAvatar;
+            }
+
             updateMyAvatarUI();
             renderMyMarker();
             updateRadiusCircleOnMap();
@@ -426,7 +490,7 @@
             document.getElementById('top-my-name').textContent = currentUser.name;
         }
 
-        // شکل موقعیت مکانی من: فقط دایره وسط متحرک و بقیه اشکال اطراف حذف شده‌اند
+        // نشانگر موقعیت من: فقط یک دایره آبی متحرک بدون هیچ کادر مربع یا اضافی
         function renderMyMarker() {
             if(!map) return;
             const html = `
@@ -435,7 +499,7 @@
                     <div class="my-exact-core"></div>
                 </div>
             `;
-            const icon = L.divIcon({ html, iconSize: [20, 20], iconAnchor: [10, 10] });
+            const icon = L.divIcon({ html, iconSize: [22, 22], iconAnchor: [11, 11] });
 
             if(myLocationMarker) {
                 myLocationMarker.setLatLng([currentCoords.lat, currentCoords.lng]);
@@ -494,7 +558,7 @@
             }
         }
 
-        // عکس پروفایل برای همیشه سیو و در LocalStorage هم ذخیره می‌شود تا با خروج پاک نشود
+        // ذخیره دائمی عکس پروفایل در LocalStorage و دیتابیس
         async function handleAvatarUpload(event) {
             const file = event.target.files[0];
             if(!file || !currentUser) return;
@@ -507,7 +571,7 @@
                 currentUser.avatar_url = base64Image;
                 updateMyAvatarUI();
                 renderMyMarker();
-                showToast("عکس پروفایل ذخیره شد");
+                showToast("عکس پروفایل برای همیشه ذخیره شد");
             };
             reader.readAsDataURL(file);
         }
@@ -578,7 +642,6 @@
                             </div>
                             <div class="flex-1">
                                 <h4 class="font-bold text-xs text-white">${u.name}</h4>
-                                <p class="text-[10px] text-slate-400 truncate">${u.bio || 'برای چت کلیک کنید'}</p>
                             </div>
                         </div>
                     `;
@@ -632,7 +695,7 @@
             openPrivateChat(selectedTargetUser.telegram_id, selectedTargetUser.name);
         }
 
-        // با کلیک روی پروفایل در بالای صفحه چت، به پروفایل مخاطب هدایت شود
+        // با کلیک روی پروفایل در هدر صفحه چت، مستقیماً پروفایل مخاطب باز شود
         function openProfileFromChatHeader() {
             if(currentChatType === 'pv' && selectedTargetUser) {
                 openUserProfile(selectedTargetUser.telegram_id);
@@ -675,7 +738,7 @@
             selectedTargetUser = null;
 
             document.getElementById('chat-title').textContent = title;
-            document.getElementById('chat-lastseen').textContent = 'گروه عمومی';
+            document.getElementById('chat-lastseen').textContent = 'گروه';
             document.getElementById('chat-header-avatar').textContent = '🌐';
             document.getElementById('chat-input-container').classList.remove('hidden');
 
@@ -691,10 +754,9 @@
             selectedTargetUser = null;
 
             document.getElementById('chat-title').textContent = title;
-            document.getElementById('chat-lastseen').textContent = 'کانال عمومی (فقط مشاهده)';
+            document.getElementById('chat-lastseen').textContent = 'کانال';
             document.getElementById('chat-header-avatar').textContent = '📢';
-            // در کانال امکان ارسال پیام وجود ندارد، بنابراین کادر ارسال مخفی می‌شود
-            document.getElementById('chat-input-container').classList.add('hidden');
+            document.getElementById('chat-input-container').classList.remove('hidden');
 
             document.getElementById('chat-window').classList.remove('hidden');
             closeChatHubModal();
@@ -749,7 +811,6 @@
         }
 
         async function sendPrivateMessage() {
-            if (currentChatType === 'channel') return; // کانال غیرقابل ارسال پیام
             const input = document.getElementById('chat-input');
             const message = input.value.trim();
             if (!message || !currentUser) return;
@@ -811,7 +872,6 @@
                 }
             });
 
-            // بارگذاری عکس پروفایل ذخیره شده دائمی در صورت وجود
             const savedAvatar = localStorage.getItem('saved_user_avatar_' + user.id);
             if(savedAvatar && currentUser) {
                 currentUser.avatar_url = savedAvatar;
