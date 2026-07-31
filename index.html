@@ -49,10 +49,10 @@
             </div>
             <button onclick="closeProfile()" class="ml-auto text-slate-400 hover:text-white text-xl p-2">✕</button>
         </div>
-        <button onclick="openChat()" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl font-semibold shadow-lg hover:opacity-95 transition">شروع گفتگوی خصوصی</button>
+        <button onclick="openChat()" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl font-semibold shadow-lg hover:opacity-95 transition">شروع گفتگوی خصوصی (پی‌وی)</button>
     </div>
 
-    <!-- پنجره چت -->
+    <!-- پنجره چت (عمومی یا پی‌وی) -->
     <div id="chat-window" class="hidden absolute inset-0 bg-[#0d1117] z-50 flex flex-col">
         <div class="p-4 glass flex items-center gap-3 border-b border-slate-800">
             <button onclick="closeChat()" class="text-slate-300 text-xl px-2">←</button>
@@ -75,7 +75,7 @@
         let currentUser = null, selectedTargetUser = null;
         let map, markers = {};
         let isGlobalChat = false;
-        let chatInterval = null;
+        let messageSubscription = null;
 
         const user = tg?.initDataUnsafe?.user || { 
             id: Math.floor(Math.random() * 900000) + 100000, 
@@ -114,6 +114,7 @@
 
             setInterval(fetchNearbyUsers, 4000);
             fetchNearbyUsers();
+            initRealtimeListeners();
         }
 
         async function fetchNearbyUsers() {
@@ -159,11 +160,9 @@
         function openChat() { 
             closeProfile(); 
             isGlobalChat = false;
-            document.getElementById('chat-title').textContent = `چت با ${selectedTargetUser.name}`; 
+            document.getElementById('chat-title').textContent = `پی‌وی با ${selectedTargetUser.name}`; 
             document.getElementById('chat-window').classList.remove('hidden'); 
             loadMessages(); 
-            if(chatInterval) clearInterval(chatInterval);
-            chatInterval = setInterval(loadMessages, 2000); // به‌روزرسانی خودکار هر ۲ ثانیه
         }
 
         function openGlobalChat() {
@@ -171,13 +170,10 @@
             document.getElementById('chat-title').textContent = "چت عمومی 🌐";
             document.getElementById('chat-window').classList.remove('hidden');
             loadMessages();
-            if(chatInterval) clearInterval(chatInterval);
-            chatInterval = setInterval(loadMessages, 2000); // به‌روزرسانی خودکار هر ۲ ثانیه
         }
 
         function closeChat() { 
             document.getElementById('chat-window').classList.add('hidden'); 
-            if(chatInterval) clearInterval(chatInterval);
         }
 
         async function loadMessages() {
@@ -192,18 +188,13 @@
             }
 
             const { data } = await query;
-            const scrollAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
-
             container.innerHTML = (data || []).map(m => `
                 <div class="max-w-[75%] p-3.5 rounded-2xl text-sm ${m.sender_id === currentUser.telegram_id ? 'bg-blue-600 self-end rounded-br-none' : 'bg-slate-800 self-start rounded-bl-none'}">
                     <div class="text-[10px] opacity-70 mb-1">${m.sender_name || 'کاربر'}</div>
                     ${m.message}
                 </div>
             `).join('');
-
-            if (scrollAtBottom) {
-                container.scrollTop = container.scrollHeight;
-            }
+            container.scrollTop = container.scrollHeight;
         }
 
         async function sendMessage() {
@@ -229,7 +220,39 @@
             }
 
             input.value = '';
+            // پیام بلافاصله لود میشود
             loadMessages();
+        }
+
+        // گوش دادن لحظه‌ای به پیام‌های جدید (Real-time)
+        function initRealtimeListeners() {
+            supabaseClient.channel('realtime-messages')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+                    const newMsg = payload.new;
+                    
+                    // بررسی اینکه صفحه چت باز است یا خیر
+                    const chatWindowOpen = !document.getElementById('chat-window').classList.contains('hidden');
+                    
+                    if (chatWindowOpen) {
+                        if (isGlobalChat && !newMsg.receiver_id) {
+                            loadMessages();
+                        } else if (!isGlobalChat && selectedTargetUser && 
+                            ((newMsg.sender_id === selectedTargetUser.telegram_id && newMsg.receiver_id === currentUser.telegram_id) ||
+                             (newMsg.sender_id === currentUser.telegram_id && newMsg.receiver_id === selectedTargetUser.telegram_id))) {
+                            loadMessages();
+                        }
+                    }
+
+                    // نمایش اعلان (Toast) اگر پیام شخصی یا عمومی از طرف شخص دیگری آمد
+                    if (newMsg.sender_id !== currentUser?.telegram_id) {
+                        if (!newMsg.receiver_id) {
+                            showToast(`پیام عمومی جدید از ${newMsg.sender_name}`);
+                        } else if (newMsg.receiver_id === currentUser?.telegram_id) {
+                            showToast(`پی‌وی جدید از ${newMsg.sender_name}`);
+                        }
+                    }
+                })
+                .subscribe();
         }
 
         init();
