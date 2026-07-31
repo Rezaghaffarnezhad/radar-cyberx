@@ -184,6 +184,7 @@
         let activeRadiusKm = 0;
         let typingTimeout = null;
         let activeChannel = null;
+        let globalChannel = null;
 
         const user = tg?.initDataUnsafe?.user || { 
             id: Math.floor(Math.random() * 900000) + 100000, 
@@ -364,17 +365,13 @@
             if (!message || !currentUser) return;
 
             input.value = '';
-            const { data } = await supabaseClient.from('messages').insert([{
+            await supabaseClient.from('messages').insert([{
                 sender_id: currentUser.telegram_id,
                 sender_name: currentUser.name,
                 receiver_id: null,
                 room_name: currentRoom,
                 message
-            }]).select().single();
-
-            if(data) {
-                loadRoomMessages();
-            }
+            }]);
         }
 
         async function loadUsersList() {
@@ -409,7 +406,10 @@
         function closeChat() { 
             document.getElementById('chat-window').classList.add('hidden'); 
             selectedTargetUser = null;
-            if(activeChannel) supabaseClient.removeChannel(activeChannel);
+            if(activeChannel) {
+                supabaseClient.removeChannel(activeChannel);
+                activeChannel = null;
+            }
         }
 
         async function loadPrivateMessages() {
@@ -434,16 +434,12 @@
             if (!message || !selectedTargetUser || !currentUser) return;
 
             input.value = '';
-            const { data } = await supabaseClient.from('messages').insert([{
+            await supabaseClient.from('messages').insert([{
                 sender_id: currentUser.telegram_id,
                 sender_name: currentUser.name,
                 receiver_id: selectedTargetUser.telegram_id,
                 message
-            }]).select().single();
-
-            if (data) {
-                loadPrivateMessages();
-            }
+            }]);
         }
 
         function handleTypingEvent() {
@@ -453,10 +449,22 @@
 
         function initRealtimePrivateChat(targetId) {
             if(activeChannel) supabaseClient.removeChannel(activeChannel);
-            activeChannel = supabaseClient.channel(`chat_${Math.min(currentUser.telegram_id, targetId)}_${Math.max(currentUser.telegram_id, targetId)}`)
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+            
+            // ایجاد یک کانال منحصربه‌فرد برای این گفتگوی دوطرفه
+            const channelName = `chat_pv_${Math.min(currentUser.telegram_id, targetId)}_${Math.max(currentUser.telegram_id, targetId)}`;
+            
+            activeChannel = supabaseClient.channel(channelName)
+                .on('postgres_changes', { 
+                    event: 'INSERT', 
+                    schema: 'public', 
+                    table: 'messages'
+                }, payload => {
                     const m = payload.new;
-                    if ((m.sender_id === targetId && m.receiver_id === currentUser.telegram_id) || (m.sender_id === currentUser.telegram_id && m.receiver_id === targetId)) {
+                    // اگر پیام مربوط به همین چت بود، فوراً لیست آپدیت شود (چه فرستنده باشیم چه گیرنده)
+                    if (
+                        (m.sender_id === currentUser.telegram_id && m.receiver_id === targetId) ||
+                        (m.sender_id === targetId && m.receiver_id === currentUser.telegram_id)
+                    ) {
                         loadPrivateMessages();
                     }
                 })
@@ -471,19 +479,24 @@
         }
 
         function initRealtimeGlobal() {
-            supabaseClient.channel('global-app-sync')
+            if(globalChannel) supabaseClient.removeChannel(globalChannel);
+
+            globalChannel = supabaseClient.channel('global-app-sync')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                     const m = payload.new;
                     if (!m) return;
 
+                    // روم عمومی
                     if (!m.receiver_id && m.room_name === currentRoom) {
                         loadRoomMessages();
                     }
 
+                    // پیام خصوصی برای کاربر فعلی (اگر در صفحه چت با آن شخص خاص نیست، نوتیفیکیشن نمایش داده شود)
                     if (m.receiver_id === currentUser?.telegram_id) {
                         if (m.sender_id !== currentUser?.telegram_id) {
                             showToast(`پیام جدید از ${m.sender_name}`);
                         }
+                        // اگر گیرنده در صفحه چت با همان شخص است، پیامش بلافاصله بارگذاری شود
                         if (selectedTargetUser && selectedTargetUser.telegram_id === m.sender_id) {
                             loadPrivateMessages();
                         }
