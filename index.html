@@ -54,7 +54,7 @@
         </div>
     </div>
 
-    <!-- تب ۲: روم‌های گفتگو (گروه‌های تلگرامی) -->
+    <!-- تب ۲: روم‌های گفتگو -->
     <div id="view-chats" class="view-section hidden absolute inset-0 pb-16 pt-3 px-3 flex flex-col z-10 tg-bg">
         <div class="flex items-center justify-between mb-2 px-1">
             <h2 class="font-bold text-xs text-slate-400">گروه‌ها و روم‌های زنده</h2>
@@ -104,7 +104,7 @@
         </div>
     </div>
 
-    <!-- صفحه چت خصوصی (پی‌وی شبیه آخرین نسخه تلگرام) -->
+    <!-- صفحه چت خصوصی (پی‌وی لحظه‌ای) -->
     <div id="chat-window" class="hidden absolute inset-0 tg-bg z-50 flex flex-col">
         <div class="tg-header px-3 py-2.5 flex items-center gap-3">
             <button onclick="closeChat()" class="text-slate-300 text-base px-2 py-1 rounded-lg hover:bg-white/5 transition">←</button>
@@ -149,7 +149,7 @@
         <div id="toast-text" class="text-xs font-semibold text-white">اعلان جدید</div>
     </div>
 
-    <!-- منوی پایین تلگرام (Bottom Bar) -->
+    <!-- منوی پایین تلگرام -->
     <div class="absolute bottom-0 left-0 right-0 h-14 tg-header z-40 flex items-center justify-around px-1">
         <button onclick="switchTab('map')" id="nav-map" class="flex flex-col items-center gap-0.5 text-[#5288c1] transition py-1 px-3 rounded-lg">
             <span class="text-lg">🗺️</span>
@@ -370,7 +370,7 @@
                 message
             }]);
             input.value = '';
-            loadRoomMessages();
+            // پیام بلافاصله از طریق لیسنر سابسکرایب رندر می‌شود
         }
 
         async function loadUsersList() {
@@ -435,7 +435,7 @@
                 message
             }]);
             input.value = '';
-            loadPrivateMessages();
+            // رندر لحظه‌ای از طریق Realtime Channel انجام می‌شود
         }
 
         function handleTypingEvent() {
@@ -468,7 +468,12 @@
                     const m = payload.new;
                     if (m.sender_id !== currentUser?.telegram_id) {
                         if (!m.receiver_id && m.room_name === currentRoom) loadRoomMessages();
-                        if (m.receiver_id === currentUser?.telegram_id) showToast(`پیام از ${m.sender_name}`);
+                        if (m.receiver_id === currentUser?.telegram_id) {
+                            showToast(`پیام از ${m.sender_name}`);
+                            if(selectedTargetUser && selectedTargetUser.telegram_id === m.sender_id) {
+                                loadPrivateMessages();
+                            }
+                        }
                     }
                 })
                 .subscribe();
