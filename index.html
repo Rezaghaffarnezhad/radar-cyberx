@@ -76,11 +76,10 @@
         let map, markers = {};
         let isGlobalChat = false;
 
-        // اگر توی تلگرام نبودید برای تست با دو اکانت مرورگر، مقادیر تصادفی امن میسازد
         const user = tg?.initDataUnsafe?.user || { 
             id: Math.floor(Math.random() * 900000) + 100000, 
             first_name: "کاربر " + Math.floor(Math.random() * 100), 
-            username: "user_" + Math.random().toString(36.substring(7)) 
+            username: "user_" + Math.random().toString(36).substring(7) 
         };
 
         function showToast(text) {
@@ -93,8 +92,7 @@
         }
 
         async function init() {
-            // ثبت یا آپدیت کاربر در دیتابیس با لوکیشن اولیه تهران (تا همدیگر را ببینید)
-            const { data } = await supabaseClient
+            const { data, error } = await supabaseClient
                 .from('users')
                 .upsert({ 
                     telegram_id: user.id, 
@@ -107,6 +105,12 @@
                 .select()
                 .single();
 
+            if (error) {
+                console.error("Supabase Error:", error);
+                document.getElementById('online-count').textContent = "خطای اتصال به دیتابیس";
+                return;
+            }
+
             if (data) currentUser = data;
 
             showToast(`خوش آمدید، ${currentUser.name}!`);
@@ -114,7 +118,6 @@
             map = L.map('map', { zoomControl: false }).setView([35.6892, 51.3890], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-            // گرفتن لوکیشن واقعی گوشی اگر دسترسی داده شود
             if (navigator.geolocation) {
                 navigator.geolocation.watchPosition(async pos => {
                     if (!currentUser) return;
@@ -137,7 +140,6 @@
                 document.getElementById('online-count').textContent = `${data.length} نفر آنلاین`;
                 
                 const existingIds = data.map(u => u.telegram_id);
-                // حذف مارکرهایی که آفلاین شدند
                 Object.keys(markers).forEach(id => {
                     if (!existingIds.includes(Number(id))) {
                         map.removeLayer(markers[id]);
@@ -157,7 +159,6 @@
                         const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
                         marker.on('click', () => showProfile(u));
                         markers[u.telegram_id] = marker;
-                        // اعلان ورود کاربر جدید به نزدیکی شما
                         showToast(`کاربر جدید (${u.name}) آنلاین شد!`);
                     }
                 });
@@ -237,7 +238,6 @@
             loadMessages();
         }
 
-        // گوش دادن زنده به پیام‌های جدید برای نمایش اعلان
         function listenToRealtimeMessages() {
             supabaseClient.channel('public:messages')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
