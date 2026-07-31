@@ -43,7 +43,7 @@
                 </div>
             </div>
             <div class="tg-card px-3 py-1.5 rounded-xl flex items-center justify-between text-xs backdrop-blur-md bg-opacity-90">
-                <span class="text-slate-400">محدوده:</span>
+                <span class="text-slate-400">محدوده شعاع:</span>
                 <div class="flex gap-1">
                     <button onclick="setRadius(1)" id="rad-1" class="px-2 py-0.5 rounded font-medium tg-input text-slate-300 transition text-[11px]">۱ ک‌م</button>
                     <button onclick="setRadius(5)" id="rad-5" class="px-2 py-0.5 rounded font-medium tg-input text-slate-300 transition text-[11px]">۵ ک‌م</button>
@@ -57,7 +57,7 @@
     <!-- تب ۲: روم‌های گفتگو -->
     <div id="view-chats" class="view-section hidden absolute inset-0 pb-16 pt-3 px-3 flex flex-col z-10 tg-bg">
         <div class="flex items-center justify-between mb-2 px-1">
-            <h2 class="font-bold text-xs text-slate-400">گروه‌ها و روم‌های زنده</h2>
+            <h2 class="font-bold text-xs text-slate-400">گروه‌ها و روم‌های زنده (بر اساس شعاع)</h2>
             <span id="room-status" class="text-[10px] text-emerald-400 font-medium">● آنلاین</span>
         </div>
         <div class="flex gap-1.5 overflow-x-auto pb-2 shrink-0 no-scrollbar">
@@ -68,7 +68,7 @@
         </div>
         <div id="room-messages" class="flex-1 overflow-y-auto flex flex-col gap-2 p-3 tg-card rounded-2xl my-1"></div>
         <div class="flex gap-1.5 mt-1">
-            <input id="room-input" oninput="handleRoomTyping()" onkeydown="if(event.key==='Enter') sendRoomMessage()" type="text" placeholder="پیام در روم..." class="flex-1 tg-input px-3.5 py-2.5 rounded-xl text-xs">
+            <input id="room-input" oninput="handleRoomTyping()" onkeydown="if(event.key==='Enter') sendRoomMessage()" type="text" placeholder="پیام در روم شعاعی..." class="flex-1 tg-input px-3.5 py-2.5 rounded-xl text-xs">
             <button onclick="sendRoomMessage()" class="bg-[#2b5278] hover:bg-[#336394] px-5 rounded-xl font-medium text-xs text-white transition">ارسال</button>
         </div>
     </div>
@@ -229,6 +229,9 @@
             });
             fetchUsersData();
             fetchNotesData();
+            if(!document.getElementById('view-chats').classList.contains('hidden')) {
+                loadRoomMessages();
+            }
         }
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -281,6 +284,7 @@
 
         async function updateMyLocation(lat, lng) {
             if(!currentUser) return;
+            currentCoords = { lat, lng };
             await supabaseClient.from('users').update({ latitude: lat, longitude: lng, last_seen: new Date() }).eq('telegram_id', currentUser.telegram_id);
         }
 
@@ -384,7 +388,23 @@
                 .is('receiver_id', null)
                 .order('created_at', { ascending: true });
 
-            container.innerHTML = (data || []).map(m => {
+            if (!data) {
+                container.innerHTML = '';
+                return;
+            }
+
+            // فیلتر کردن پیام‌ها بر اساس شعاع انتخابی کاربر
+            let filteredMessages = data;
+            if (activeRadiusKm > 0) {
+                filteredMessages = data.filter(m => {
+                    // پیام‌های خود کاربر همیشه نشان داده شوند
+                    if (m.sender_id === currentUser?.telegram_id) return true;
+                    if (!m.latitude || !m.longitude) return false;
+                    return calculateDistance(currentCoords.lat, currentCoords.lng, m.latitude, m.longitude) <= activeRadiusKm;
+                });
+            }
+
+            container.innerHTML = filteredMessages.map(m => {
                 const isMe = m.sender_id === currentUser?.telegram_id;
                 let ticksHTML = '';
                 if (isMe) {
@@ -420,6 +440,8 @@
                 receiver_id: null,
                 room_name: currentRoom,
                 message,
+                latitude: currentCoords.lat,
+                longitude: currentCoords.lng,
                 is_read: false
             }]);
         }
