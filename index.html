@@ -2,165 +2,180 @@
 <html lang="fa" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تلگرام مینی‌اپ - نقشه اجتماعی</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>سوپر اپلیکیشن اجتماعی تلگرام</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap');
         body, html { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #0e1621; color: #f5f5f5; font-family: 'Vazirmatn', sans-serif; }
-        .map-container { width: 100%; height: calc(100% - 60px); position: absolute; top: 0; left: 0; z-index: 1; }
+        .map-container { width: 100%; height: calc(100% - 64px); position: absolute; top: 0; left: 0; z-index: 1; }
         .tg-bg { background: #17212b; }
-        .tg-card { background: #232e3c; border: 1px solid rgba(255,255,255,0.05); }
-        .tg-input { background: #18222d; border: 1px solid #2f3d4c; color: #fff; }
-        .tg-input:focus { border-color: #2b5278; outline: none; }
-        .custom-marker { position: relative; width: 44px; height: 44px; border-radius: 50%; border: 2px solid #2b5278; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.5); background: #17212b; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 15px; }
-        .status-dot { position: absolute; bottom: 2px; right: 2px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #17212b; background: #4fae4e; }
-        .leaflet-layer { filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(90%); }
+        .tg-card { background: #232e3c; border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+        .tg-input { background: #18222d; border: 1.5px solid #2f3d4c; color: #fff; transition: all 0.2s ease; }
+        .tg-input:focus { border-color: #5288c1; outline: none; box-shadow: 0 0 0 3px rgba(82, 136, 193, 0.15); }
+        .custom-marker { position: relative; width: 46px; height: 46px; border-radius: 50%; border: 2.5px solid #5288c1; overflow: hidden; box-shadow: 0 6px 16px rgba(0,0,0,0.6); background: #17212b; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 16px; }
+        .status-dot { position: absolute; bottom: 2px; right: 2px; width: 11px; height: 11px; border-radius: 50%; border: 2px solid #17212b; background: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
+        .leaflet-layer { filter: invert(100%) hue-rotate(180deg) brightness(85%
+) contrast(90%); }
         .leaflet-container { background-color: #0e1621 !important; }
-        #toast { transition: transform 0.3s ease, opacity 0.3s ease; }
+        #toast { transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+        .pulse-ring { animation: pulse-animation 2s infinite; }
+        @keyframes pulse-animation { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(46, 204, 113, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); } }
     </style>
 </head>
 <body class="relative flex flex-col h-full justify-between select-none">
 
-    <!-- تب ۱: نقشه زنده با لوکیشن زنده افراد -->
+    <!-- تب ۱: نقشه زنده و لوکیشن‌ها -->
     <div id="view-map" class="view-section relative w-full h-full">
         <div id="map" class="map-container"></div>
-        <div class="absolute top-3 left-3 right-3 z-10 tg-card px-4 py-2.5 rounded-xl flex items-center justify-between shadow-xl">
-            <div class="flex items-center gap-2">
-                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                <span id="online-count" class="text-xs font-semibold text-emerald-400">در حال ردیابی لوکیشن‌ها...</span>
+        <div class="absolute top-4 left-4 right-4 z-10 tg-card px-4 py-3 rounded-2xl flex items-center justify-between shadow-2xl backdrop-blur-md bg-opacity-90">
+            <div class="flex items-center gap-2.5">
+                <div class="w-3 h-3 rounded-full bg-emerald-500 pulse-ring"></div>
+                <span id="online-count" class="text-xs font-bold text-emerald-400">در حال ردیابی لوکیشن‌ها...</span>
             </div>
-            <button onclick="openMapNoteModal()" class="bg-[#2b5278] hover:bg-[#386797] px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition text-white">📍 یادداشت نقشه</button>
+            <button onclick="openMapNoteModal()" class="bg-[#2b5278] hover:bg-[#386797] px-3.5 py-2 rounded-xl text-xs font-bold shadow-lg transition text-white flex items-center gap-1.5">
+                <span>📍</span> یادداشت نقشه
+            </button>
         </div>
     </div>
 
-    <!-- تب ۲: روم‌های گفتگو (استایل تلگرام) -->
-    <div id="view-chats" class="view-section hidden absolute inset-0 pb-16 pt-3 px-3 flex flex-col z-10 tg-bg">
-        <div class="flex gap-1.5 overflow-x-auto pb-2 shrink-0">
-            <button onclick="switchRoom('general')" id="room-btn-general" class="room-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#2b5278] text-white shrink-0">🌐 عمومی</button>
-            <button onclick="switchRoom('dev')" id="room-btn-dev" class="room-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold tg-card text-slate-300 shrink-0">💻 برنامه‌نویسان</button>
-            <button onclick="switchRoom('hangout')" id="room-btn-hangout" class="room-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold tg-card text-slate-300 shrink-0">☕ کافه و پاتوق</button>
-            <button onclick="switchRoom('gamer')" id="room-btn-gamer" class="room-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold tg-card text-slate-300 shrink-0">🎮 گیمرها</button>
+    <!-- تب ۲: روم‌های گفتگو و چت -->
+    <div id="view-chats" class="view-section hidden absolute inset-0 pb-20 pt-4 px-4 flex flex-col z-10 tg-bg">
+        <div class="flex items-center justify-between mb-3 px-1">
+            <h2 class="font-extrabold text-sm text-slate-200">روم‌های گفتگوی زنده</h2>
+            <span class="text-[10px] text-slate-400 tg-card px-2.5 py-1 rounded-full">فعال</span>
         </div>
-        <div id="room-messages" class="flex-1 overflow-y-auto flex flex-col gap-2.5 p-3 tg-card rounded-2xl my-2"></div>
-        <div class="flex gap-2">
-            <input id="room-input" type="text" placeholder="نوشتن پیام..." class="flex-1 tg-input px-4 py-2.5 rounded-xl text-xs">
-            <button onclick="sendRoomMessage()" class="bg-[#2b5278] hover:bg-[#386797] px-5 rounded-xl font-semibold text-xs text-white">ارسال</button>
+        <div class="flex gap-2 overflow-x-auto pb-2 shrink-0 no-scrollbar">
+            <button onclick="switchRoom('general')" id="room-btn-general" class="room-tab px-4 py-2 rounded-xl text-xs font-bold transition shrink-0 bg-[#2b5278] text-white shadow-md">🌐 عمومی</button>
+            <button onclick="switchRoom('dev')" id="room-btn-dev" class="room-tab px-4 py-2 rounded-xl text-xs font-bold transition shrink-0 tg-card text-slate-300">💻 برنامه‌نویسان</button>
+            <button onclick="switchRoom('hangout')" id="room-btn-hangout" class="room-tab px-4 py-2 rounded-xl text-xs font-bold transition shrink-0 tg-card text-slate-300">☕ کافه و پاتوق</button>
+            <button onclick="switchRoom('gamer')" id="room-btn-gamer" class="room-tab px-4 py-2 rounded-xl text-xs font-bold transition shrink-0 tg-card text-slate-300">🎮 گیمرها</button>
+        </div>
+        <div id="room-messages" class="flex-1 overflow-y-auto flex flex-col gap-3 p-3.5 tg-card rounded-3xl my-2 shadow-inner"></div>
+        <div class="flex gap-2 mt-1">
+            <input id="room-input" type="text" placeholder="پیام خود را در روم بنویسید..." class="flex-1 tg-input px-4 py-3 rounded-2xl text-xs">
+            <button onclick="sendRoomMessage()" class="bg-[#2b5278] hover:bg-[#386797] px-6 rounded-2xl font-bold text-xs text-white shadow-lg transition">ارسال</button>
         </div>
     </div>
 
-    <!-- تب ۳: جامعه و اعلانات -->
-    <div id="view-community" class="view-section hidden absolute inset-0 pb-16 pt-3 px-3 overflow-y-auto z-10 tg-bg flex flex-col gap-3">
-        <div class="flex justify-between items-center">
-            <h2 class="font-bold text-sm text-slate-200">جامعه و رویدادهای محلی</h2>
-            <button onclick="openBoardModal()" class="bg-[#2b5278] px-3 py-1.5 rounded-lg text-xs font-semibold text-white">➕ ثبت رویداد</button>
+    <!-- تب ۳: جامعه و اعلانات محلی -->
+    <div id="view-community" class="view-section hidden absolute inset-0 pb-20 pt-4 px-4 overflow-y-auto z-10 tg-bg flex flex-col gap-4">
+        <div class="flex justify-between items-center px-1">
+            <h2 class="font-extrabold text-sm text-slate-200">جامعه و تابلو اعلانات</h2>
+            <button onclick="openBoardModal()" class="bg-[#2b5278] hover:bg-[#386797] px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow transition">➕ ثبت رویداد</button>
         </div>
-        <div id="board-container" class="flex flex-col gap-2.5"></div>
-        <h3 class="font-bold text-xs text-slate-300 mt-1">کاربران آنلاین</h3>
-        <div id="users-list-container" class="flex flex-col gap-2"></div>
+        <div id="board-container" class="flex flex-col gap-3"></div>
+        <h3 class="font-bold text-xs text-slate-300 mt-2 px-1">کاربران حاضر در اطراف شما</h3>
+        <div id="users-list-container" class="flex flex-col gap-2.5"></div>
     </div>
 
-    <!-- تب ۴: پروفایل و استوری -->
-    <div id="view-profile" class="view-section hidden absolute inset-0 pb-16 pt-3 px-3 overflow-y-auto z-10 tg-bg flex flex-col gap-3">
-        <div class="tg-card p-4 rounded-2xl flex flex-col gap-3 shadow-lg">
-            <div class="flex items-center gap-3">
-                <div id="my-avatar" class="w-12 h-12 rounded-full bg-[#2b5278] flex items-center justify-center text-lg font-bold text-white">ک</div>
+    <!-- تب ۴: پروفایل و استوری‌ها -->
+    <div id="view-profile" class="view-section hidden absolute inset-0 pb-20 pt-4 px-4 overflow-y-auto z-10 tg-bg flex flex-col gap-4">
+        <div class="tg-card p-5 rounded-3xl flex flex-col gap-3.5 shadow-xl">
+            <div class="flex items-center gap-3.5">
+                <div id="my-avatar" class="w-16 h-16 rounded-2xl bg-[#2b5278] flex items-center justify-center text-2xl font-extrabold text-white shadow-lg">ک</div>
                 <div>
-                    <h3 id="profile-display-name" class="font-bold text-sm text-white">کاربر</h3>
-                    <p id="profile-badge" class="text-[11px] text-amber-400 font-semibold mt-0.5">⭐ امتیاز: ۱۰ | تازه وارد</p>
+                    <h3 id="profile-display-name" class="font-bold text-base text-white">کاربر</h3>
+                    <p id="profile-badge" class="text-[11px] text-amber-400 font-semibold mt-1 bg-amber-400/10 px-2.5 py-0.5 rounded-full inline-block border border-amber-400/20">⭐ امتیاز: ۱۰ | تازه وارد</p>
                 </div>
             </div>
             <div>
-                <label class="text-[11px] text-slate-400 mb-1 block">نام نمایشی</label>
-                <input id="input-my-name" type="text" class="w-full tg-input px-3.5 py-2 rounded-xl text-xs">
+                <label class="text-[11px] text-slate-400 mb-1.5 block font-medium">نام نمایشی</label>
+                <input id="input-my-name" type="text" class="w-full tg-input px-4 py-3 rounded-2xl text-xs">
             </div>
             <div>
-                <label class="text-[11px] text-slate-400 mb-1 block">بیوگرافی</label>
-                <textarea id="input-my-bio" rows="2" class="w-full tg-input px-3.5 py-2 rounded-xl text-xs resize-none"></textarea>
+                <label class="text-[11px] text-slate-400 mb-1.5 block font-medium">بیوگرافی کوتاه</label>
+                <textarea id="input-my-bio" rows="2" placeholder="درباره علایق یا پاتوق خود بنویسید..." class="w-full tg-input px-4 py-3 rounded-2xl text-xs resize-none"></textarea>
             </div>
-            <div class="flex items-center justify-between py-1">
-                <span class="text-xs text-slate-300">حالت روح (مخفی کردن لوکیشن)</span>
-                <input id="input-ghost-mode" type="checkbox" class="w-4 h-4 accent-[#2b5278]">
+            <div class="flex items-center justify-between py-1.5 bg-[#18222d] px-4 rounded-2xl border border-[#2f3d4c]">
+                <span class="text-xs text-slate-300 font-medium">حالت روح (مخفی شدن لوکیشن روی نقشه)</span>
+                <input id="input-ghost-mode" type="checkbox" class="w-5 h-5 accent-[#5288c1] cursor-pointer">
             </div>
-            <button onclick="saveProfile()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#386797] rounded-xl font-semibold text-xs text-white">ذخیره تغییرات</button>
+            <button onclick="saveProfile()" class="w-full py-3 bg-[#2b5278] hover:bg-[#386797] rounded-2xl font-bold text-xs text-white shadow-lg transition">ذخیره پروفایل</button>
         </div>
 
-        <div class="tg-card p-4 rounded-2xl flex flex-col gap-2.5">
-            <h4 class="font-bold text-xs text-slate-200">انتشار استوری ۲۴ ساعته</h4>
-            <input id="input-story-text" type="text" placeholder="الان کجایی؟..." class="w-full tg-input px-3.5 py-2 rounded-xl text-xs">
-            <button onclick="postStory()" class="py-2 bg-[#2b5278] rounded-xl font-semibold text-xs text-white">ارسال استوری</button>
-            <div id="stories-container" class="flex flex-col gap-2 mt-1"></div>
+        <div class="tg-card p-5 rounded-3xl flex flex-col gap-3 shadow-xl">
+            <h4 class="font-bold text-xs text-slate-200">انتشار استوری موقت (۲۴ ساعته)</h4>
+            <input id="input-story-text" type="text" placeholder="الان کجایی یا چه حسی داری؟..." class="w-full tg-input px-4 py-3 rounded-2xl text-xs">
+            <button onclick="postStory()" class="py-2.5 bg-[#2b5278] hover:bg-[#386797] rounded-2xl font-bold text-xs text-white shadow transition">انتشار استوری</button>
+            <div id="stories-container" class="flex flex-col gap-2.5 mt-2"></div>
         </div>
     </div>
 
     <!-- پنل چت خصوصی (پی‌وی) -->
-    <div id="chat-window" class="hidden absolute inset-0 tg-bg z-50 flex flex-col pb-3">
-        <div class="p-3 tg-card flex items-center gap-3 border-b border-[#2f3d4c]">
-            <button onclick="closeChat()" class="text-slate-300 text-lg px-2">←</button>
+    <div id="chat-window" class="hidden absolute inset-0 tg-bg z-50 flex flex-col pb-4 animate-in fade-in duration-200">
+        <div class="p-4 tg-card flex items-center gap-3 border-b border-[#2f3d4c] shadow-md">
+            <button onclick="closeChat()" class="text-slate-300 text-lg px-2.5 py-1 rounded-xl tg-card hover:bg-[#2b3c50] transition">←</button>
             <h3 id="chat-title" class="font-bold text-sm text-white">پی‌وی</h3>
         </div>
-        <div id="chat-messages" class="flex-1 p-3 overflow-y-auto flex flex-col gap-2.5"></div>
-        <div class="p-3 tg-card flex gap-2 border-t border-[#2f3d4c]">
-            <input id="chat-input" type="text" placeholder="پیام..." class="flex-1 tg-input px-3.5 py-2.5 rounded-xl text-xs">
-            <button onclick="sendPrivateMessage()" class="bg-[#2b5278] px-5 rounded-xl font-semibold text-xs text-white">ارسال</button>
+        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3"></div>
+        <div class="p-4 tg-card flex gap-2 border-t border-[#2f3d4c]">
+            <input id="chat-input" type="text" placeholder="پیام خود را بنویسید..." class="flex-1 tg-input px-4 py-3 rounded-2xl text-xs">
+            <button onclick="sendPrivateMessage()" class="bg-[#2b5278] hover:bg-[#386797] px-6 rounded-2xl font-bold text-xs text-white shadow transition">ارسال</button>
         </div>
     </div>
 
-    <!-- مودال یادداشت روی نقشه -->
-    <div id="map-note-modal" class="hidden absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="tg-card p-4 rounded-2xl w-full max-w-sm flex flex-col gap-3 shadow-2xl">
-            <h3 class="font-bold text-xs text-white">ثبت یادداشت روی نقشه</h3>
-            <textarea id="map-note-input" rows="3" placeholder="متن یادداشت..." class="w-full tg-input p-3 rounded-xl text-xs resize-none"></textarea>
-            <div class="flex gap-2">
-                <button onclick="submitMapNote()" class="flex-1 py-2 bg-[#2b5278] rounded-xl font-semibold text-xs text-white">ثبت</button>
-                <button onclick="closeMapNoteModal()" class="flex-1 py-2 tg-card rounded-xl font-semibold text-xs text-slate-300">لغو</button>
+    <!-- مودال ثبت یادداشت روی نقشه -->
+    <div id="map-note-modal" class="hidden absolute inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="tg-card p-6 rounded-3xl w-full max-w-sm flex flex-col gap-4 shadow-2xl">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-sm text-white">سنجاق یادداشت روی نقشه</h3>
+                <button onclick="closeMapNoteModal()" class="text-slate-400 hover:text-white text-xs">✕</button>
+            </div>
+            <textarea id="map-note-input" rows="3" placeholder="یک پیام یادگاری، معرفی کافه یا پیشنهاد پاتوق..." class="w-full tg-input p-3.5 rounded-2xl text-xs resize-none"></textarea>
+            <div class="flex gap-2.5">
+                <button onclick="submitMapNote()" class="flex-1 py-3 bg-[#2b5278] hover:bg-[#386797] rounded-2xl font-bold text-xs text-white shadow transition">ثبت روی نقشه</button>
+                <button onclick="closeMapNoteModal()" class="flex-1 py-3 tg-card hover:bg-[#2b3c50] rounded-2xl font-bold text-xs text-slate-300 transition">انصراف</button>
             </div>
         </div>
     </div>
 
-    <!-- مودال اعلانات -->
-    <div id="board-modal" class="hidden absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="tg-card p-4 rounded-2xl w-full max-w-sm flex flex-col gap-3 shadow-2xl">
-            <h3 class="font-bold text-xs text-white">ثبت رویداد محلی</h3>
-            <input id="board-title-input" type="text" placeholder="عنوان رویداد" class="w-full tg-input p-2.5 rounded-xl text-xs">
-            <textarea id="board-desc-input" rows="2" placeholder="توضیحات..." class="w-full tg-input p-3 rounded-xl text-xs resize-none"></textarea>
-            <div class="flex gap-2">
-                <button onclick="submitBoardPost()" class="flex-1 py-2 bg-[#2b5278] rounded-xl font-semibold text-xs text-white">ثبت</button>
-                <button onclick="closeBoardModal()" class="flex-1 py-2 tg-card rounded-xl font-semibold text-xs text-slate-300">لغو</button>
+    <!-- مودال ثبت اعلانات محلی -->
+    <div id="board-modal" class="hidden absolute inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="tg-card p-6 rounded-3xl w-full max-w-sm flex flex-col gap-4 shadow-2xl">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-sm text-white">ثبت رویداد یا آگهی محلی</h3>
+                <button onclick="closeBoardModal()" class="text-slate-400 hover:text-white text-xs">✕</button>
+            </div>
+            <input id="board-title-input" type="text" placeholder="عنوان رویداد (مثلاً دورهمی کافه)" class="w-full tg-input p-3.5 rounded-2xl text-xs">
+            <textarea id="board-desc-input" rows="3" placeholder="توضیحات کامل..." class="w-full tg-input p-3.5 rounded-2xl text-xs resize-none"></textarea>
+            <div class="flex gap-2.5">
+                <button onclick="submitBoardPost()" class="flex-1 py-3 bg-[#2b5278] hover:bg-[#386797] rounded-2xl font-bold text-xs text-white shadow transition">انتشار</button>
+                <button onclick="closeBoardModal()" class="flex-1 py-3 tg-card hover:bg-[#2b3c50] rounded-2xl font-bold text-xs text-slate-300 transition">انصراف</button>
             </div>
         </div>
     </div>
 
     <!-- سیستم اعلان (Toast) -->
-    <div id="toast" class="absolute top-4 left-3 right-3 z-50 transform -translate-y-20 opacity-0 pointer-events-none tg-card p-3 rounded-xl border border-[#2b5278] shadow-xl flex items-center gap-2.5">
-        <span class="text-base">🔔</span>
-        <div id="toast-text" class="text-xs font-medium text-slate-200">پیام جدید</div>
+    <div id="toast" class="absolute top-5 left-4 right-4 z-50 transform -translate-y-24 opacity-0 pointer-events-none tg-card px-4 py-3 rounded-2xl border border-[#5288c1]/40 shadow-2xl flex items-center gap-3">
+        <span class="text-xl">🔔</span>
+        <div id="toast-text" class="text-xs font-bold text-white">اعلان جدید</div>
     </div>
 
-    <!-- منوی پایین (Telegram Bottom Bar) -->
-    <div class="absolute bottom-0 left-0 right-0 h-14 tg-card z-40 flex items-center justify-around border-t border-[#2f3d4c] px-2">
-        <button onclick="switchTab('map')" id="nav-map" class="flex flex-col items-center gap-0.5 text-[#5288c1] transition">
-            <span class="text-base">🗺️</span>
-            <span class="text-[9px] font-semibold">نقشه</span>
+    <!-- منوی پایین (Telegram Navigation Bar) -->
+    <div class="absolute bottom-0 left-0 right-0 h-16 tg-card z-40 flex items-center justify-around border-t border-[#2f3d4c] px-2 shadow-2xl">
+        <button onclick="switchTab('map')" id="nav-map" class="flex flex-col items-center gap-0.5 text-[#5288c1] transition py-1 px-4 rounded-xl bg-[#5288c1]/10">
+            <span class="text-xl">🗺️</span>
+            <span class="text-[10px] font-bold">نقشه</span>
         </button>
-        <button onclick="switchTab('chats')" id="nav-chats" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-white transition">
-            <span class="text-base">💬</span>
-            <span class="text-[9px] font-semibold">روم‌ها</span>
+        <button onclick="switchTab('chats')" id="nav-chats" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-200 transition py-1 px-4 rounded-xl">
+            <span class="text-xl">💬</span>
+            <span class="text-[10px] font-bold">روم‌ها</span>
         </button>
-        <button onclick="switchTab('community')" id="nav-community" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-white transition">
-            <span class="text-base">📢</span>
-            <span class="text-[9px] font-semibold">جامعه</span>
+        <button onclick="switchTab('community')" id="nav-community" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-200 transition py-1 px-4 rounded-xl">
+            <span class="text-xl">📢</span>
+            <span class="text-[10px] font-bold">جامعه</span>
         </button>
-        <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-white transition">
-            <span class="text-base">👤</span>
-            <span class="text-[9px] font-semibold">پروفایل</span>
+        <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-200 transition py-1 px-4 rounded-xl">
+            <span class="text-xl">👤</span>
+            <span class="text-[10px] font-bold">پروفایل</span>
         </button>
     </div>
 
@@ -186,9 +201,9 @@
         function showToast(text) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-text').textContent = text;
-            toast.classList.remove('-translate-y-20', 'opacity-0', 'pointer-events-none');
+            toast.classList.remove('-translate-y-24', 'opacity-0', 'pointer-events-none');
             setTimeout(() => {
-                toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none');
+                toast.classList.add('-translate-y-24', 'opacity-0', 'pointer-events-none');
             }, 3500);
         }
 
@@ -198,9 +213,11 @@
 
             ['map', 'chats', 'community', 'profile'].forEach(t => {
                 const btn = document.getElementById(`nav-${t}`);
-                if(btn) btn.className = t === tabId ? 
-                    "flex flex-col items-center gap-0.5 text-[#5288c1] transition" : 
-                    "flex flex-col items-center gap-0.5 text-slate-400 hover:text-white transition";
+                if(btn) {
+                    btn.className = t === tabId ? 
+                        "flex flex-col items-center gap-0.5 text-[#5288c1] transition py-1 px-4 rounded-xl bg-[#5288c1]/10 font-bold" : 
+                        "flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-200 transition py-1 px-4 rounded-xl";
+                }
             });
 
             if(tabId === 'map' && map) setTimeout(() => map.invalidateSize(), 200);
@@ -244,7 +261,7 @@
             map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-            setInterval(fetchData, 3000);
+            setInterval(fetchData, 3500);
             fetchData();
             initRealtime();
         }
@@ -272,7 +289,7 @@
                     if (u.telegram_id === currentUser?.telegram_id || !u.latitude || !u.longitude) return;
                     const initial = u.name ? u.name.charAt(0) : '?';
                     const html = `<div class="custom-marker">${initial}<div class="status-dot"></div></div>`;
-                    const icon = L.divIcon({ html, iconSize: [44, 44], iconAnchor: [22, 22] });
+                    const icon = L.divIcon({ html, iconSize: [46, 46], iconAnchor: [23, 23] });
 
                     if (markers[u.telegram_id]) {
                         markers[u.telegram_id].setLatLng([u.latitude, u.longitude]);
@@ -289,7 +306,7 @@
                 notes.forEach(n => {
                     if(!markers['note_' + n.id]) {
                         const marker = L.marker([n.latitude, n.longitude]).addTo(map);
-                        marker.bindPopup(`<div style="font-family:Vazirmatn; font-size:11px; color:#17212b;"><b>${n.user_name}</b><br>${n.message}</div>`);
+                        marker.bindPopup(`<div style="font-family:Vazirmatn; font-size:11px; color:#17212b; padding:2px;"><b>${n.user_name}</b><br>${n.message}</div>`);
                         markers['note_' + n.id] = marker;
                     }
                 });
@@ -308,7 +325,7 @@
             currentUser.ghost_mode = ghost_mode;
             document.getElementById('my-avatar').textContent = name.charAt(0);
             document.getElementById('profile-display-name').textContent = name;
-            showToast("پروفایل به‌روزرسانی شد");
+            showToast("پروفایل شما با موفقیت ذخیره شد ✨");
         }
 
         function switchRoom(room) {
@@ -316,9 +333,9 @@
             ['general', 'dev', 'hangout', 'gamer'].forEach(r => {
                 const btn = document.getElementById(`room-btn-${r}`);
                 if(r === room) {
-                    btn.className = "room-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#2b5278] text-white shrink-0";
+                    btn.className = "room-tab px-4 py-2 rounded-xl text-xs font-bold transition shrink-0 bg-[#2b5278] text-white shadow-md";
                 } else {
-                    btn.className = "room-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold tg-card text-slate-300 shrink-0";
+                    btn.className = "room-tab px-4 py-2 rounded-xl text-xs font-bold transition shrink-0 tg-card text-slate-300";
                 }
             });
             loadRoomMessages();
@@ -329,9 +346,9 @@
             const { data } = await supabaseClient.from('messages').select('*').eq('room_name', currentRoom).is('receiver_id', null).order('created_at', { ascending: true });
 
             container.innerHTML = (data || []).map(m => `
-                <div class="max-w-[80%] p-3 rounded-2xl text-xs ${m.sender_id === currentUser.telegram_id ? 'bg-[#2b5278] text-white self-end rounded-br-none' : 'tg-card text-slate-200 self-start rounded-bl-none'}">
+                <div class="max-w-[85%] p-3.5 rounded-2xl text-xs ${m.sender_id === currentUser.telegram_id ? 'bg-[#2b5278] text-white self-end rounded-br-none shadow-md' : 'tg-card text-slate-200 self-start rounded-bl-none'}">
                     <div class="text-[10px] text-[#5288c1] font-bold mb-1">${m.sender_name}</div>
-                    <div>${m.message}</div>
+                    <div class="leading-relaxed">${m.message}</div>
                 </div>
             `).join('');
             container.scrollTop = container.scrollHeight;
@@ -357,13 +374,13 @@
             const { data } = await supabaseClient.from('users').select('*');
             if(data) {
                 document.getElementById('users-list-container').innerHTML = data.map(u => `
-                    <div onclick="openPrivateChat(${u.telegram_id}, '${u.name}')" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#2b3c50] transition">
-                        <div class="w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-sm">${(u.name || 'ک').charAt(0)}</div>
+                    <div onclick="openPrivateChat(${u.telegram_id}, '${u.name}')" class="tg-card p-3.5 rounded-2xl flex items-center gap-3.5 cursor-pointer hover:bg-[#2b3c50] transition shadow-sm">
+                        <div class="w-11 h-11 rounded-xl bg-[#2b5278] flex items-center justify-center font-bold text-white text-sm shadow">${(u.name || 'ک').charAt(0)}</div>
                         <div class="flex-1">
                             <h4 class="font-bold text-xs text-white">${u.name}</h4>
-                            <p class="text-[10px] text-slate-400 mt-0.5 line-clamp-1">${u.bio || 'بدون بیوگرافی'}</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5 line-clamp-1">${u.bio || 'بدون بیوگرافی'}</p>
                         </div>
-                        <span class="text-[10px] text-emerald-400 font-semibold">● آنلاین</span>
+                        <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">● آنلاین</span>
                     </div>
                 `).join('');
             }
@@ -387,8 +404,8 @@
                 .order('created_at', { ascending: true });
 
             container.innerHTML = (data || []).map(m => `
-                <div class="max-w-[75%] p-3 rounded-2xl text-xs ${m.sender_id === currentUser.telegram_id ? 'bg-[#2b5278] text-white self-end rounded-br-none' : 'tg-card text-slate-200 self-start rounded-bl-none'}">
-                    <div>${m.message}</div>
+                <div class="max-w-[75%] p-3.5 rounded-2xl text-xs ${m.sender_id === currentUser.telegram_id ? 'bg-[#2b5278] text-white self-end rounded-br-none shadow-md' : 'tg-card text-slate-200 self-start rounded-bl-none'}">
+                    <div class="leading-relaxed">${m.message}</div>
                 </div>
             `).join('');
             container.scrollTop = container.scrollHeight;
@@ -414,7 +431,7 @@
             if(!content) return;
             await supabaseClient.from('stories').insert([{ user_id: currentUser.telegram_id, user_name: currentUser.name, content }]);
             document.getElementById('input-story-text').value = '';
-            showToast("استوری منتشر شد");
+            showToast("استوری شما منتشر شد ⚡");
             loadStories();
         }
 
@@ -423,9 +440,9 @@
             const container = document.getElementById('stories-container');
             if(data) {
                 container.innerHTML = data.map(s => `
-                    <div class="tg-card p-2.5 rounded-xl text-xs flex flex-col gap-0.5">
+                    <div class="tg-card p-3 rounded-2xl text-xs flex flex-col gap-1 shadow-sm">
                         <span class="font-bold text-[#5288c1] text-[11px]">${s.user_name}</span>
-                        <p class="text-slate-300">${s.content}</p>
+                        <p class="text-slate-300 leading-relaxed">${s.content}</p>
                     </div>
                 `).join('');
             }
@@ -444,7 +461,7 @@
                 message
             }]);
             closeMapNoteModal();
-            showToast("یادداشت روی نقشه ثبت شد");
+            showToast("یادداشت شما روی نقشه سنجاق شد 📍");
             fetchData();
         }
 
@@ -456,7 +473,7 @@
             if(!title || !description) return;
             await supabaseClient.from('board_posts').insert([{ user_id: currentUser.telegram_id, user_name: currentUser.name, title, description }]);
             closeBoardModal();
-            showToast("رویداد ثبت شد");
+            showToast("رویداد شما در تابلو اعلانات ثبت شد 📢");
             loadBoardPosts();
         }
 
@@ -465,12 +482,12 @@
             const container = document.getElementById('board-container');
             if(data) {
                 container.innerHTML = data.map(p => `
-                    <div class="tg-card p-3 rounded-xl flex flex-col gap-1">
+                    <div class="tg-card p-4 rounded-2xl flex flex-col gap-1.5 shadow-sm">
                         <div class="flex justify-between items-center">
                             <h4 class="font-bold text-xs text-[#5288c1]">${p.title}</h4>
-                            <span class="text-[10px] text-slate-400">${p.user_name}</span>
+                            <span class="text-[10px] text-slate-400 bg-[#18222d] px-2.5 py-0.5 rounded-md border border-[#2f3d4c]">${p.user_name}</span>
                         </div>
-                        <p class="text-xs text-slate-300">${p.description}</p>
+                        <p class="text-xs text-slate-300 leading-relaxed">${p.description}</p>
                     </div>
                 `).join('');
             }
@@ -484,7 +501,7 @@
                         if (!m.receiver_id && m.room_name === currentRoom) loadRoomMessages();
                         if (m.receiver_id === currentUser?.telegram_id) {
                             if (!document.getElementById('chat-window').classList.contains('hidden') && selectedTargetUser?.telegram_id === m.sender_id) loadPrivateMessages();
-                            showToast(`پی‌وی جدید از ${m.sender_name}`);
+                            showToast(`پی‌وی جدید از ${m.sender_name} 💬`);
                         }
                     }
                 })
