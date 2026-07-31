@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Social Map</title>
+    <title>نقشه و چت زنده</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -17,36 +17,46 @@
         .status-dot { position: absolute; bottom: 2px; right: 2px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #0d1117; background: #22c55e; }
         .leaflet-layer { filter: invert(100%) hue-rotate(180deg) brightness(90%) contrast(90%); }
         .leaflet-container { background-color: #0d1117 !important; }
+        #toast { transition: transform 0.3s ease, opacity 0.3s ease; }
     </style>
 </head>
 <body class="relative flex flex-col h-full">
 
     <div id="map"></div>
 
+    <!-- هدر بالای صفحه -->
     <div class="absolute top-4 left-4 right-4 z-10 glass p-3 rounded-2xl flex items-center justify-between shadow-lg">
         <div class="flex items-center gap-3">
             <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-            <span class="text-sm font-semibold tracking-wide">نقشه زنده اجتماعی</span>
+            <span id="online-count" class="text-sm font-semibold tracking-wide">در حال اتصال...</span>
         </div>
-        <span id="online-count" class="text-xs bg-slate-800 px-3 py-1 rounded-full text-slate-300">در حال اتصال...</span>
+        <button onclick="openGlobalChat()" class="bg-blue-600/80 hover:bg-blue-600 px-4 py-1.5 rounded-xl text-xs font-semibold shadow transition">چت عمومی 🌐</button>
     </div>
 
-    <div id="profile-modal" class="hidden absolute bottom-0 left-0 right-0 glass p-6 rounded-t-3xl z-50 flex flex-col gap-4 shadow-2xl transition-all">
+    <!-- کادر اعلان (Toast) -->
+    <div id="toast" class="absolute top-20 left-4 right-4 z-50 transform -translate-y-20 opacity-0 pointer-events-none glass p-3.5 rounded-2xl border border-blue-500/30 shadow-xl flex items-center gap-3">
+        <span class="text-xl">🔔</span>
+        <div id="toast-text" class="text-xs font-medium text-slate-200">اعلان جدید</div>
+    </div>
+
+    <!-- پروفایل کاربر هنگام کلیک روی مارکر -->
+    <div id="profile-modal" class="hidden absolute bottom-0 left-0 right-0 glass p-6 rounded-t-3xl z-50 flex flex-col gap-4 shadow-2xl">
         <div class="flex items-center gap-4">
             <div id="modal-avatar" class="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-xl font-bold text-white shadow-md">ک</div>
             <div>
                 <h3 id="modal-name" class="font-bold text-lg">نام کاربر</h3>
-                <p class="text-xs text-green-400 flex items-center gap-1 mt-0.5">● آنلاین در نزدیکی شما</p>
+                <p class="text-xs text-green-400 flex items-center gap-1 mt-0.5">● آنلاین روی نقشه</p>
             </div>
             <button onclick="closeProfile()" class="ml-auto text-slate-400 hover:text-white text-xl p-2">✕</button>
         </div>
-        <button onclick="openChat()" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl font-semibold shadow-lg hover:opacity-95 transition">شروع گفتگوی زنده</button>
+        <button onclick="openChat()" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl font-semibold shadow-lg hover:opacity-95 transition">شروع گفتگوی خصوصی</button>
     </div>
 
+    <!-- پنجره چت (خصوصی یا عمومی) -->
     <div id="chat-window" class="hidden absolute inset-0 bg-[#0d1117] z-50 flex flex-col">
         <div class="p-4 glass flex items-center gap-3 border-b border-slate-800">
             <button onclick="closeChat()" class="text-slate-300 text-xl px-2">←</button>
-            <h3 id="chat-title" class="font-bold text-base">چت خصوصی</h3>
+            <h3 id="chat-title" class="font-bold text-base">چت</h3>
         </div>
         <div id="chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3"></div>
         <div class="p-4 glass flex gap-2 border-t border-slate-800">
@@ -58,28 +68,53 @@
     <script>
         const SUPABASE_URL = "https://dxdskvkcmovotzxixxhd.supabase.co";
         const SUPABASE_KEY = "sb_publishable_3-rNuWmg9jAyPPQ89hE4ZQ_avo0wsPd";
-        const TELEGRAM_BOT_TOKEN = "8186173027:AAHY6oTA7TF0NWbgD_KaajJgqBZtyAu6EPc";
         
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let tg = window.Telegram?.WebApp;
         let currentUser = null, selectedTargetUser = null;
         let map, markers = {};
+        let isGlobalChat = false;
 
-        const user = tg?.initDataUnsafe?.user || { id: Math.floor(Math.random()*100000), first_name: "کاربر تستی", username: "test_user" };
+        // اگر توی تلگرام نبودید برای تست با دو اکانت مرورگر، مقادیر تصادفی امن میسازد
+        const user = tg?.initDataUnsafe?.user || { 
+            id: Math.floor(Math.random() * 900000) + 100000, 
+            first_name: "کاربر " + Math.floor(Math.random() * 100), 
+            username: "user_" + Math.random().toString(36.substring(7)) 
+        };
+
+        function showToast(text) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-text').textContent = text;
+            toast.classList.remove('-translate-y-20', 'opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none');
+            }, 4000);
+        }
 
         async function init() {
+            // ثبت یا آپدیت کاربر در دیتابیس با لوکیشن اولیه تهران (تا همدیگر را ببینید)
             const { data } = await supabaseClient
                 .from('users')
-                .upsert({ telegram_id: user.id, name: user.first_name, username: user.username, last_seen: new Date() }, { onConflict: 'telegram_id' })
+                .upsert({ 
+                    telegram_id: user.id, 
+                    name: user.first_name, 
+                    username: user.username, 
+                    latitude: 35.6892 + (Math.random() - 0.5) * 0.02, 
+                    longitude: 51.3890 + (Math.random() - 0.5) * 0.02,
+                    last_seen: new Date() 
+                }, { onConflict: 'telegram_id' })
                 .select()
                 .single();
 
             if (data) currentUser = data;
 
-            map = L.map('map', { zoomControl: false }).setView([35.6892, 51.3890], 14);
+            showToast(`خوش آمدید، ${currentUser.name}!`);
+
+            map = L.map('map', { zoomControl: false }).setView([35.6892, 51.3890], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
+            // گرفتن لوکیشن واقعی گوشی اگر دسترسی داده شود
             if (navigator.geolocation) {
                 navigator.geolocation.watchPosition(async pos => {
                     if (!currentUser) return;
@@ -93,12 +128,23 @@
 
             setInterval(fetchNearbyUsers, 4000);
             fetchNearbyUsers();
+            listenToRealtimeMessages();
         }
 
         async function fetchNearbyUsers() {
             const { data } = await supabaseClient.from('users').select('*');
             if (data) {
                 document.getElementById('online-count').textContent = `${data.length} نفر آنلاین`;
+                
+                const existingIds = data.map(u => u.telegram_id);
+                // حذف مارکرهایی که آفلاین شدند
+                Object.keys(markers).forEach(id => {
+                    if (!existingIds.includes(Number(id))) {
+                        map.removeLayer(markers[id]);
+                        delete markers[id];
+                    }
+                });
+
                 data.forEach(u => {
                     if (u.telegram_id === currentUser?.telegram_id || !u.latitude || !u.longitude) return;
                     const initial = u.name ? u.name.charAt(0) : '?';
@@ -111,6 +157,8 @@
                         const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
                         marker.on('click', () => showProfile(u));
                         markers[u.telegram_id] = marker;
+                        // اعلان ورود کاربر جدید به نزدیکی شما
+                        showToast(`کاربر جدید (${u.name}) آنلاین شد!`);
                     }
                 });
             }
@@ -124,19 +172,39 @@
         }
 
         function closeProfile() { document.getElementById('profile-modal').classList.add('hidden'); }
-        function openChat() { closeProfile(); document.getElementById('chat-title').textContent = selectedTargetUser.name; document.getElementById('chat-window').classList.remove('hidden'); loadMessages(); }
+        
+        function openChat() { 
+            closeProfile(); 
+            isGlobalChat = false;
+            document.getElementById('chat-title').textContent = `چت با ${selectedTargetUser.name}`; 
+            document.getElementById('chat-window').classList.remove('hidden'); 
+            loadMessages(); 
+        }
+
+        function openGlobalChat() {
+            isGlobalChat = true;
+            document.getElementById('chat-title').textContent = "چت عمومی 🌐";
+            document.getElementById('chat-window').classList.remove('hidden');
+            loadMessages();
+        }
+
         function closeChat() { document.getElementById('chat-window').classList.add('hidden'); }
 
         async function loadMessages() {
-            if (!selectedTargetUser) return;
-            const { data } = await supabaseClient.from('messages')
-                .select('*')
-                .or(`and(sender_id.eq.${currentUser.telegram_id},receiver_id.eq.${selectedTargetUser.telegram_id}),and(sender_id.eq.${selectedTargetUser.telegram_id},receiver_id.eq.${currentUser.telegram_id})`)
-                .order('created_at', { ascending: true });
-
             const container = document.getElementById('chat-messages');
+            let query = supabaseClient.from('messages').select('*').order('created_at', { ascending: true });
+
+            if (isGlobalChat) {
+                query = query.is('receiver_id', null);
+            } else {
+                if (!selectedTargetUser) return;
+                query = query.or(`and(sender_id.eq.${currentUser.telegram_id},receiver_id.eq.${selectedTargetUser.telegram_id}),and(sender_id.eq.${selectedTargetUser.telegram_id},receiver_id.eq.${currentUser.telegram_id})`);
+            }
+
+            const { data } = await query;
             container.innerHTML = (data || []).map(m => `
                 <div class="max-w-[75%] p-3.5 rounded-2xl text-sm ${m.sender_id === currentUser.telegram_id ? 'bg-blue-600 self-end rounded-br-none' : 'bg-slate-800 self-start rounded-bl-none'}">
+                    <div class="text-[10px] opacity-70 mb-1">${m.sender_name || 'کاربر'}</div>
                     ${m.message}
                 </div>
             `).join('');
@@ -146,16 +214,44 @@
         async function sendMessage() {
             const input = document.getElementById('chat-input');
             const message = input.value.trim();
-            if (!message || !selectedTargetUser) return;
+            if (!message) return;
 
-            await supabaseClient.from('messages').insert([{ 
-                sender_id: currentUser.telegram_id, 
-                receiver_id: selectedTargetUser.telegram_id, 
-                message 
-            }]);
+            if (isGlobalChat) {
+                await supabaseClient.from('messages').insert([{ 
+                    sender_id: currentUser.telegram_id, 
+                    sender_name: currentUser.name,
+                    receiver_id: null, 
+                    message 
+                }]);
+            } else {
+                if (!selectedTargetUser) return;
+                await supabaseClient.from('messages').insert([{ 
+                    sender_id: currentUser.telegram_id, 
+                    sender_name: currentUser.name,
+                    receiver_id: selectedTargetUser.telegram_id, 
+                    message 
+                }]);
+            }
 
             input.value = '';
             loadMessages();
+        }
+
+        // گوش دادن زنده به پیام‌های جدید برای نمایش اعلان
+        function listenToRealtimeMessages() {
+            supabaseClient.channel('public:messages')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+                    const newMsg = payload.new;
+                    if (newMsg.sender_id !== currentUser?.telegram_id) {
+                        if (!isGlobalChat && newMsg.receiver_id === currentUser?.telegram_id) {
+                            showToast(`پیام جدید از ${newMsg.sender_name || 'کاربر'}`);
+                            loadMessages();
+                        } else if (isGlobalChat && !newMsg.receiver_id) {
+                            loadMessages();
+                        }
+                    }
+                })
+                .subscribe();
         }
 
         init();
