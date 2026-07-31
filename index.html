@@ -178,7 +178,7 @@
         if(tg) tg.expand();
 
         let currentUser = null, selectedTargetUser = null;
-        let map, markers = {};
+        let map, markers = {}, noteMarkers = {};
         let currentRoom = 'general';
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
         let activeRadiusKm = 0;
@@ -225,7 +225,8 @@
                     btn.className = r === km ? "px-2 py-0.5 rounded font-medium bg-[#2b5278] text-white transition text-[11px]" : "px-2 py-0.5 rounded font-medium tg-input text-slate-300 transition text-[11px]";
                 }
             });
-            fetchData();
+            fetchUsersData();
+            fetchNotesData();
         }
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -270,14 +271,18 @@
             map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
+            // ارسال آپدیت موقعیت خود کاربر هر 10 ثانیه
             setInterval(() => {
                 if(currentUser) updateMyLocation(currentCoords.lat, currentCoords.lng);
-                fetchData();
-            }, 3000);
+            }, 10000);
 
-            fetchData();
-            initRealtimeGlobal();
+            // لود اولیه اطلاعات نقشه و چت‌ها
+            fetchUsersData();
+            fetchNotesData();
             loadRoomMessages();
+
+            // فعال‌سازی ریل‌تایم سراسری برای کل برنامه‌
+            initRealtimeGlobal();
         }
 
         async function updateMyLocation(lat, lng) {
@@ -285,7 +290,7 @@
             await supabaseClient.from('users').update({ latitude: lat, longitude: lng, last_seen: new Date() }).eq('telegram_id', currentUser.telegram_id);
         }
 
-        async function fetchData() {
+        async function fetchUsersData() {
             const { data } = await supabaseClient.from('users').select('*');
             if (data) {
                 let activeUsers = data.filter(u => !u.ghost_mode);
@@ -299,7 +304,7 @@
 
                 const existingIds = activeUsers.map(u => u.telegram_id);
                 Object.keys(markers).forEach(id => {
-                    if (!id.startsWith('note_') && !existingIds.includes(Number(id))) {
+                    if (!existingIds.includes(Number(id))) {
                         map.removeLayer(markers[id]);
                         delete markers[id];
                     }
@@ -318,6 +323,22 @@
                         marker.on('click', () => openPrivateChat(u.telegram_id, u.name));
                         markers[u.telegram_id] = marker;
                     }
+                });
+            }
+        }
+
+        async function fetchNotesData() {
+            const { data } = await supabaseClient.from('map_notes').select('*');
+            if (data) {
+                data.forEach(note => {
+                    if (noteMarkers[note.id]) return;
+                    const icon = L.divIcon({
+                        html: `<div style="background:#2b5278; color:white; padding:4px 8px; border-radius:8px; font-size:10px; font-weight:bold; border:1px solid #5288c1; white-space:nowrap;">📍 ${note.user_name}: ${note.message}</div>`,
+                        iconSize: [100, 30],
+                        iconAnchor: [50, 15]
+                    });
+                    const marker = L.marker([note.latitude, note.longitude], { icon }).addTo(map);
+                    noteMarkers[note.id] = marker;
                 });
             }
         }
@@ -449,18 +470,11 @@
 
         function initRealtimePrivateChat(targetId) {
             if(activeChannel) supabaseClient.removeChannel(activeChannel);
-            
-            // ایجاد یک کانال منحصربه‌فرد برای این گفتگوی دوطرفه
             const channelName = `chat_pv_${Math.min(currentUser.telegram_id, targetId)}_${Math.max(currentUser.telegram_id, targetId)}`;
             
             activeChannel = supabaseClient.channel(channelName)
-                .on('postgres_changes', { 
-                    event: 'INSERT', 
-                    schema: 'public', 
-                    table: 'messages'
-                }, payload => {
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                     const m = payload.new;
-                    // اگر پیام مربوط به همین چت بود، فوراً لیست آپدیت شود (چه فرستنده باشیم چه گیرنده)
                     if (
                         (m.sender_id === currentUser.telegram_id && m.receiver_id === targetId) ||
                         (m.sender_id === targetId && m.receiver_id === currentUser.telegram_id)
@@ -478,6 +492,7 @@
                 .subscribe();
         }
 
+        // ⭐ قلب تپنده Realtime سراسری برای کل اپلیکیشن (چت عمومی، پی‌وی، کاربران، یادداشت‌ها)
         function initRealtimeGlobal() {
             if(globalChannel) supabaseClient.removeChannel(globalChannel);
 
@@ -486,26 +501,33 @@
                     const m = payload.new;
                     if (!m) return;
 
-                    // روم عمومی
+                    // ۱. اگر پیام برای روم عمومی جاری باشد
                     if (!m.receiver_id && m.room_name === currentRoom) {
                         loadRoomMessages();
                     }
 
-                    // پیام خصوصی برای کاربر فعلی (اگر در صفحه چت با آن شخص خاص نیست، نوتیفیکیشن نمایش داده شود)
+                    // ۲. اگر پیام خصوصی جدیدی برای کاربر آمده باشد
                     if (m.receiver_id === currentUser?.telegram_id) {
                         if (m.sender_id !== currentUser?.telegram_id) {
                             showToast(`پیام جدید از ${m.sender_name}`);
                         }
-                        // اگر گیرنده در صفحه چت با همان شخص است، پیامش بلافاصله بارگذاری شود
                         if (selectedTargetUser && selectedTargetUser.telegram_id === m.sender_id) {
                             loadPrivateMessages();
                         }
                     }
                 })
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
-                    fetchData();
+                    // ۳. اگر پروفایل یا لوکیشن کاربری تغییر کرد
+                    fetchUsersData();
                     if(!document.getElementById('view-community').classList.contains('hidden')) {
                         loadUsersList();
+                    }
+                })
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'map_notes' }, payload => {
+                    // ۴. اگر یادداشت جدیدی روی نقشه گذاشته شد
+                    fetchNotesData();
+                    if(payload.new && payload.new.user_id !== currentUser?.telegram_id) {
+                        showToast(`یادداشت جدید روی نقشه ثبت شد`);
                     }
                 })
                 .subscribe();
@@ -535,6 +557,7 @@
                 longitude: currentCoords.lng + (Math.random() - 0.5) * 0.002,
                 message
             }]);
+            document.getElementById('map-note-input').value = '';
             closeMapNoteModal();
             showToast("یادداشت ثبت شد");
         }
