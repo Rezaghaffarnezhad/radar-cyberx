@@ -14,21 +14,21 @@
         body, html { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #0e1621; color: #f5f5f5; font-family: 'Vazirmatn', sans-serif; }
         .map-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
         .tg-bg { background: #0e1621; }
-        .tg-card { background: #17212b; border: 1px solid rgba(255,255,255,0.04); }
+        .tg-card { background: #17212b; border: 1px solid rgba(255,255,255,0.03); }
         .tg-header { background: #17212b; border-bottom: 1px solid #0e1621; }
         
-        /* کادرهای بالا و پایین با شیشه‌ای‌تر شدن بیشتر و افکت بلور ظریف‌تر */
+        /* کادرهای کاملاً شیشه‌ای‌شده و مدرن */
         .glass-box {
-            background: rgba(23, 33, 43, 0.65);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(23, 33, 43, 0.45);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
-        /* نشانگر موقعیت من: فقط یک دایره آبی متحرک تمیز و بدون هیچ کادر مربع یا اضافی */
+        /* نشانگر موقعیت من: حذف کامل کادر مشکی و دایره‌ها، فقط پالس تمیز و دایره آبی دقیق */
         .my-exact-marker { position: relative; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
         .my-exact-pulse { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #3b82f6; opacity: 0.6; animation: custom-pulse 1.8s infinite; }
         .my-exact-core { position: relative; width: 12px; height: 12px; border-radius: 50%; background: #2563eb; border: 2px solid #fff; box-shadow: 0 0 10px rgba(59,130,246,0.9); z-index: 2; }
@@ -62,10 +62,9 @@
             cursor: pointer;
         }
 
-        .chat-bubble-out { background: #2b5278; color: #fff; border-radius: 14px 14px 4px 14px; }
-        .chat-bubble-in { background: #18222d; color: #f5f5f5; border-radius: 14px 14px 14px 4px; border: 1px solid rgba(255,255,255,0.03); }
+        .chat-bubble-out { background: #2b5278; color: #fff; border-radius: 14px 14px 4px 14px; transition: transform 0.2s ease; }
+        .chat-bubble-in { background: #18222d; color: #f5f5f5; border-radius: 14px 14px 14px 4px; border: 1px solid rgba(255,255,255,0.03); transition: transform 0.2s ease; }
 
-        /* دکمه بازگشت به سبک تلگرام */
         .telegram-back-btn {
             display: inline-flex;
             align-items: center;
@@ -78,11 +77,9 @@
             transition: background 0.2s ease;
             cursor: pointer;
         }
-        .telegram-back-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-        }
+        .telegram-back-btn:hover { background: rgba(255, 255, 255, 0.08); }
 
-        /* دکمه چت: دایره‌ای سه بعدی، دقیقاً یک‌چهارم (25 درصد) بیرون زده از بالای کادر پایین */
+        /* دکمه چت: دقیقاً دو سوم (66.6 درصد) داخل کادر پایین و یک‌سوم بیرون زده */
         .chat-3d-btn {
             width: 58px;
             height: 58px;
@@ -97,13 +94,11 @@
             cursor: pointer;
             transition: transform 0.15s ease, box-shadow 0.15s ease;
             position: absolute;
-            top: -29px; /* دقیقاً یک‌چهارم قطر دکمه (58 / 4 = ~14.5 یا حدود نیمی از شعاع یعنی 29px) بیرون زده از لبه بالایی کادر */
+            top: -19px; /* دو سوم داخل کادر و یک‌سوم بالا بیرون زده */
             left: 50%;
             transform: translateX(-50%);
         }
-        .chat-3d-btn:active {
-            transform: translateX(-50%) scale(0.94);
-        }
+        .chat-3d-btn:active { transform: translateX(-50%) scale(0.94); }
 
         ::-webkit-scrollbar { width: 3px; height: 3px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
@@ -111,11 +106,23 @@
 </head>
 <body class="relative flex flex-col h-full justify-between select-none">
 
+    <!-- صفحه استارت ربات تلگرام و دکمه ورود به اپ -->
+    <div id="view-splash" class="view-section absolute inset-0 z-50 tg-bg flex flex-col items-center justify-center p-6 text-center">
+        <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-4xl shadow-2xl mb-6 animate-bounce">
+            🗺️
+        </div>
+        <h1 class="text-xl font-bold text-white mb-2">خوش آمدید به نقشه و چت زنده</h1>
+        <p class="text-xs text-slate-400 max-w-xs mb-8 leading-relaxed">برای شروع تعامل با افراد آنلاین در شعاع جغرافیایی خود، لطفاً وارد برنامه شوید.</p>
+        <button onclick="enterAppFromSplash()" class="w-full max-w-xs py-3.5 bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 rounded-2xl font-bold text-sm text-white shadow-xl transition transform active:scale-95">
+            ورود به برنامه 🚀
+        </button>
+    </div>
+
     <!-- نقشه زنده (بک‌گراند اصلی) -->
-    <div id="view-map" class="view-section relative w-full h-full">
+    <div id="view-map" class="view-section hidden relative w-full h-full">
         <div id="map" class="map-container"></div>
         
-        <!-- هدر بالای صفحه: کادر نیمه‌شیشه‌ای یکپارچه با قابلیت کلیک روی آنلاین برای مشاهده لیست افراد -->
+        <!-- هدر بالای صفحه -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3.5 py-2.5 rounded-2xl flex items-center justify-between shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
@@ -137,14 +144,14 @@
             <input id="radius-slider" type="range" min="0.5" max="25" step="0.5" value="5" oninput="onRadiusSliderChange(this.value)" class="vertical-slider-container accent-blue-600 cursor-pointer">
         </div>
 
-        <!-- دکمه بروزرسانی موقعیت (بدون هیچگونه اجازه و با یک کلیک ساده به‌روز می‌شود) -->
+        <!-- دکمه بروزرسانی / دریافت لوکیشن جغرافیایی -->
         <div class="absolute bottom-24 right-4 z-10">
-            <button onclick="forceUpdateLocation()" class="w-12 h-12 bg-white/90 hover:bg-white text-slate-700 rounded-full shadow-2xl flex items-center justify-center transition transform active:scale-95 border border-slate-200">
+            <button onclick="requestUserLocation()" class="w-12 h-12 bg-white/90 hover:bg-white text-slate-700 rounded-full shadow-2xl flex items-center justify-center transition transform active:scale-95 border border-slate-200">
                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
             </button>
         </div>
 
-        <!-- کادر پایین با شیشه‌ای‌تر شدن بیشتر، دکمه چت سه بعدی یک‌چهارم بیرون از کادر -->
+        <!-- کادر پایین شیشه‌ای‌تر با دکمه چت (دو سوم داخل کادر) -->
         <div class="absolute bottom-4 left-0 right-0 z-20 flex justify-center pointer-events-none">
             <div class="glass-box w-64 h-16 rounded-3xl flex items-center justify-center shadow-2xl pointer-events-auto relative">
                 <div onclick="openChatHubModal()" class="chat-3d-btn">
@@ -225,7 +232,7 @@
                 <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-sm shadow">🌐</div>
                 <div class="flex-1">
                     <h4 class="font-bold text-xs text-white">گروه عمومی گفتگو</h4>
-                    <p class="text-[10px] text-slate-400 mt-0.5">پیام‌های گروه عمومی بر اساس شعاع انتخابی شما پاک‌شونده هستند</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">ارسال پیام در گروه عمومی داخل شعاع</p>
                 </div>
             </div>
         </div>
@@ -259,6 +266,7 @@
                 <span class="text-[10px] text-slate-400 font-bold">بیوگرافی</span>
                 <p id="modal-user-bio" class="text-xs text-slate-200">بدون بیوگرافی</p>
             </div>
+            <!-- رفتن به پیوی با کلیک روی ارسال پیام -->
             <button onclick="startChatFromProfile()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition shadow">ارسال پیام</button>
         </div>
     </div>
@@ -266,9 +274,11 @@
     <!-- صفحه چت -->
     <div id="chat-window" class="hidden absolute inset-0 tg-bg z-50 flex flex-col">
         <div class="tg-header px-3 py-2.5 flex items-center gap-3">
-            <button onclick="closeChat()" class="telegram-back-btn">
+            <!-- برگشت به قسمت چت (هاب چت) با کلیک روی بازگشت در کانال، گروه و پیوی -->
+            <button onclick="backToChatHub()" class="telegram-back-btn">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             </button>
+            <!-- رفتن به پروفایل با کلیک روی پروفایل مخاطب در هدر چت پیوی -->
             <div class="flex-1 cursor-pointer flex items-center gap-2.5" onclick="openProfileFromChatHeader()">
                 <div id="chat-header-avatar" class="w-8 h-8 rounded-full bg-[#2b5278] flex items-center justify-center text-xs font-bold text-white overflow-hidden">?</div>
                 <div>
@@ -278,9 +288,26 @@
             </div>
         </div>
         <div id="chat-messages" class="flex-1 p-3 overflow-y-auto flex flex-col gap-2"></div>
-        <div id="chat-input-container" class="p-2.5 tg-card flex gap-2">
+        
+        <!-- نوار ریپلای فعال -->
+        <div id="reply-preview-bar" class="hidden px-3 py-1.5 bg-[#17212b] border-t border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2 overflow-hidden">
+                <div class="w-1 h-7 bg-[#5288c1] rounded-full"></div>
+                <div class="text-[11px] truncate">
+                    <span id="reply-preview-sender" class="text-[#5288c1] font-bold block">فرستنده</span>
+                    <span id="reply-preview-text" class="text-slate-300">متن پیام...</span>
+                </div>
+            </div>
+            <button onclick="cancelReply()" class="text-slate-400 text-xs px-1.5 py-0.5 hover:text-white">✕</button>
+        </div>
+
+        <div id="chat-input-container" class="p-2.5 tg-card flex items-center gap-2">
+            <!-- گزینه ارسال فایل -->
+            <button onclick="document.getElementById('file-upload-input').click()" class="text-slate-400 hover:text-white p-1.5 transition text-lg" title="ارسال فایل">📎</button>
+            <input type="file" id="file-upload-input" class="hidden" onchange="handleFileUpload(event)">
+            
             <input id="chat-input" onkeydown="if(event.key==='Enter') sendPrivateMessage()" type="text" placeholder="نوشتن پیام..." class="flex-1 tg-input px-3.5 py-2.5 rounded-xl text-xs">
-            <button onclick="sendPrivateMessage()" class="bg-[#2b5278] hover:bg-[#336394] px-5 rounded-xl font-medium text-xs text-white transition">ارسال</button>
+            <button onclick="sendPrivateMessage()" class="bg-[#2b5278] hover:bg-[#336394] px-5 py-2.5 rounded-xl font-medium text-xs text-white transition">ارسال</button>
         </div>
     </div>
 
@@ -314,7 +341,10 @@
         let onlineUsersMap = {};
         let activeUsersGlobalList = [];
         let isDarkMap = false;
-        let navigationHistory = ['map'];
+        let navigationHistory = ['splash'];
+        let replyingToMessage = null;
+        let backButtonPressCount = 0;
+        let backButtonTimer = null;
 
         const user = tg?.initDataUnsafe?.user || { 
             id: Math.floor(Math.random() * 900000) + 100000, 
@@ -329,7 +359,12 @@
             setTimeout(() => { toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none'); }, 2000);
         }
 
-        // سیستم مدیریت تاریخچه صفحه و بازگشت به صفحه قبلی دقیق
+        // ورود از استارت ربات تلگرام
+        async function enterAppFromSplash() {
+            navigateTo('map');
+            initAppAfterSplash();
+        }
+
         function navigateTo(viewId) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
             const target = document.getElementById(`view-${viewId}`);
@@ -341,17 +376,60 @@
             if(viewId === 'map' && map) setTimeout(() => map.invalidateSize(), 50);
         }
 
-        function goBack() {
-            if(navigationHistory.length > 1) {
-                navigationHistory.pop();
-                const previousView = navigationHistory[navigationHistory.length - 1];
-                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-                const target = document.getElementById(`view-${previousView}`);
-                if(target) target.classList.remove('hidden');
-                if(previousView === 'map' && map) setTimeout(() => map.invalidateSize(), 50);
-            } else {
-                navigateTo('map');
+        // برگشت به صفحه قبل با زدن دکمه بازگشت موبایل / خروج با دوبار کلیک
+        window.addEventListener('popstate', (e) => {
+            handleMobileBackButton();
+        });
+
+        function handleMobileBackButton() {
+            // بررسی اگر پنجره چت باز است
+            const chatWindow = document.getElementById('chat-window');
+            if(!chatWindow.classList.contains('hidden')) {
+                backToChatHub();
+                return;
             }
+
+            // بررسی اگر هاب چت باز است
+            const chatHub = document.getElementById('chat-hub-modal');
+            if(!chatHub.classList.contains('hidden')) {
+                closeChatHubModal();
+                return;
+            }
+
+            // بررسی اگر پروفایل مخاطب باز است
+            const userProfileModal = document.getElementById('user-profile-modal');
+            if(!userProfileModal.classList.contains('hidden')) {
+                closeUserProfileModal();
+                return;
+            }
+
+            // بررسی اگر لیست افراد آنلاین باز است
+            const onlineModal = document.getElementById('online-users-modal');
+            if(!onlineModal.classList.contains('hidden')) {
+                closeOnlineUsersModal();
+                return;
+            }
+
+            // در صفحه نقشه یا استارت: خروج از برنامه با دوبار کلیک دکمه بازگشت
+            backButtonPressCount++;
+            if(backButtonPressCount === 1) {
+                showToast("برای خروج از برنامه دوباره دکمه بازگشت را بزنید");
+                clearTimeout(backButtonTimer);
+                backButtonTimer = setTimeout(() => { backButtonPressCount = 0; }, 2000);
+            } else if(backButtonPressCount === 2) {
+                if(tg) tg.close();
+                else window.close();
+            }
+        }
+
+        function goBack() {
+            handleMobileBackButton();
+        }
+
+        // برگشت به قسمت چت (هاب چت) با کلیک روی بازگشت در داخل کانال، گروه و پیوی
+        function backToChatHub() {
+            document.getElementById('chat-window').classList.add('hidden');
+            openChatHubModal();
         }
 
         function toggleMapTheme() {
@@ -399,18 +477,26 @@
             return `آخرین بازدید در ${date.toLocaleDateString('fa-IR')} ساعت ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
         }
 
-        // بروزرسانی فوری لوکیشن بدون پرسیدن هیچگونه اجازه یا پنجره سیستمی
-        async function forceUpdateLocation() {
-            currentCoords.lat += (Math.random() - 0.5) * 0.002;
-            currentCoords.lng += (Math.random() - 0.5) * 0.002;
-            map.setView([currentCoords.lat, currentCoords.lng], map.getZoom(), { animate: true });
-            renderMyMarker();
-            updateRadiusCircleOnMap();
-            await updateMyLocation(currentCoords.lat, currentCoords.lng);
-            showToast("موقعیت به‌روز شد");
+        // دریافت لوکیشن جغرافیایی کاربر
+        function requestUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    currentCoords.lat = position.coords.latitude;
+                    currentCoords.lng = position.coords.longitude;
+                    if(map) map.setView([currentCoords.lat, currentCoords.lng], 14, { animate: true });
+                    renderMyMarker();
+                    updateRadiusCircleOnMap();
+                    updateMyLocation(currentCoords.lat, currentCoords.lng);
+                    showToast("موقعیت با موفقیت دریافت شد");
+                }, error => {
+                    showToast("خطا در دریافت موقعیت. استفاده از موقعیت پیش‌فرض");
+                }, { enableHighAccuracy: true });
+            } else {
+                showToast("مرورگر شما از موقعیت مکانی پشتیبانی نمی‌کند");
+            }
         }
 
-        async function init() {
+        async function initAppAfterSplash() {
             map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 13);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
@@ -475,6 +561,7 @@
 
         function renderMyMarker() {
             if(!map) return;
+            // حذف کامل نشانگر مشکی و استفاده صرفاً از دایره آبی و پالس متحرک
             const html = `
                 <div class="my-exact-marker">
                     <div class="my-exact-pulse"></div>
@@ -696,6 +783,7 @@
             }
         }
 
+        // رفتن به پیوی با کلیک روی ارسال پیام در پروفایل مخاطب
         function startChatFromProfile() {
             if(!selectedTargetUser) return;
             closeUserProfileModal();
@@ -703,6 +791,7 @@
             openPrivateChat(selectedTargetUser.telegram_id, selectedTargetUser.name);
         }
 
+        // رفتن به پروفایل با کلیک روی پروفایل مخاطب (در هدر چت پیوی)
         function openProfileFromChatHeader() {
             if(currentChatType === 'pv' && selectedTargetUser) {
                 openUserProfile(selectedTargetUser.telegram_id);
@@ -739,6 +828,7 @@
             initRealtimeChatChannel();
         }
 
+        // ارسال پیام در گروه عمومی
         function openGroupChat(roomName, title) {
             currentChatType = 'group';
             currentChatTargetId = roomName;
@@ -771,15 +861,6 @@
             initRealtimeChatChannel();
         }
 
-        function closeChat() { 
-            document.getElementById('chat-window').classList.add('hidden'); 
-            selectedTargetUser = null;
-            if(activePrivateChannel) {
-                supabaseClient.removeChannel(activePrivateChannel);
-                activePrivateChannel = null;
-            }
-        }
-
         async function loadMessages() {
             if (!currentUser) return;
             const container = document.getElementById('chat-messages');
@@ -793,11 +874,8 @@
 
             const { data } = await query.order('created_at', { ascending: true });
 
-            // اعمال فیلتر پاک‌شوندگی پیام‌های گروه عمومی بر اساس فرستندگانی که خارج از شعاع فعال هستند
             let filteredMessages = data || [];
             if (currentChatType === 'group') {
-                // برای هر پیام چک می‌کنیم آیا فرستنده آن در شعاع فعلی کاربر قرار دارد یا خیر
-                // (در صورت عدم حضور فرستنده در شعاع، پیام پاک‌شونده در نظر گرفته شده و نمایش داده نمی‌شود)
                 filteredMessages = filteredMessages.filter(m => {
                     if (m.sender_id === currentUser.telegram_id) return true;
                     const senderUser = activeUsersGlobalList.find(u => u.telegram_id === m.sender_id);
@@ -818,15 +896,108 @@
                     `;
                 }
 
+                // نمایش زمان پیام
+                const msgTime = new Date(m.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                // لایک پیام (قلب)
+                const isLiked = m.liked ? '❤️' : '';
+                
+                // ریپلای پیام در صورت وجود
+                let replyBlock = '';
+                if(m.reply_to) {
+                    replyBlock = `
+                        <div class="bg-black/20 px-2 py-1 rounded border-r-2 border-[#5288c1] mb-1 text-[10px] text-slate-300">
+                            <span class="font-bold text-[#5288c1] block">${m.reply_sender || 'کاربر'}</span>
+                            <span class="truncate block">${m.reply_text || ''}</span>
+                        </div>
+                    `;
+                }
+
                 return `
-                    <div class="max-w-[80%] px-3 py-2 rounded-xl text-xs flex flex-col ${isMe ? 'chat-bubble-out self-end' : 'chat-bubble-in self-start'}">
+                    <div data-id="${m.id}" data-sender="${m.sender_name || 'کاربر'}" data-text="${m.message}" 
+                         ondblclick="toggleLikeMessage('${m.id}', ${!!m.liked})" 
+                         ontouchstart="handleTouchStart(event, '${m.id}', '${m.sender_name || 'کاربر'}', '${m.message}')"
+                         ontouchend="handleTouchEnd(event)"
+                         class="max-w-[80%] px-3 py-2 rounded-xl text-xs flex flex-col ${isMe ? 'chat-bubble-out self-end' : 'chat-bubble-in self-start'} relative group cursor-pointer">
                         ${currentChatType !== 'pv' && !isMe ? `<div class="text-[10px] text-[#5288c1] font-bold mb-0.5">${m.sender_name || 'کاربر'}</div>` : ''}
+                        ${replyBlock}
                         <div>${m.message}</div>
-                        <div class="flex items-center justify-end mt-0.5">${ticksHTML}</div>
+                        <div class="flex items-center justify-end gap-1.5 mt-0.5">
+                            <span class="text-[9px] text-slate-300 opacity-80">${isLiked}</span>
+                            <span class="text-[9px] text-slate-300 opacity-80">${msgTime}</span>
+                            ${ticksHTML}
+                        </div>
                     </div>
                 `;
             }).join('');
             container.scrollTop = container.scrollHeight;
+        }
+
+        // لایک پیام با دوبار کلیک
+        async function toggleLikeMessage(msgId, currentLikedState) {
+            await supabaseClient.from('messages').update({ liked: !currentLikedState }).eq('id', msgId);
+            loadMessages();
+        }
+
+        // ریپلای با کشیدن پیام (Swipe to reply یا لمس طولانی در موبایل)
+        let touchStartX = 0;
+        let activeMsgIdForSwipe = null;
+        function handleTouchStart(e, id, sender, text) {
+            touchStartX = e.touches[0].clientX;
+            activeMsgIdForSwipe = { id, sender, text };
+        }
+        function handleTouchEnd(e) {
+            if(!touchStartX || !activeMsgIdForSwipe) return;
+            let touchEndX = e.changedTouches[0].clientX;
+            if(touchEndX - touchStartX > 70) {
+                // کشیدن به سمت راست برای ریپلای
+                setReplyTarget(activeMsgIdForSwipe.id, activeMsgIdForSwipe.sender, activeMsgIdForSwipe.text);
+            }
+            touchStartX = 0;
+            activeMsgIdForSwipe = null;
+        }
+
+        function setReplyTarget(id, sender, text) {
+            replyingToMessage = { id, sender, text };
+            document.getElementById('reply-preview-sender').textContent = sender;
+            document.getElementById('reply-preview-text').textContent = text;
+            document.getElementById('reply-preview-bar').classList.remove('hidden');
+            document.getElementById('chat-input').focus();
+        }
+
+        function cancelReply() {
+            replyingToMessage = null;
+            document.getElementById('reply-preview-bar').classList.add('hidden');
+        }
+
+        // گزينه ارسال فایل
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if(!file || !currentUser) return;
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const fileDataUrl = e.target.result;
+                const fileMessageText = `📁 فایل ارسال شد: ${file.name} <br><a href="${fileDataUrl}" download="${file.name}" class="text-sky-300 underline text-[10px]">دانلود فایل</a>`;
+                
+                let payload = {
+                    sender_id: currentUser.telegram_id,
+                    sender_name: currentUser.name,
+                    message: fileMessageText,
+                    is_read: false
+                };
+
+                if (currentChatType === 'pv') {
+                    payload.receiver_id = currentChatTargetId;
+                } else {
+                    payload.room_name = currentChatTargetId;
+                    payload.receiver_id = null;
+                }
+
+                await supabaseClient.from('messages').insert([payload]);
+                showToast("فایل با موفقیت ارسال شد");
+            };
+            reader.readAsDataURL(file);
         }
 
         async function sendPrivateMessage() {
@@ -841,6 +1012,13 @@
                 message,
                 is_read: false
             };
+
+            if (replyingToMessage) {
+                payload.reply_to = replyingToMessage.id;
+                payload.reply_sender = replyingToMessage.sender;
+                payload.reply_text = replyingToMessage.text;
+                cancelReply();
+            }
 
             if (currentChatType === 'pv') {
                 payload.receiver_id = currentChatTargetId;
@@ -898,8 +1076,6 @@
                 renderMyMarker();
             }
         }
-
-        init();
     </script>
 </body>
 </html>
