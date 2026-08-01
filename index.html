@@ -29,6 +29,37 @@
         
         .custom-marker { position: relative; width: 38px; height: 38px; border-radius: 50%; border: 2px solid #5288c1; overflow: hidden; background: #17212b; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer; }
         
+        .my-animated-marker {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse-ring 2s infinite;
+        }
+        .my-marker-inner {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid #3b82f6;
+            overflow: hidden;
+            background: #17212b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 12px;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        
         .led-status { position: absolute; bottom: 1px; right: 1px; width: 8px; height: 8px; border-radius: 50%; border: 2px solid #17212b; }
         .led-online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
         .led-offline { background: #e74c3c; }
@@ -102,35 +133,23 @@
 </head>
 <body class="relative flex flex-col h-full justify-between select-none">
 
-    <!-- صفحه کلید ورود (استارت ربات تلگرام) -->
-    <div id="view-splash" class="view-section absolute inset-0 z-50 tg-bg flex flex-col items-center justify-center p-6 text-center">
-        <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-4xl shadow-2xl mb-6 animate-bounce">
-            🔑
-        </div>
-        <h1 class="text-xl font-bold text-white mb-2">دریافت کلید ورود</h1>
-        <p class="text-xs text-slate-400 max-w-xs mb-8 leading-relaxed">لطفاً کلید اختصاصی ورود خود را جهت دسترسی به نقشه و چت زنده وارد نمایید.</p>
-        <input id="input-access-key" type="password" placeholder="کلید ورود را وارد کنید..." class="w-full max-w-xs tg-input px-4 py-3 rounded-2xl text-xs text-center mb-4">
-        <button onclick="verifyAndEnterApp()" class="w-full max-w-xs py-3.5 bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 rounded-2xl font-bold text-sm text-white shadow-xl transition transform active:scale-95">
-            تایید و ورود 🚀
-        </button>
-    </div>
-
     <!-- نقشه زنده -->
-    <div id="view-map" class="view-section hidden relative w-full h-full">
+    <div id="view-map" class="view-section relative w-full h-full">
         <div id="map" class="map-container"></div>
         
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3.5 py-2.5 rounded-2xl flex items-center justify-between shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
                     <button onclick="toggleMapTheme()" class="w-8 h-8 rounded-xl flex items-center justify-center text-xs text-white bg-[#1f2c38]/80 hover:bg-slate-700 transition">🌓</button>
-                    <!-- دکمه بازگردانده شده بروزرسانی -->
                     <button onclick="manualRefreshData()" class="w-8 h-8 rounded-xl flex items-center justify-center text-xs text-white bg-[#1f2c38]/80 hover:bg-slate-700 transition" title="بروزرسانی">🔄</button>
+                    <!-- دکمه بروزرسانی لوکیشن من -->
+                    <button onclick="manualRefreshMyLocation()" class="w-8 h-8 rounded-xl flex items-center justify-center text-xs text-white bg-[#1f2c38]/80 hover:bg-slate-700 transition" title="بروزرسانی لوکیشن من">📍</button>
                 </div>
                 <div class="flex items-center gap-3">
-                    <!-- گزینه آنلاین در صفحه اصلی بدون پس زمینه -->
-                    <div class="flex items-center gap-1.5">
+                    <!-- تعداد افراد آنلاین بالا سمت چپ بدون پس‌زمینه -->
+                    <div class="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition" onclick="openOnlineUsersModal()">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span class="text-[11px] font-bold text-emerald-400">آنلاین</span>
+                        <span id="top-online-count" class="text-[11px] font-bold text-emerald-400">0 آنلاین</span>
                     </div>
                     <div onclick="navigateTo('profile')" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
                         <span id="top-my-name" class="font-bold text-xs text-white">کاربر</span>
@@ -187,6 +206,15 @@
             </div>
             <button onclick="saveProfile()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition shadow">ذخیره و به‌روزرسانی</button>
         </div>
+    </div>
+
+    <!-- مودال لیست افراد آنلاین -->
+    <div id="online-users-modal" class="hidden absolute inset-0 tg-bg z-40 flex flex-col">
+        <div class="tg-header px-4 py-3 flex items-center justify-between">
+            <h3 class="font-bold text-xs text-white">افراد آنلاین داخل شعاع</h3>
+            <button onclick="closeOnlineUsersModal()" class="text-slate-400 text-sm px-2 py-1 rounded-lg hover:bg-white/5 transition">✕</button>
+        </div>
+        <div id="online-users-list-container" class="flex-1 p-3 overflow-y-auto flex flex-col gap-1.5"></div>
     </div>
 
     <!-- مودال هاب چت -->
@@ -292,8 +320,14 @@
         <div id="chat-input-container" class="p-2.5 tg-card flex items-center gap-2 relative">
             <input id="chat-input" oninput="toggleInputButtonState()" onkeydown="if(event.key==='Enter') handleSendAction()" type="text" placeholder="نوشتن پیام..." class="flex-1 tg-input px-3.5 py-2.5 rounded-xl text-xs">
             
-            <!-- دکمه ارسال پیام یا وویس الگوبرداری شده از تلگرام -->
-            <button id="dynamic-send-btn" onclick="handleSendAction()" class="w-10 h-10 rounded-xl bg-[#2b5278] hover:bg-[#336394] flex items-center justify-center text-white transition">
+            <!-- دکمه ارسال پیام / ضبط وویس با قابلیت نگه داشتن و رها کردن -->
+            <button id="dynamic-send-btn" 
+                ontouchstart="startVoiceRecording(event)" 
+                ontouchend="stopVoiceRecording(event)" 
+                onmousedown="startVoiceRecording(event)" 
+                onmouseup="stopVoiceRecording(event)" 
+                onclick="handleSendAction()" 
+                class="w-10 h-10 rounded-xl bg-[#2b5278] hover:bg-[#336394] flex items-center justify-center text-white transition select-none">
                 <svg id="btn-icon-mic" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"/></svg>
                 <svg id="btn-icon-send" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
             </button>
@@ -330,6 +364,7 @@
 
         let currentUser = null, selectedTargetUser = null, currentChatType = 'pv', currentChatTargetId = null;
         let map, markers = {};
+        let myLocationMarker = null;
         let radiusCircle = null;
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
         let activeRadiusKm = 5;
@@ -338,10 +373,12 @@
         let onlineUsersMap = {};
         let activeUsersGlobalList = [];
         let isDarkMap = false;
-        let navigationHistory = ['splash'];
+        let navigationHistory = ['map'];
         let replyingToMessage = null;
         let editingMessage = null;
         let selectedMessageForAction = null;
+        let isVoiceRecordingActive = false;
+        let voiceTimer = null;
 
         const user = tg?.initDataUnsafe?.user || { 
             id: Math.floor(Math.random() * 900000) + 100000, 
@@ -354,17 +391,6 @@
             document.getElementById('toast-text').textContent = text;
             toast.classList.remove('-translate-y-20', 'opacity-0', 'pointer-events-none');
             setTimeout(() => { toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none'); }, 2000);
-        }
-
-        async function verifyAndEnterApp() {
-            const accessKey = document.getElementById('input-access-key').value.trim();
-            if(!accessKey) {
-                showToast("لطفاً کلید ورود را وارد کنید");
-                return;
-            }
-            // اعتبارسنجی یا قبول کلید ورود
-            navigateTo('map');
-            initAppAfterSplash();
         }
 
         function navigateTo(viewId) {
@@ -392,6 +418,12 @@
             const chatHub = document.getElementById('chat-hub-modal');
             if(!chatHub.classList.contains('hidden')) {
                 closeChatHubModal();
+                return;
+            }
+
+            const onlineModal = document.getElementById('online-users-modal');
+            if(!onlineModal.classList.contains('hidden')) {
+                closeOnlineUsersModal();
                 return;
             }
 
@@ -432,6 +464,23 @@
             showToast("اطلاعات بروزرسانی شد");
         }
 
+        function manualRefreshMyLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    currentCoords.lat = position.coords.latitude;
+                    currentCoords.lng = position.coords.longitude;
+                    if(map) map.setView([currentCoords.lat, currentCoords.lng], 15, { animate: true });
+                    updateRadiusCircleOnMap();
+                    updateMyLocation(currentCoords.lat, currentCoords.lng);
+                    showToast("لوکیشن شما بروزرسانی شد");
+                }, () => {
+                    showToast("خطا در دریافت موقعیت مکانی");
+                }, { enableHighAccuracy: true });
+            } else {
+                showToast("GPS پشتیبانی نمی‌شود");
+            }
+        }
+
         function onRadiusSliderChange(val) {
             activeRadiusKm = parseFloat(val);
             updateRadiusCircleOnMap();
@@ -448,6 +497,13 @@
                 fillColor: '#3b82f6',
                 fillOpacity: 0.08
             }).addTo(map);
+
+            if(myLocationMarker) map.removeLayer(myLocationMarker);
+            const initial = (currentUser?.name || 'ک').charAt(0);
+            const myAvatarInner = currentUser?.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : initial;
+            const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner">${myAvatarInner}</div></div>`;
+            const myIcon = L.divIcon({ html: myHtml, iconSize: [44, 44], iconAnchor: [22, 22] });
+            myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -470,7 +526,7 @@
             return `آخرین بازدید در ${date.toLocaleDateString('fa-IR')} ساعت ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
         }
 
-        async function initAppAfterSplash() {
+        window.addEventListener('DOMContentLoaded', async () => {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
                     currentCoords.lat = position.coords.latitude;
@@ -520,7 +576,7 @@
             fetchUsersData();
             initRealtimeGlobal();
             setInterval(updateMyHeartbeat, 15000);
-        }
+        });
 
         async function updateMyHeartbeat() {
             if(!currentUser) return;
@@ -561,6 +617,12 @@
                 
                 activeUsersGlobalList = activeUsers;
 
+                let onlineCount = 0;
+                activeUsers.forEach(u => {
+                    if(onlineUsersMap[u.telegram_id]) onlineCount++;
+                });
+                document.getElementById('top-online-count').textContent = `${onlineCount} آنلاین`;
+
                 const existingIds = activeUsers.map(u => u.telegram_id);
                 Object.keys(markers).forEach(id => {
                     if (!existingIds.includes(Number(id))) {
@@ -590,6 +652,33 @@
             }
         }
 
+        function openOnlineUsersModal() {
+            const container = document.getElementById('online-users-list-container');
+            const onlineUsers = activeUsersGlobalList.filter(u => onlineUsersMap[u.telegram_id]);
+            
+            container.innerHTML = onlineUsers.length ? onlineUsers.map(u => {
+                const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : (u.name || 'ک').charAt(0);
+                return `
+                    <div onclick="closeOnlineUsersModal(); openPrivateChat(${u.telegram_id}, '${u.name}')" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
+                        <div class="relative w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden">
+                            ${avatarInner}
+                            <div class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#17212b]"></div>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-xs text-white">${u.name}</h4>
+                            <p class="text-[10px] text-emerald-400 mt-0.5">آنلاین</p>
+                        </div>
+                    </div>
+                `;
+            }).join('') : '<div class="text-center text-xs text-slate-400 py-6">هیچ کاربر آنلاین دیگری در شعاع شما یافت نشد.</div>';
+
+            document.getElementById('online-users-modal').classList.remove('hidden');
+        }
+
+        function closeOnlineUsersModal() {
+            document.getElementById('online-users-modal').classList.add('hidden');
+        }
+
         async function handleAvatarUpload(event) {
             const file = event.target.files[0];
             if(!file || !currentUser) return;
@@ -601,6 +690,7 @@
                 await supabaseClient.from('users').update({ avatar_url: base64Image }).eq('telegram_id', currentUser.telegram_id);
                 currentUser.avatar_url = base64Image;
                 updateMyAvatarUI();
+                updateRadiusCircleOnMap();
                 showToast("عکس پروفایل برای همیشه ذخیره شد");
             };
             reader.readAsDataURL(file);
@@ -617,6 +707,7 @@
             currentUser.username = username;
             currentUser.bio = bio;
             updateMyAvatarUI();
+            updateRadiusCircleOnMap();
             showToast("پروفایل ذخیره شد");
         }
 
@@ -831,11 +922,12 @@
                     <div id="msg-card-${m.id}" 
                          ontouchstart="handleTouchStart(event, '${m.id}', '${m.sender_name || 'کاربر'}', '${m.message}')"
                          ontouchmove="handleTouchMove(event, '${m.id}')"
-                         ontouchend="handleTouchEnd(event, '${m.id}', '${m.sender_name || 'کاربر'}', '${m.message}', '${m.id}', ${isMe})"
+                         ontouchend="handleTouchEnd(event, '${m.id}', '${m.sender_name || 'کاربر'}', '${m.message}')"
+                         onclick="openMessageActions('${m.id}', '${m.message}', ${isMe})"
                          class="max-w-[80%] px-3 py-2 rounded-xl text-xs flex flex-col ${isMe ? 'chat-bubble-out self-end' : 'chat-bubble-in self-start'} relative group cursor-pointer swipe-message-container">
                         ${currentChatType !== 'pv' && !isMe ? `<div class="text-[10px] text-[#5288c1] font-bold mb-0.5">${m.sender_name || 'کاربر'}</div>` : ''}
                         ${replyBlock}
-                        <div onclick="openMessageActions('${m.id}', '${m.message}', ${isMe})">${m.message}</div>
+                        <div>${m.message}</div>
                         <div class="flex items-center justify-end gap-1 mt-0.5">
                             ${editedMark}
                             <span class="text-[9px] text-slate-300 opacity-80">${msgTime}</span>
@@ -847,7 +939,6 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // منوی عملیات پیام (کپی، ویرایش، حذف)
         function openMessageActions(id, text, isMe) {
             selectedMessageForAction = { id, text, isMe };
             const editBtn = document.getElementById('action-btn-edit');
@@ -892,7 +983,6 @@
             toggleInputButtonState();
         }
 
-        // ریپلای با کشیدن پیام به سمت وسط چت
         let touchStartX = 0;
         let currentSwipeId = null;
 
@@ -953,13 +1043,59 @@
             }
         }
 
+        function startVoiceRecording(e) {
+            const inputVal = document.getElementById('chat-input').value;
+            if (inputVal.trim().length > 0) return; // اگر متن نوشته شده باشد، دکمه حالت ارسال دارد نه وویس
+
+            e.preventDefault();
+            if (isVoiceRecordingActive) return;
+            isVoiceRecordingActive = true;
+            showToast("🔴 در حال ضبط صدا... (با رها کردن ارسال می‌شود)");
+            
+            voiceTimer = setTimeout(async () => {
+                if(isVoiceRecordingActive) {
+                    isVoiceRecordingActive = false;
+                    showToast("🎙️ وویس ارسال شد");
+                    await sendVoiceMessagePayload("🎤 پیام صوتی");
+                }
+            }, 3000); // شبیه‌سازی اتمام ضبط پس از 3 ثانیه نگه داشتن یا با رها کردن
+        }
+
+        async function stopVoiceRecording(e) {
+            const inputVal = document.getElementById('chat-input').value;
+            if (inputVal.trim().length > 0) return;
+
+            e.preventDefault();
+            if (!isVoiceRecordingActive) return;
+            clearTimeout(voiceTimer);
+            isVoiceRecordingActive = false;
+            showToast("🎙️ وویس ارسال شد");
+            await sendVoiceMessagePayload("🎤 پیام صوتی");
+        }
+
+        async function sendVoiceMessagePayload(text) {
+            let payload = {
+                sender_id: currentUser.telegram_id,
+                sender_name: currentUser.name,
+                message: text,
+                is_read: false
+            };
+
+            if (currentChatType === 'pv') {
+                payload.receiver_id = currentChatTargetId;
+            } else {
+                payload.room_name = currentChatTargetId;
+                payload.receiver_id = null;
+            }
+
+            await supabaseClient.from('messages').insert([payload]);
+        }
+
         async function handleSendAction() {
             const input = document.getElementById('chat-input');
             const message = input.value.trim();
 
             if (!message) {
-                // شبیه‌سازی ارسال وویس به سبک تلگرام
-                showToast("ارسال وویس فعال شد...");
                 return;
             }
 
