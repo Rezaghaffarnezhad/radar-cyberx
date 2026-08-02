@@ -9,13 +9,21 @@ TOKEN = "8186173027:AAHY6oTA7TF0NWbgD_KaajJgqBZtyAu6EPc"
 WEB_APP_URL = "https://rezaghaffarnezhad.github.io/radar-cyberx/index.html"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_name = update.effective_user.first_name
+    
+    # دکمه‌های جذاب‌تر و حرفه‌ای‌تر
     keyboard = [
-        [InlineKeyboardButton("ورود به محیط اپ", web_app=WebAppInfo(url=WEB_APP_URL))]
+        [InlineKeyboardButton("🚀 ورود به محیط اپلیکیشن", web_app=WebAppInfo(url=WEB_APP_URL))],
+        [
+            InlineKeyboardButton("📖 راهنما", callback_data="help"),
+            InlineKeyboardButton("💬 پشتیبانی", url="https://t.me/Rezaghaffarnezhad")
+        ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
+    # پیام خوش‌آمدگویی شخصی‌سازی‌شده
     await update.message.reply_text(
-        "سلام! برای ورود به محیط برنامه روی دکمه زیر کلیک کنید:",
+        f"سلام {user_name} عزیز! 🌟\nبه ربات نقشه و چت زنده خوش آمدید.\n\nبرای ورود به محیط برنامه روی دکمه زیر کلیک کنید:",
         reply_markup=reply_markup
     )
 
