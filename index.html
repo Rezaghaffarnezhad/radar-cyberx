@@ -27,7 +27,6 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
-        /* نشانگر لوکیشن کاربر با پالس سایه شبیه گوگل مپ */
         .my-animated-marker {
             width: 52px;
             height: 52px;
@@ -129,31 +128,39 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3.5 py-2.5 rounded-2xl flex items-center justify-between shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <!-- تعداد افراد آنلاین سمت چپ -->
                     <div class="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition" onclick="openOnlineUsersModal()">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                         <span id="top-online-count" class="text-[11px] font-bold text-emerald-400">0 آنلاین</span>
                     </div>
-                    <button onclick="toggleMapTheme()" class="w-8 h-8 rounded-xl flex items-center justify-center text-xs text-white bg-[#1f2c38]/80 hover:bg-slate-700 transition">🌓</button>
+                    <!-- حذف پس زمینه گزینه تغییر مود -->
+                    <button onclick="toggleMapTheme()" class="w-8 h-8 rounded-xl flex items-center justify-center text-xs text-white hover:bg-slate-700/50 transition" title="تغییر حالت نقشه">🌓</button>
+                </div>
+                <!-- افزودن گزینه جستجو به کادر بالا -->
+                <div class="flex items-center gap-2 flex-1 max-w-[160px] mx-2">
+                    <input id="top-search-input" oninput="handleMapSearch(this.value)" type="text" placeholder="جستجو..." class="w-full tg-input px-2.5 py-1 rounded-xl text-[11px]">
                 </div>
                 <div class="flex items-center gap-3">
                     <div onclick="navigateTo('profile')" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
-                        <span id="top-my-name" class="font-bold text-xs text-white">کاربر</span>
+                        <span id="top-my-name" class="font-bold text-xs text-white truncate max-w-[80px]">کاربر</span>
                         <div id="top-my-avatar" class="w-8 h-8 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow">ک</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center">
+        <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center gap-2">
             <input id="radius-slider" type="range" min="0.5" max="25" step="0.5" value="5" oninput="onRadiusSliderChange(this.value)" class="vertical-slider-container accent-blue-600 cursor-pointer">
+            <!-- افزودن گزینه تنظیمات به زیر تنظیم شعاع -->
+            <button onclick="navigateTo('profile')" class="w-9 h-9 rounded-xl glass-box flex items-center justify-center text-white shadow-xl hover:bg-slate-700/80 active:scale-95 transition" title="تنظیمات">
+                ⚙️
+            </button>
         </div>
 
-        <!-- دکمه لوکیشن سمت راست پایین صفحه (الگو گرفته از گوگل مپ) -->
-        <div class="absolute bottom-24 right-4 z-10">
-            <button onclick="manualRefreshMyLocation()" class="w-12 h-12 rounded-2xl glass-box flex items-center justify-center text-white shadow-xl hover:bg-slate-700/80 active:scale-95 transition" title="موقعیت من">
-                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            </button>
+        <!-- دکمه لوکیشن با الگوی گوگل مپ و بدون پس زمینه (بدون قابلیت بروزرسانی دستی/اجازه بروزرسانی) -->
+        <div class="absolute bottom-24 right-4 z-10 pointer-events-none">
+            <div class="w-12 h-12 flex items-center justify-center text-white drop-shadow-xl" title="موقعیت من">
+                <svg class="w-7 h-7 text-blue-500 drop-shadow-md" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
         </div>
 
         <div class="absolute bottom-4 left-0 right-0 z-20 flex justify-center pointer-events-none">
@@ -286,7 +293,6 @@
         </div>
         <div id="chat-messages" class="flex-1 p-3 overflow-y-auto flex flex-col gap-2"></div>
         
-        <!-- نوار ریپلای فعال -->
         <div id="reply-preview-bar" class="hidden px-3 py-1.5 bg-[#17212b] border-t border-slate-800 flex items-center justify-between">
             <div class="flex items-center gap-2 overflow-hidden">
                 <div class="w-1 h-7 bg-[#5288c1] rounded-full"></div>
@@ -298,7 +304,6 @@
             <button onclick="cancelReply()" class="text-slate-400 text-xs px-1.5 py-0.5 hover:text-white">✕</button>
         </div>
 
-        <!-- نوار ویرایش فعال -->
         <div id="edit-preview-bar" class="hidden px-3 py-1.5 bg-[#17212b] border-t border-slate-800 flex items-center justify-between">
             <div class="flex items-center gap-2 overflow-hidden">
                 <div class="w-1 h-7 bg-amber-500 rounded-full"></div>
@@ -350,7 +355,7 @@
         const SUPABASE_URL = "https://dxdskvkcmovotzxixxhd.supabase.co";
         const SUPABASE_KEY = "sb_publishable_3-rNuWmg9jAyPPQ89hE4ZQ_avo0wsPd";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-            realtime: { params: { eventsPerSecond: 10 } }
+            realtime: { params: { eventsPerSecond: 15 } }
         });
 
         let tg = window.Telegram?.WebApp;
@@ -383,7 +388,7 @@
             const toast = document.getElementById('toast');
             document.getElementById('toast-text').textContent = text;
             toast.classList.remove('-translate-y-20', 'opacity-0', 'pointer-events-none');
-            setTimeout(() => { toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none'); }, 1800);
+            setTimeout(() => { toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none'); }, 1500);
         }
 
         function navigateTo(viewId) {
@@ -394,7 +399,7 @@
             if(navigationHistory[navigationHistory.length - 1] !== viewId) {
                 navigationHistory.push(viewId);
             }
-            if(viewId === 'map' && map) setTimeout(() => map.invalidateSize(), 30);
+            if(viewId === 'map' && map) setTimeout(() => map.invalidateSize(), 20);
         }
 
         window.addEventListener('popstate', (e) => {
@@ -452,23 +457,6 @@
             else mapContainer.classList.remove('dark-map');
         }
 
-        function manualRefreshMyLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    currentCoords.lat = position.coords.latitude;
-                    currentCoords.lng = position.coords.longitude;
-                    if(map) map.setView([currentCoords.lat, currentCoords.lng], 15, { animate: true });
-                    updateRadiusCircleOnMap();
-                    updateMyLocation(currentCoords.lat, currentCoords.lng);
-                    showToast("موقعیت شما به‌روز شد");
-                }, () => {
-                    showToast("خطا در دریافت موقعیت مکانی");
-                }, { enableHighAccuracy: true, timeout: 5000 });
-            } else {
-                showToast("GPS پشتیبانی نمی‌شود");
-            }
-        }
-
         function onRadiusSliderChange(val) {
             activeRadiusKm = parseFloat(val);
             updateRadiusCircleOnMap();
@@ -502,7 +490,6 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        // الگوریتم استاندارد آخرین بازدید تلگرام (بدون متن اضافه غیرضروری)
         function formatTelegramLastSeen(dateString) {
             if (!dateString) return 'آخرین بازدید اخیراً';
             const date = new Date(dateString);
@@ -537,6 +524,7 @@
 
             if (data) {
                 currentUser = data;
+                showToast("سلام! خوش آمدید 🎉");
             } else {
                 const newUserData = { 
                     telegram_id: user.id, 
@@ -548,6 +536,7 @@
                 };
                 const { data: inserted } = await supabaseClient.from('users').upsert(newUserData).select().single();
                 currentUser = inserted || newUserData;
+                showToast("سلام! به ربات خوش آمدید 🚀");
             }
 
             document.getElementById('input-my-name').value = currentUser.name || '';
@@ -611,6 +600,16 @@
                     if(onlineUsersMap[u.telegram_id] || (u.telegram_id === currentUser?.telegram_id)) onlineCount++;
                 });
                 document.getElementById('top-online-count').textContent = `${onlineCount} آنلاین`;
+            }
+        }
+
+        function handleMapSearch(query) {
+            const q = query.trim().toLowerCase();
+            if(!q) return;
+            const found = activeUsersGlobalList.find(u => u.name && u.name.toLowerCase().includes(q));
+            if(found && found.latitude && found.longitude) {
+                map.setView([found.latitude, found.longitude], 16, { animate: true });
+                showToast(`یافت شد: ${found.name}`);
             }
         }
 
