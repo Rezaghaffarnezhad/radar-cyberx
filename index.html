@@ -27,7 +27,7 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
-        /* نشانگر موقعیت مکانی با نشانگر دایره و سایه بازشونده متحرک */
+        /* نشانگر موقعیت مکانی با رادار متحرک پیشرفته */
         .my-animated-marker {
             width: 64px;
             height: 64px;
@@ -185,18 +185,14 @@
             align-items: center;
             gap: 6px;
         }
-        .google-suggestion-item:hover {
-            background: #232e3c;
-        }
+        .google-suggestion-item:hover { background: #232e3c; }
 
         .transparent-location-btn {
             background: transparent !important;
             border: none !important;
             box-shadow: none !important;
         }
-        .transparent-location-btn:hover {
-            background: rgba(255, 255, 255, 0.08) !important;
-        }
+        .transparent-location-btn:hover { background: rgba(255, 255, 255, 0.08) !important; }
 
         ::-webkit-scrollbar { width: 3px; height: 3px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
@@ -240,9 +236,7 @@
 
         <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center gap-2">
             <input id="radius-slider" type="range" min="0.5" max="25" step="0.5" value="5" oninput="onRadiusSliderChange(this.value)" class="vertical-slider-container accent-blue-600 cursor-pointer" title="تنظیم شعاع">
-            <button onclick="openRadiusSettingsModal()" class="w-9 h-9 flex items-center justify-center text-white text-lg drop-shadow-xl hover:scale-110 active:scale-95 transition" title="تنظیمات شعاع">
-                ⚙️
-            </button>
+            <button onclick="openRadiusSettingsModal()" class="w-9 h-9 flex items-center justify-center text-white text-lg drop-shadow-xl hover:scale-110 active:scale-95 transition" title="تنظیمات شعاع">⚙️</button>
         </div>
 
         <!-- نشانگر لوکیشن من -->
@@ -254,9 +248,7 @@
 
         <div class="absolute bottom-4 left-0 right-0 z-20 flex justify-center pointer-events-none">
             <div class="glass-box w-64 h-16 rounded-3xl flex items-center justify-center shadow-2xl pointer-events-auto relative">
-                <div onclick="openChatHubModal()" class="chat-3d-btn">
-                    💬
-                </div>
+                <div onclick="openChatHubModal()" class="chat-3d-btn">💬</div>
             </div>
         </div>
     </div>
@@ -331,7 +323,7 @@
     <!-- مودال لیست افراد آنلاین -->
     <div id="online-users-modal" class="hidden absolute inset-0 tg-bg z-40 flex flex-col">
         <div class="tg-header px-4 py-3 flex items-center justify-between">
-            <h3 class="font-bold text-xs text-white">افراد آنلاین داخل شعاع</h3>
+            <h3 class="font-bold text-xs text-white">افراد آنلاین داخل اپ</h3>
             <button onclick="closeOnlineUsersModal()" class="text-slate-400 text-sm px-2 py-1 rounded-lg hover:bg-white/5 transition">✕</button>
         </div>
         <div id="online-users-list-container" class="flex-1 p-3 overflow-y-auto flex flex-col gap-1.5"></div>
@@ -574,9 +566,7 @@
             else window.close();
         }
 
-        function goBack() {
-            handleMobileBackButton();
-        }
+        function goBack() { handleMobileBackButton(); }
 
         function backToChatHub() {
             document.getElementById('chat-window').classList.add('hidden');
@@ -660,13 +650,8 @@
             fetchUsersData();
         }
 
-        function openRadiusSettingsModal() {
-            document.getElementById('radius-settings-modal').classList.remove('hidden');
-        }
-
-        function closeRadiusSettingsModal() {
-            document.getElementById('radius-settings-modal').classList.add('hidden');
-        }
+        function openRadiusSettingsModal() { document.getElementById('radius-settings-modal').classList.remove('hidden'); }
+        function closeRadiusSettingsModal() { document.getElementById('radius-settings-modal').classList.add('hidden'); }
 
         function startPickingLocationOnMap() {
             closeRadiusSettingsModal();
@@ -828,21 +813,20 @@
         async function fetchUsersData() {
             const { data } = await supabaseClient.from('users').select('*');
             if (data) {
-                let activeUsers = data;
-                if (activeRadiusKm > 0) {
-                    activeUsers = activeUsers.filter(u => {
-                        if (!u.latitude || !u.longitude || u.telegram_id === currentUser?.telegram_id) return false;
-                        return calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude) <= activeRadiusKm;
-                    });
-                }
+                activeUsersGlobalList = data;
                 
-                activeUsersGlobalList = activeUsers;
-                renderOtherUsersOnMap(activeUsers);
+                // فیلتر کاربران برای نمایش روی نقشه بر اساس شعاع انتخابی
+                const mapUsers = data.filter(u => {
+                    if (!u.latitude || !u.longitude || u.telegram_id === currentUser?.telegram_id) return false;
+                    return calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude) <= activeRadiusKm;
+                });
+                
+                renderOtherUsersOnMap(mapUsers);
 
                 let onlineCount = 0;
                 const now = new Date();
                 
-                activeUsers.forEach(u => {
+                data.forEach(u => {
                     const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
                     const isRecent = lastSeenDate && (now - lastSeenDate < 120000);
                     
@@ -851,7 +835,7 @@
                     }
                 });
                 
-                if(currentUser) onlineCount++;
+                if(currentUser && onlineCount === 0) onlineCount = 1;
                 document.getElementById('top-online-count').textContent = `${onlineCount} آنلاین`;
             }
         }
@@ -878,7 +862,10 @@
         function openOnlineUsersModal() {
             const container = document.getElementById('online-users-list-container');
             const now = new Date();
+            
+            // نمایش تمامی افراد آنلاین و حاضر در اپ (بدون محدودیت شعاع جغرافیایی)
             const onlineUsers = activeUsersGlobalList.filter(u => {
+                if(u.telegram_id === currentUser?.telegram_id) return true;
                 const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
                 const isRecent = lastSeenDate && (now - lastSeenDate < 120000);
                 return onlineUsersMap[u.telegram_id] || isRecent;
@@ -886,6 +873,7 @@
             
             container.innerHTML = onlineUsers.length ? onlineUsers.map(u => {
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : (u.name || 'ک').charAt(0);
+                const isMeLabel = u.telegram_id === currentUser?.telegram_id ? ' (شما)' : '';
                 return `
                     <div onclick="closeOnlineUsersModal(); openUserProfile(${u.telegram_id})" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
                         <div class="relative w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden">
@@ -893,19 +881,17 @@
                             <div class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#17212b]"></div>
                         </div>
                         <div class="flex-1">
-                            <h4 class="font-bold text-xs text-white">${u.name}</h4>
-                            <p class="text-[10px] text-emerald-400 mt-0.5">آنلاین</p>
+                            <h4 class="font-bold text-xs text-white">${u.name}${isMeLabel}</h4>
+                            <p class="text-[10px] text-emerald-400 mt-0.5">آنلاین و حاضر در اپ</p>
                         </div>
                     </div>
                 `;
-            }).join('') : '<div class="text-center text-xs text-slate-400 py-6">هیچ کاربر آنلاین دیگری در شعاع شما یافت نشد.</div>';
+            }).join('') : '<div class="text-center text-xs text-slate-400 py-6">هیچ کاربر آنلاین دیگری در اپ یافت نشد.</div>';
 
             document.getElementById('online-users-modal').classList.remove('hidden');
         }
 
-        function closeOnlineUsersModal() {
-            document.getElementById('online-users-modal').classList.add('hidden');
-        }
+        function closeOnlineUsersModal() { document.getElementById('online-users-modal').classList.add('hidden'); }
 
         async function handleAvatarUpload(event) {
             const file = event.target.files[0];
@@ -943,9 +929,7 @@
             document.getElementById('chat-hub-modal').classList.remove('hidden');
             loadMatchesAndRequests();
         }
-        function closeChatHubModal() {
-            document.getElementById('chat-hub-modal').classList.add('hidden');
-        }
+        function closeChatHubModal() { document.getElementById('chat-hub-modal').classList.add('hidden'); }
 
         function switchHubTab(tab) {
             const contactsDiv = document.getElementById('hub-content-contacts');
@@ -1063,12 +1047,18 @@
                 avatarEl.textContent = (data.name || 'ک').charAt(0);
             }
 
+            const actionContainer = document.getElementById('profile-action-container');
+            if(currentUser && targetId === currentUser.telegram_id) {
+                actionContainer.innerHTML = `<button disabled class="w-full py-2.5 bg-slate-700 rounded-xl text-xs text-slate-400">این پروفایل خود شماست</button>`;
+                document.getElementById('user-profile-modal').classList.remove('hidden');
+                return;
+            }
+
             const { data: matchCheck } = await supabaseClient.from('matches')
                 .select('*')
                 .or(`and(user1_id.eq.${currentUser.telegram_id},user2_id.eq.${targetId}),and(user1_id.eq.${targetId},user2_id.eq.${currentUser.telegram_id})`)
                 .single();
 
-            const actionContainer = document.getElementById('profile-action-container');
             if(matchCheck) {
                 if(matchCheck.status === 'accepted') {
                     actionContainer.innerHTML = `<button onclick="closeUserProfileModal(); openPrivateChat(${targetId}, '${data.name}')" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition shadow">ارسال پیام</button>`;
@@ -1082,9 +1072,7 @@
             document.getElementById('user-profile-modal').classList.remove('hidden');
         }
 
-        function closeUserProfileModal() {
-            document.getElementById('user-profile-modal').classList.add('hidden');
-        }
+        function closeUserProfileModal() { document.getElementById('user-profile-modal').classList.add('hidden'); }
 
         async function sendMatchRequest() {
             if(!selectedTargetUser || !currentUser) return;
@@ -1275,9 +1263,7 @@
             document.getElementById('message-actions-modal').classList.remove('hidden');
         }
 
-        function closeMessageActions() {
-            document.getElementById('message-actions-modal').classList.add('hidden');
-        }
+        function closeMessageActions() { document.getElementById('message-actions-modal').classList.add('hidden'); }
 
         async function executeMessageAction(action) {
             if(!selectedMessageForAction) return;
