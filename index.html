@@ -27,42 +27,37 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
-        .custom-marker { position: relative; width: 38px; height: 38px; border-radius: 50%; border: 2px solid #5288c1; overflow: hidden; background: #17212b; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer; }
-        
+        /* نشانگر لوکیشن کاربر با پالس سایه شبیه گوگل مپ */
         .my-animated-marker {
-            width: 44px;
-            height: 44px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
-            background: rgba(59, 130, 246, 0.25);
+            background: rgba(66, 133, 244, 0.22);
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: pulse-ring 2s infinite;
+            animation: google-pulse 1.8s infinite;
         }
         .my-marker-inner {
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            border: 2px solid #3b82f6;
+            border: 3px solid #ffffff;
             overflow: hidden;
-            background: #17212b;
+            background: #4285f4;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
             color: white;
-            font-size: 12px;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+            font-size: 13px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
         }
-        @keyframes pulse-ring {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        @keyframes google-pulse {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 16px rgba(66, 133, 244, 0); }
+            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0); }
         }
-        
-        .led-status { position: absolute; bottom: 1px; right: 1px; width: 8px; height: 8px; border-radius: 50%; border: 2px solid #17212b; }
-        .led-online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
-        .led-offline { background: #e74c3c; }
 
         .leaflet-container { background-color: #0e1621 !important; }
         .dark-map .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
@@ -86,8 +81,8 @@
             cursor: pointer;
         }
 
-        .chat-bubble-out { background: #2b5278; color: #fff; border-radius: 14px 14px 4px 14px; transition: transform 0.2s ease; }
-        .chat-bubble-in { background: #18222d; color: #f5f5f5; border-radius: 14px 14px 14px 4px; border: 1px solid rgba(255,255,255,0.03); transition: transform 0.2s ease; }
+        .chat-bubble-out { background: #2b5278; color: #fff; border-radius: 14px 14px 4px 14px; }
+        .chat-bubble-in { background: #18222d; color: #f5f5f5; border-radius: 14px 14px 14px 4px; border: 1px solid rgba(255,255,255,0.03); }
 
         .telegram-back-btn {
             display: inline-flex;
@@ -98,7 +93,6 @@
             border-radius: 50%;
             background: transparent;
             color: #d7d8d9;
-            transition: background 0.2s ease;
             cursor: pointer;
         }
         .telegram-back-btn:hover { background: rgba(255, 255, 255, 0.08); }
@@ -115,17 +109,12 @@
             font-size: 24px;
             color: white;
             cursor: pointer;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
             position: absolute;
             top: -19px;
             left: 50%;
             transform: translateX(-50%);
         }
         .chat-3d-btn:active { transform: translateX(-50%) scale(0.94); }
-
-        .swipe-message-container {
-            transition: transform 0.15s ease-out;
-        }
 
         ::-webkit-scrollbar { width: 3px; height: 3px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
@@ -140,17 +129,14 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3.5 py-2.5 rounded-2xl flex items-center justify-between shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <button onclick="toggleMapTheme()" class="w-8 h-8 rounded-xl flex items-center justify-center text-xs text-white bg-[#1f2c38]/80 hover:bg-slate-700 transition">🌓</button>
-                    <button onclick="manualRefreshData()" class="w-8 h-8 rounded-xl flex items-center justify-center text-xs text-white bg-[#1f2c38]/80 hover:bg-slate-700 transition" title="بروزرسانی">🔄</button>
-                    <!-- دکمه بروزرسانی لوکیشن من -->
-                    <button onclick="manualRefreshMyLocation()" class="w-8 h-8 rounded-xl flex items-center justify-center text-xs text-white bg-[#1f2c38]/80 hover:bg-slate-700 transition" title="بروزرسانی لوکیشن من">📍</button>
-                </div>
-                <div class="flex items-center gap-3">
-                    <!-- تعداد افراد آنلاین بالا سمت چپ بدون پس‌زمینه -->
+                    <!-- تعداد افراد آنلاین سمت چپ -->
                     <div class="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition" onclick="openOnlineUsersModal()">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                         <span id="top-online-count" class="text-[11px] font-bold text-emerald-400">0 آنلاین</span>
                     </div>
+                    <button onclick="toggleMapTheme()" class="w-8 h-8 rounded-xl flex items-center justify-center text-xs text-white bg-[#1f2c38]/80 hover:bg-slate-700 transition">🌓</button>
+                </div>
+                <div class="flex items-center gap-3">
                     <div onclick="navigateTo('profile')" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
                         <span id="top-my-name" class="font-bold text-xs text-white">کاربر</span>
                         <div id="top-my-avatar" class="w-8 h-8 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow">ک</div>
@@ -161,6 +147,13 @@
 
         <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center">
             <input id="radius-slider" type="range" min="0.5" max="25" step="0.5" value="5" oninput="onRadiusSliderChange(this.value)" class="vertical-slider-container accent-blue-600 cursor-pointer">
+        </div>
+
+        <!-- دکمه لوکیشن سمت راست پایین صفحه (الگو گرفته از گوگل مپ) -->
+        <div class="absolute bottom-24 right-4 z-10">
+            <button onclick="manualRefreshMyLocation()" class="w-12 h-12 rounded-2xl glass-box flex items-center justify-center text-white shadow-xl hover:bg-slate-700/80 active:scale-95 transition" title="موقعیت من">
+                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </button>
         </div>
 
         <div class="absolute bottom-4 left-0 right-0 z-20 flex justify-center pointer-events-none">
@@ -320,7 +313,6 @@
         <div id="chat-input-container" class="p-2.5 tg-card flex items-center gap-2 relative">
             <input id="chat-input" oninput="toggleInputButtonState()" onkeydown="if(event.key==='Enter') handleSendAction()" type="text" placeholder="نوشتن پیام..." class="flex-1 tg-input px-3.5 py-2.5 rounded-xl text-xs">
             
-            <!-- دکمه ارسال پیام / ضبط وویس با قابلیت نگه داشتن و رها کردن -->
             <button id="dynamic-send-btn" 
                 ontouchstart="startVoiceRecording(event)" 
                 ontouchend="stopVoiceRecording(event)" 
@@ -334,7 +326,7 @@
         </div>
     </div>
 
-    <!-- منوی عملیات پیام (کپی، ویرایش، حذف) -->
+    <!-- منوی عملیات پیام -->
     <div id="message-actions-modal" class="hidden absolute inset-0 bg-black/60 z-50 flex items-end justify-center" onclick="closeMessageActions()">
         <div class="bg-[#17212b] w-full max-w-md rounded-t-3xl p-3 flex flex-col gap-1.5 border-t border-slate-700" onclick="event.stopPropagation()">
             <button id="action-btn-copy" onclick="executeMessageAction('copy')" class="w-full py-3 px-4 text-right text-xs text-slate-200 hover:bg-[#232e3c] rounded-xl transition flex items-center gap-3">📋 کپی کردن متن</button>
@@ -357,14 +349,15 @@
     <script>
         const SUPABASE_URL = "https://dxdskvkcmovotzxixxhd.supabase.co";
         const SUPABASE_KEY = "sb_publishable_3-rNuWmg9jAyPPQ89hE4ZQ_avo0wsPd";
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            realtime: { params: { eventsPerSecond: 10 } }
+        });
 
         let tg = window.Telegram?.WebApp;
         if(tg) tg.expand();
 
         let currentUser = null, selectedTargetUser = null, currentChatType = 'pv', currentChatTargetId = null;
-        let map, markers = {};
-        let myLocationMarker = null;
+        let map, myLocationMarker = null;
         let radiusCircle = null;
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
         let activeRadiusKm = 5;
@@ -390,7 +383,7 @@
             const toast = document.getElementById('toast');
             document.getElementById('toast-text').textContent = text;
             toast.classList.remove('-translate-y-20', 'opacity-0', 'pointer-events-none');
-            setTimeout(() => { toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none'); }, 2000);
+            setTimeout(() => { toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none'); }, 1800);
         }
 
         function navigateTo(viewId) {
@@ -401,7 +394,7 @@
             if(navigationHistory[navigationHistory.length - 1] !== viewId) {
                 navigationHistory.push(viewId);
             }
-            if(viewId === 'map' && map) setTimeout(() => map.invalidateSize(), 50);
+            if(viewId === 'map' && map) setTimeout(() => map.invalidateSize(), 30);
         }
 
         window.addEventListener('popstate', (e) => {
@@ -459,11 +452,6 @@
             else mapContainer.classList.remove('dark-map');
         }
 
-        function manualRefreshData() {
-            fetchUsersData();
-            showToast("اطلاعات بروزرسانی شد");
-        }
-
         function manualRefreshMyLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
@@ -472,10 +460,10 @@
                     if(map) map.setView([currentCoords.lat, currentCoords.lng], 15, { animate: true });
                     updateRadiusCircleOnMap();
                     updateMyLocation(currentCoords.lat, currentCoords.lng);
-                    showToast("لوکیشن شما بروزرسانی شد");
+                    showToast("موقعیت شما به‌روز شد");
                 }, () => {
                     showToast("خطا در دریافت موقعیت مکانی");
-                }, { enableHighAccuracy: true });
+                }, { enableHighAccuracy: true, timeout: 5000 });
             } else {
                 showToast("GPS پشتیبانی نمی‌شود");
             }
@@ -492,9 +480,9 @@
             if(radiusCircle) map.removeLayer(radiusCircle);
             radiusCircle = L.circle([currentCoords.lat, currentCoords.lng], {
                 radius: activeRadiusKm * 1000,
-                color: '#2563eb',
+                color: '#4285f4',
                 weight: 1.5,
-                fillColor: '#3b82f6',
+                fillColor: '#4285f4',
                 fillOpacity: 0.08
             }).addTo(map);
 
@@ -502,7 +490,7 @@
             const initial = (currentUser?.name || 'ک').charAt(0);
             const myAvatarInner = currentUser?.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : initial;
             const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner">${myAvatarInner}</div></div>`;
-            const myIcon = L.divIcon({ html: myHtml, iconSize: [44, 44], iconAnchor: [22, 22] });
+            const myIcon = L.divIcon({ html: myHtml, iconSize: [52, 52], iconAnchor: [26, 26] });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
 
@@ -514,13 +502,14 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
+        // الگوریتم استاندارد آخرین بازدید تلگرام (بدون متن اضافه غیرضروری)
         function formatTelegramLastSeen(dateString) {
             if (!dateString) return 'آخرین بازدید اخیراً';
             const date = new Date(dateString);
             const now = new Date();
             const diffSec = Math.floor((now - date) / 1000);
 
-            if (diffSec < 60) return 'آخرین بازدید همین الان';
+            if (diffSec < 60) return 'آنلاین';
             if (diffSec < 3600) return `آخرین بازدید ${Math.floor(diffSec / 60)} دقیقه پیش`;
             if (diffSec < 86400) return `آخرین بازدید امروز ساعت ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
             return `آخرین بازدید در ${date.toLocaleDateString('fa-IR')} ساعت ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
@@ -534,7 +523,7 @@
                     if(map) map.setView([currentCoords.lat, currentCoords.lng], 14, { animate: true });
                     updateRadiusCircleOnMap();
                     updateMyLocation(currentCoords.lat, currentCoords.lng);
-                }, () => {}, { enableHighAccuracy: true });
+                }, () => {}, { enableHighAccuracy: true, timeout: 5000 });
             }
 
             map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 13);
@@ -575,7 +564,7 @@
 
             fetchUsersData();
             initRealtimeGlobal();
-            setInterval(updateMyHeartbeat, 15000);
+            setInterval(updateMyHeartbeat, 10000);
         });
 
         async function updateMyHeartbeat() {
@@ -619,45 +608,19 @@
 
                 let onlineCount = 0;
                 activeUsers.forEach(u => {
-                    if(onlineUsersMap[u.telegram_id]) onlineCount++;
+                    if(onlineUsersMap[u.telegram_id] || (u.telegram_id === currentUser?.telegram_id)) onlineCount++;
                 });
                 document.getElementById('top-online-count').textContent = `${onlineCount} آنلاین`;
-
-                const existingIds = activeUsers.map(u => u.telegram_id);
-                Object.keys(markers).forEach(id => {
-                    if (!existingIds.includes(Number(id))) {
-                        map.removeLayer(markers[id]);
-                        delete markers[id];
-                    }
-                });
-
-                activeUsers.forEach(u => {
-                    if (u.telegram_id === currentUser?.telegram_id || !u.latitude || !u.longitude) return;
-                    const isOnline = onlineUsersMap[u.telegram_id] == true;
-                    const initial = u.avatar_url ? '' : (u.name ? u.name.charAt(0) : '?');
-                    const innerContent = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : initial;
-                    
-                    const ledClass = isOnline ? 'led-online' : 'led-offline';
-                    const html = `<div class="custom-marker">${innerContent}<div class="led-status ${ledClass}"></div></div>`;
-                    const icon = L.divIcon({ html, iconSize: [38, 38], iconAnchor: [19, 19] });
-
-                    if (markers[u.telegram_id]) {
-                        markers[u.telegram_id].setLatLng([u.latitude, u.longitude]);
-                    } else {
-                        const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
-                        marker.on('click', () => openUserProfile(u.telegram_id));
-                        markers[u.telegram_id] = marker;
-                    }
-                });
             }
         }
 
         function openOnlineUsersModal() {
             const container = document.getElementById('online-users-list-container');
-            const onlineUsers = activeUsersGlobalList.filter(u => onlineUsersMap[u.telegram_id]);
+            const onlineUsers = activeUsersGlobalList.filter(u => onlineUsersMap[u.telegram_id] || u.telegram_id === currentUser?.telegram_id);
             
             container.innerHTML = onlineUsers.length ? onlineUsers.map(u => {
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : (u.name || 'ک').charAt(0);
+                const statusText = u.telegram_id === currentUser?.telegram_id ? 'آنلاین (خودتان)' : formatTelegramLastSeen(u.last_seen);
                 return `
                     <div onclick="closeOnlineUsersModal(); openPrivateChat(${u.telegram_id}, '${u.name}')" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
                         <div class="relative w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden">
@@ -666,7 +629,7 @@
                         </div>
                         <div class="flex-1">
                             <h4 class="font-bold text-xs text-white">${u.name}</h4>
-                            <p class="text-[10px] text-emerald-400 mt-0.5">آنلاین</p>
+                            <p class="text-[10px] text-emerald-400 mt-0.5">${statusText}</p>
                         </div>
                     </div>
                 `;
@@ -691,7 +654,7 @@
                 currentUser.avatar_url = base64Image;
                 updateMyAvatarUI();
                 updateRadiusCircleOnMap();
-                showToast("عکس پروفایل برای همیشه ذخیره شد");
+                showToast("عکس پروفایل ذخیره شد");
             };
             reader.readAsDataURL(file);
         }
@@ -708,7 +671,7 @@
             currentUser.bio = bio;
             updateMyAvatarUI();
             updateRadiusCircleOnMap();
-            showToast("پروفایل ذخیره شد");
+            showToast("پروفایل به‌روز شد");
         }
 
         function openChatHubModal() {
@@ -760,6 +723,7 @@
                             </div>
                             <div class="flex-1">
                                 <h4 class="font-bold text-xs text-white">${u.name}</h4>
+                                <p class="text-[10px] text-slate-400 mt-0.5">${formatTelegramLastSeen(u.last_seen)}</p>
                             </div>
                         </div>
                     `;
@@ -961,7 +925,7 @@
 
             if(action === 'copy') {
                 navigator.clipboard.writeText(text);
-                showToast("متن با موفقیت کپی شد");
+                showToast("متن کپی شد");
             } else if(action === 'edit' && isMe) {
                 editingMessage = { id, text };
                 document.getElementById('edit-preview-text').textContent = text;
@@ -1045,12 +1009,12 @@
 
         function startVoiceRecording(e) {
             const inputVal = document.getElementById('chat-input').value;
-            if (inputVal.trim().length > 0) return; // اگر متن نوشته شده باشد، دکمه حالت ارسال دارد نه وویس
+            if (inputVal.trim().length > 0) return;
 
             e.preventDefault();
             if (isVoiceRecordingActive) return;
             isVoiceRecordingActive = true;
-            showToast("🔴 در حال ضبط صدا... (با رها کردن ارسال می‌شود)");
+            showToast("🔴 در حال ضبط صدا...");
             
             voiceTimer = setTimeout(async () => {
                 if(isVoiceRecordingActive) {
@@ -1058,7 +1022,7 @@
                     showToast("🎙️ وویس ارسال شد");
                     await sendVoiceMessagePayload("🎤 پیام صوتی");
                 }
-            }, 3000); // شبیه‌سازی اتمام ضبط پس از 3 ثانیه نگه داشتن یا با رها کردن
+            }, 3000);
         }
 
         async function stopVoiceRecording(e) {
@@ -1095,9 +1059,7 @@
             const input = document.getElementById('chat-input');
             const message = input.value.trim();
 
-            if (!message) {
-                return;
-            }
+            if (!message) return;
 
             input.value = '';
             toggleInputButtonState();
