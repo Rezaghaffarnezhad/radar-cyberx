@@ -6,7 +6,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 TOKEN = "8186173027:AAHY6oTA7TF0NWbgD_KaajJgqBZtyAu6EPc"
 
 # لینک اینترنتی فایل index.html که روی گیت‌هاب یا هاست آپلود کرده‌اید را اینجا قرار دهید
-WEB_APP_URL = "https://your-username.github.io/your-repo/index.html"
+WEB_APP_URL = "8186173027:AAHY6oTA7TF0NWbgD_KaajJgqBZtyAu6EPc"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # ساخت دکمه شیشه‌ای ورود به اپلیکیشن
