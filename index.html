@@ -116,7 +116,6 @@
         }
         .chat-3d-btn:active { transform: translateX(-50%) scale(0.94); }
 
-        /* گزینه جستجو با الگوی برداری کامل گوگل مپ (ذره‌بین در کنار آنلاین بدون پس‌زمینه) */
         .google-search-bar-container {
             display: flex;
             align-items: center;
@@ -190,7 +189,6 @@
             background: #232e3c;
         }
 
-        /* حذف پس‌زمینه گزینه لوکیشن */
         .transparent-location-btn {
             background: transparent !important;
             border: none !important;
@@ -219,7 +217,7 @@
                         <span id="top-online-count" class="text-[11px] font-bold text-emerald-400">0 آنلاین</span>
                     </div>
 
-                    <!-- جستجوی آدرس با انتخاب ذره‌بین (بدون پس‌زمینه، الگوی برداری کامل گوگل مپ) -->
+                    <!-- جستجوی آدرس با انتخاب ذره‌بین -->
                     <div id="google-search-container" class="google-search-bar-container">
                         <button class="google-search-icon-btn" onclick="toggleGoogleSearchExpansion()">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -247,7 +245,7 @@
             </button>
         </div>
 
-        <!-- نشانگر لوکیشن من (دکمه موقعیت من با حذف پس‌زمینه) -->
+        <!-- نشانگر لوکیشن من -->
         <div class="absolute bottom-24 right-4 z-10 pointer-events-auto">
             <button onclick="centerToMyLocation()" class="w-12 h-12 transparent-location-btn rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95" title="موقعیت من">
                 <svg class="w-7 h-7 text-blue-400 drop-shadow-md" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -315,7 +313,6 @@
                     <input id="modal-radius-range" type="range" min="0.5" max="25" step="0.5" value="5" oninput="onModalRadiusChange(this.value)" class="w-full accent-blue-600 cursor-pointer">
                 </div>
                 
-                <!-- انتخاب لوکیشن دستی روی نقشه -->
                 <div class="bg-[#18222d] p-3 rounded-xl flex flex-col gap-2">
                     <span class="text-[11px] text-slate-300 font-bold">انتخاب لوکیشن دستی روی نقشه</span>
                     <p class="text-[10px] text-slate-400 leading-relaxed">با زدن دکمه زیر، نقشه برای شما باز می‌شود. روی هر نقطه از نقشه کلیک کنید تا به عنوان لوکیشن شما ثبت شود.</p>
@@ -774,7 +771,7 @@
                     username: user.username, 
                     latitude: currentCoords.lat, 
                     longitude: currentCoords.lng,
-                    last_seen: new Date() 
+                    last_seen: new Date().toISOString() 
                 };
                 const { data: inserted } = await supabaseClient.from('users').upsert(newUserData).select().single();
                 currentUser = inserted || newUserData;
@@ -799,7 +796,12 @@
 
         async function updateMyHeartbeat() {
             if(!currentUser) return;
-            await supabaseClient.from('users').update({ last_seen: new Date() }).eq('telegram_id', currentUser.telegram_id);
+            await supabaseClient.from('users').update({ 
+                latitude: currentCoords.lat, 
+                longitude: currentCoords.lng, 
+                last_seen: new Date().toISOString() 
+            }).eq('telegram_id', currentUser.telegram_id);
+            fetchUsersData();
         }
 
         function updateMyAvatarUI() {
@@ -819,7 +821,7 @@
         async function updateMyLocation(lat, lng) {
             if(!currentUser) return;
             currentCoords = { lat, lng };
-            await supabaseClient.from('users').update({ latitude: lat, longitude: lng, last_seen: new Date() }).eq('telegram_id', currentUser.telegram_id);
+            await supabaseClient.from('users').update({ latitude: lat, longitude: lng, last_seen: new Date().toISOString() }).eq('telegram_id', currentUser.telegram_id);
             fetchUsersData();
         }
 
@@ -838,9 +840,17 @@
                 renderOtherUsersOnMap(activeUsers);
 
                 let onlineCount = 0;
+                const now = new Date();
+                
                 activeUsers.forEach(u => {
-                    if(onlineUsersMap[u.telegram_id]) onlineCount++;
+                    const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
+                    const isRecent = lastSeenDate && (now - lastSeenDate < 120000);
+                    
+                    if(onlineUsersMap[u.telegram_id] || isRecent) {
+                        onlineCount++;
+                    }
                 });
+                
                 if(currentUser) onlineCount++;
                 document.getElementById('top-online-count').textContent = `${onlineCount} آنلاین`;
             }
@@ -867,7 +877,12 @@
 
         function openOnlineUsersModal() {
             const container = document.getElementById('online-users-list-container');
-            const onlineUsers = activeUsersGlobalList.filter(u => onlineUsersMap[u.telegram_id]);
+            const now = new Date();
+            const onlineUsers = activeUsersGlobalList.filter(u => {
+                const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
+                const isRecent = lastSeenDate && (now - lastSeenDate < 120000);
+                return onlineUsersMap[u.telegram_id] || isRecent;
+            });
             
             container.innerHTML = onlineUsers.length ? onlineUsers.map(u => {
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : (u.name || 'ک').charAt(0);
