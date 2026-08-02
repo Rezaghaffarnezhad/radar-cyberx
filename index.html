@@ -28,18 +28,18 @@
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
         .my-animated-marker {
-            width: 52px;
-            height: 52px;
+            width: 64px;
+            height: 64px;
             border-radius: 50%;
-            background: rgba(66, 133, 244, 0.22);
+            background: rgba(66, 133, 244, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: google-pulse 1.8s infinite;
+            animation: google-radar-pulse 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1);
         }
         .my-marker-inner {
-            width: 36px;
-            height: 36px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
             border: 3px solid #ffffff;
             overflow: hidden;
@@ -50,12 +50,12 @@
             font-weight: 700;
             color: white;
             font-size: 13px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.6);
         }
-        @keyframes google-pulse {
-            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 16px rgba(66, 133, 244, 0); }
-            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0); }
+        @keyframes google-radar-pulse {
+            0% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.6), 0 0 0 0 rgba(66, 133, 244, 0.4); }
+            50% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(66, 133, 244, 0), 0 0 0 35px rgba(66, 133, 244, 0.15); }
+            100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0), 0 0 0 0 rgba(66, 133, 244, 0); }
         }
 
         .leaflet-container { background-color: #0e1621 !important; }
@@ -115,6 +115,25 @@
         }
         .chat-3d-btn:active { transform: translateX(-50%) scale(0.94); }
 
+        /* استایل گوگل مپی کادر جستجو بالا */
+        .google-search-pill {
+            background: #ffffff;
+            color: #202124;
+            border-radius: 28px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+        .google-search-pill input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #202124;
+            font-size: 12px;
+        }
+        .google-search-pill input::placeholder {
+            color: #70757a;
+        }
+
         ::-webkit-scrollbar { width: 3px; height: 3px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
     </style>
@@ -125,38 +144,40 @@
     <div id="view-map" class="view-section relative w-full h-full">
         <div id="map" class="map-container"></div>
         
-        <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
-            <div class="glass-box px-3.5 py-2.5 rounded-2xl flex items-center justify-between shadow-2xl pointer-events-auto">
-                <div class="flex items-center gap-2">
-                    <div class="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition" onclick="openOnlineUsersModal()">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span id="top-online-count" class="text-[11px] font-bold text-emerald-400">0 آنلاین</span>
-                    </div>
-                    <!-- حذف پس زمینه گزینه تغییر مود -->
-                    <button onclick="toggleMapTheme()" class="w-8 h-8 rounded-xl flex items-center justify-center text-xs text-white hover:bg-slate-700/50 transition" title="تغییر حالت نقشه">🌓</button>
+        <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none flex items-center justify-between gap-2">
+            <div class="glass-box px-3 py-2 rounded-2xl flex items-center gap-2 shadow-2xl pointer-events-auto">
+                <div class="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition" onclick="openOnlineUsersModal()">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="top-online-count" class="text-[11px] font-bold text-emerald-400">0 آنلاین</span>
                 </div>
-                <!-- افزودن گزینه جستجو به کادر بالا -->
-                <div class="flex items-center gap-2 flex-1 max-w-[160px] mx-2">
-                    <input id="top-search-input" oninput="handleMapSearch(this.value)" type="text" placeholder="جستجو..." class="w-full tg-input px-2.5 py-1 rounded-xl text-[11px]">
+                <button onclick="toggleMapTheme()" class="w-7 h-7 rounded-xl flex items-center justify-center text-xs text-white hover:bg-slate-700/50 transition" title="تغییر حالت نقشه">🌓</button>
+            </div>
+
+            <!-- کادر جستجو با الگوبرداری از گوگل مپ (ذره‌بین و قابلیت باز شدن برای تایپ) -->
+            <div class="flex-1 max-w-[200px] pointer-events-auto">
+                <div id="google-search-container" class="google-search-pill px-3.5 py-2 flex items-center gap-2.5">
+                    <svg class="w-4 h-4 text-[#70757a] shrink-0 cursor-pointer" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input id="top-search-input" oninput="handleMapSearch(this.value)" type="text" placeholder="جستجو در نقشه..." class="w-full">
                 </div>
-                <div class="flex items-center gap-3">
-                    <div onclick="navigateTo('profile')" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
-                        <span id="top-my-name" class="font-bold text-xs text-white truncate max-w-[80px]">کاربر</span>
-                        <div id="top-my-avatar" class="w-8 h-8 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow">ک</div>
-                    </div>
+            </div>
+
+            <div class="glass-box px-2.5 py-1.5 rounded-2xl flex items-center shadow-2xl pointer-events-auto">
+                <div onclick="navigateTo('profile')" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
+                    <span id="top-my-name" class="font-bold text-xs text-white truncate max-w-[70px]">کاربر</span>
+                    <div id="top-my-avatar" class="w-7 h-7 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow">ک</div>
                 </div>
             </div>
         </div>
 
         <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center gap-2">
-            <input id="radius-slider" type="range" min="0.5" max="25" step="0.5" value="5" oninput="onRadiusSliderChange(this.value)" class="vertical-slider-container accent-blue-600 cursor-pointer">
-            <!-- افزودن گزینه تنظیمات به زیر تنظیم شعاع -->
-            <button onclick="navigateTo('profile')" class="w-9 h-9 rounded-xl glass-box flex items-center justify-center text-white shadow-xl hover:bg-slate-700/80 active:scale-95 transition" title="تنظیمات">
+            <input id="radius-slider" type="range" min="0.5" max="25" step="0.5" value="5" oninput="onRadiusSliderChange(this.value)" class="vertical-slider-container accent-blue-600 cursor-pointer" title="تنظیم شعاع">
+            <!-- حذف پس زمینه گزینه تنظیمات و اختصاص آن برای تنظیم شعاع و آپشن‌های وابسته -->
+            <button onclick="openRadiusSettingsModal()" class="w-9 h-9 flex items-center justify-center text-white text-lg drop-shadow-xl hover:scale-110 active:scale-95 transition" title="تنظیمات شعاع">
                 ⚙️
             </button>
         </div>
 
-        <!-- دکمه لوکیشن با الگوی گوگل مپ و بدون پس زمینه (بدون قابلیت بروزرسانی دستی/اجازه بروزرسانی) -->
+        <!-- دکمه لوکیشن با الگوی گوگل مپ و بدون پس زمینه -->
         <div class="absolute bottom-24 right-4 z-10 pointer-events-none">
             <div class="w-12 h-12 flex items-center justify-center text-white drop-shadow-xl" title="موقعیت من">
                 <svg class="w-7 h-7 text-blue-500 drop-shadow-md" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -205,6 +226,34 @@
                 <textarea id="input-my-bio" rows="2" class="w-full tg-input px-3.5 py-2.5 rounded-xl text-xs resize-none"></textarea>
             </div>
             <button onclick="saveProfile()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition shadow">ذخیره و به‌روزرسانی</button>
+        </div>
+    </div>
+
+    <!-- مودال تنظیمات شعاع و گزینه‌های وابسته -->
+    <div id="radius-settings-modal" class="hidden absolute inset-0 bg-black/70 z-40 flex items-center justify-center p-4" onclick="closeRadiusSettingsModal()">
+        <div class="tg-card w-full max-w-sm rounded-2xl p-4 flex flex-col gap-4 shadow-2xl border border-slate-700" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <h3 class="font-bold text-xs text-white flex items-center gap-1.5">⚙️ تنظیمات پیشرفته شعاع</h3>
+                <button onclick="closeRadiusSettingsModal()" class="text-slate-400 text-xs px-2 py-1 rounded hover:bg-white/5">✕</button>
+            </div>
+            <div class="flex flex-col gap-3">
+                <div>
+                    <div class="flex justify-between text-[11px] text-slate-300 mb-1">
+                        <span>محدوده شعاع جستجو:</span>
+                        <span id="modal-radius-val" class="font-bold text-[#5288c1]">5 کیلومتر</span>
+                    </div>
+                    <input id="modal-radius-range" type="range" min="0.5" max="25" step="0.5" value="5" oninput="onModalRadiusChange(this.value)" class="w-full accent-blue-600 cursor-pointer">
+                </div>
+                <div class="flex items-center justify-between bg-[#18222d] p-3 rounded-xl">
+                    <span class="text-[11px] text-slate-300">نمایش کاربران مخفی/آفلاین</span>
+                    <input type="checkbox" id="setting-offline-users" class="w-4 h-4 accent-blue-600 rounded cursor-pointer">
+                </div>
+                <div class="flex items-center justify-between bg-[#18222d] p-3 rounded-xl">
+                    <span class="text-[11px] text-slate-300">بروزرسانی خودکار موقعیت</span>
+                    <input type="checkbox" id="setting-auto-loc" checked class="w-4 h-4 accent-blue-600 rounded cursor-pointer">
+                </div>
+            </div>
+            <button onclick="closeRadiusSettingsModal()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition">ذخیره تنظیمات</button>
         </div>
     </div>
 
@@ -277,7 +326,7 @@
         </div>
     </div>
 
-    <!-- صفحه چت -->
+    <!-- صفحه چت با لود لحظه‌ای پیوی مخاطب -->
     <div id="chat-window" class="hidden absolute inset-0 tg-bg z-50 flex flex-col">
         <div class="tg-header px-3 py-2.5 flex items-center gap-3">
             <button onclick="backToChatHub()" class="telegram-back-btn">
@@ -377,6 +426,7 @@
         let selectedMessageForAction = null;
         let isVoiceRecordingActive = false;
         let voiceTimer = null;
+        let cachedMessages = {};
 
         const user = tg?.initDataUnsafe?.user || { 
             id: Math.floor(Math.random() * 900000) + 100000, 
@@ -407,6 +457,12 @@
         });
 
         function handleMobileBackButton() {
+            const radiusModal = document.getElementById('radius-settings-modal');
+            if(!radiusModal.classList.contains('hidden')) {
+                closeRadiusSettingsModal();
+                return;
+            }
+
             const chatWindow = document.getElementById('chat-window');
             if(!chatWindow.classList.contains('hidden')) {
                 backToChatHub();
@@ -459,8 +515,26 @@
 
         function onRadiusSliderChange(val) {
             activeRadiusKm = parseFloat(val);
+            document.getElementById('modal-radius-range').value = val;
+            document.getElementById('modal-radius-val').textContent = `${val} کیلومتر`;
             updateRadiusCircleOnMap();
             fetchUsersData();
+        }
+
+        function onModalRadiusChange(val) {
+            activeRadiusKm = parseFloat(val);
+            document.getElementById('radius-slider').value = val;
+            document.getElementById('modal-radius-val').textContent = `${val} کیلومتر`;
+            updateRadiusCircleOnMap();
+            fetchUsersData();
+        }
+
+        function openRadiusSettingsModal() {
+            document.getElementById('radius-settings-modal').classList.remove('hidden');
+        }
+
+        function closeRadiusSettingsModal() {
+            document.getElementById('radius-settings-modal').classList.add('hidden');
         }
 
         function updateRadiusCircleOnMap() {
@@ -478,7 +552,7 @@
             const initial = (currentUser?.name || 'ک').charAt(0);
             const myAvatarInner = currentUser?.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : initial;
             const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner">${myAvatarInner}</div></div>`;
-            const myIcon = L.divIcon({ html: myHtml, iconSize: [52, 52], iconAnchor: [26, 26] });
+            const myIcon = L.divIcon({ html: myHtml, iconSize: [64, 64], iconAnchor: [32, 32] });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
 
@@ -524,7 +598,6 @@
 
             if (data) {
                 currentUser = data;
-                showToast("سلام! خوش آمدید 🎉");
             } else {
                 const newUserData = { 
                     telegram_id: user.id, 
@@ -536,7 +609,6 @@
                 };
                 const { data: inserted } = await supabaseClient.from('users').upsert(newUserData).select().single();
                 currentUser = inserted || newUserData;
-                showToast("سلام! به ربات خوش آمدید 🚀");
             }
 
             document.getElementById('input-my-name').value = currentUser.name || '';
@@ -785,6 +857,18 @@
         async function openPrivateChat(targetId, targetName) {
             currentChatType = 'pv';
             currentChatTargetId = targetId;
+            
+            // لود لحظه‌ای کش شده یا داده اولیه
+            const container = document.getElementById('chat-messages');
+            if (cachedMessages[targetId]) {
+                renderMessagesHTML(cachedMessages[targetId], container);
+            } else {
+                container.innerHTML = '<div class="flex justify-center items-center py-10"><span class="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span></div>';
+            }
+
+            document.getElementById('chat-window').classList.remove('hidden');
+            closeChatHubModal();
+
             const { data } = await supabaseClient.from('users').select('*').eq('telegram_id', targetId).single();
             selectedTargetUser = data || { telegram_id: targetId, name: targetName };
             
@@ -797,9 +881,6 @@
             } else {
                 headerAvatar.textContent = (selectedTargetUser.name || 'ک').charAt(0);
             }
-
-            document.getElementById('chat-window').classList.remove('hidden');
-            closeChatHubModal();
             
             await supabaseClient.from('messages')
                 .update({ is_read: true })
@@ -855,7 +936,15 @@
             const { data } = await query.order('created_at', { ascending: true });
             let filteredMessages = data || [];
 
-            container.innerHTML = filteredMessages.map(m => {
+            if (currentChatType === 'pv') {
+                cachedMessages[currentChatTargetId] = filteredMessages;
+            }
+
+            renderMessagesHTML(filteredMessages, container);
+        }
+
+        function renderMessagesHTML(messagesList, container) {
+            container.innerHTML = messagesList.map(m => {
                 const isMe = m.sender_id === currentUser.telegram_id;
                 let ticksHTML = '';
                 if (isMe) {
