@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar CyberX - آنلاین‌ها</title>
+    <style>
+        body { font-family: Tahoma, sans-serif; background: #0f172a; color: #fff; margin: 0; padding: 20px; }
+        .container { display: flex; gap: 20px; }
+        .map-box { flex: 3; background: #1e293b; padding: 20px; border-radius: 10px; height: 400px; }
+        .sidebar { flex: 1; background: #1e293b; padding: 20px; border-radius: 10px; }
+        ul { list-style: none; padding: 0; }
+        li { background: #334155; margin-bottom: 8px; padding: 8px 12px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>سیستم رادار سایبرکس</h1>
+    
+    <div class="container">
+        <div class="map-box">
+            <h3>نقشه / محیط اصلی</h3>
+            <p>خوش آمدید! وضعیت شما به عنوان کاربر آنلاین ثبت شد.</p>
+        </div>
+        
+        <div class="sidebar">
+            <h3>👥 افراد آنلاین</h3>
+            <ul id="online-users-list">
+                <li>در حال بارگذاری...</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // نام کاربری نمونه (می‌توانید بعداً این را از تلگرام یا لاگین بگیرید)
+        let username = "کاربر_" + Math.floor(Math.random() * 1000);
+
+        // ۱. اعلام حضور کاربر به سرور هنگام ورود
+        function sendPresence() {
+            fetch('/api/update-presence', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username })
+            }).catch(err => console.error("خطا در ارسال حضور:", err));
+        }
+
+        // ۲. گرفتن لیست افراد آنلاین هر ۳ ثانیه یکبار
+        function fetchOnlineUsers() {
+            fetch('/api/online-users')
+                .then(response => response.json())
+                .then(users => {
+                    const listElement = document.getElementById('online-users-list');
+                    listElement.innerHTML = '';
+                    
+                    if (users.length === 0) {
+                        listElement.innerHTML = '<li>کسی آنلاین نیست</li>';
+                        return;
+                    }
+
+                    users.forEach(user => {
+                        const li = document.createElement('li');
+                        li.textContent = user + (user === username ? " (شما)" : "");
+                        listElement.appendChild(li);
+                    });
+                })
+                .catch(err => console.error("خطا در دریافت لیست آنلاین‌ها:", err));
+        }
+
+        // اجرای اولیه و تنظیم تایمرها
+        sendPresence();
+        setInterval(sendPresence, 10000); // هر ۱۰ ثانیه حضور را تمدید می‌کند
+        setInterval(fetchOnlineUsers, 3000); // هر ۳ ثانیه لیست را آپدیت می‌کند
+    </script>
+</body>
+</html>
