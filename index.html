@@ -26,6 +26,38 @@
 
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
+        
+        /* نشانگر موقعیت مکانی من با سایه متحرک بازشونده (Pulse) */
+        .my-animated-marker {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(66, 133, 244, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: google-radar-pulse 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+        }
+        .my-marker-inner {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 3px solid #ffffff;
+            overflow: hidden;
+            background: #4285f4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 13px;
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.6);
+        }
+        @keyframes google-radar-pulse {
+            0% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.6), 0 0 0 0 rgba(66, 133, 244, 0.4); }
+            50% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(66, 133, 244, 0), 0 0 0 35px rgba(66, 133, 244, 0.15); }
+            100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0), 0 0 0 0 rgba(66, 133, 244, 0); }
+        }
 
         /* نشانگر کاربران دیگر روی نقشه */
         .other-user-pin {
@@ -175,6 +207,13 @@
         }
         .google-suggestion-item:hover { background: #232e3c; }
 
+        .transparent-location-btn {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .transparent-location-btn:hover { background: rgba(255, 255, 255, 0.08) !important; }
+
         ::-webkit-scrollbar { width: 3px; height: 3px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
     </style>
@@ -220,6 +259,13 @@
             <button onclick="openRadiusSettingsModal()" class="w-9 h-9 flex items-center justify-center text-white text-lg drop-shadow-xl hover:scale-110 active:scale-95 transition" title="تنظیمات شعاع">⚙️</button>
         </div>
 
+        <!-- نشانگر لوکیشن من (سمت راست پایین) -->
+        <div class="absolute bottom-24 right-4 z-10 pointer-events-auto">
+            <button onclick="centerToMyLocation()" class="w-12 h-12 transparent-location-btn rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95" title="موقعیت من">
+                <svg class="w-7 h-7 text-blue-400 drop-shadow-md" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </button>
+        </div>
+
         <div class="absolute bottom-4 left-0 right-0 z-20 flex justify-center pointer-events-none">
             <div class="glass-box w-64 h-16 rounded-3xl flex items-center justify-center shadow-2xl pointer-events-auto relative">
                 <div onclick="openChatHubModal()" class="chat-3d-btn">💬</div>
@@ -263,11 +309,11 @@
         </div>
     </div>
 
-    <!-- مودال تنظیمات شعاع -->
+    <!-- مودال تنظیمات شعاع و انتخاب لوکیشن دستی روی نقشه -->
     <div id="radius-settings-modal" class="hidden absolute inset-0 bg-black/70 z-40 flex items-center justify-center p-4" onclick="closeRadiusSettingsModal()">
         <div class="tg-card w-full max-w-sm rounded-2xl p-4 flex flex-col gap-4 shadow-2xl border border-slate-700" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                <h3 class="font-bold text-xs text-white flex items-center gap-1.5">⚙️ تنظیمات شعاع</h3>
+                <h3 class="font-bold text-xs text-white flex items-center gap-1.5">⚙️ تنظیمات شعاع و موقعیت</h3>
                 <button onclick="closeRadiusSettingsModal()" class="text-slate-400 text-xs px-2 py-1 rounded hover:bg-white/5">✕</button>
             </div>
             <div class="flex flex-col gap-3">
@@ -277,6 +323,17 @@
                         <span id="modal-radius-val" class="font-bold text-[#5288c1]">15 کیلومتر</span>
                     </div>
                     <input id="modal-radius-range" type="range" min="0.5" max="50" step="0.5" value="15" oninput="onModalRadiusChange(this.value)" class="w-full accent-blue-600 cursor-pointer">
+                </div>
+                
+                <div class="bg-[#18222d] p-3 rounded-xl flex flex-col gap-2">
+                    <span class="text-[11px] text-slate-300 font-bold">انتخاب لوکیشن دستی روی نقشه</span>
+                    <p class="text-[10px] text-slate-400 leading-relaxed">با زدن دکمه زیر، نقشه برای شما باز می‌شود. روی هر نقطه از نقشه کلیک کنید تا به عنوان لوکیشن شما ثبت شود.</p>
+                    <button onclick="startPickingLocationOnMap()" class="py-2 bg-[#2b5278] hover:bg-[#336394] rounded-lg text-[11px] text-white transition flex items-center justify-center gap-1.5 font-medium">📍 انتخاب نقطه روی نقشه</button>
+                </div>
+
+                <div class="flex items-center justify-between bg-[#18222d] p-3 rounded-xl">
+                    <span class="text-[11px] text-slate-300">بروزرسانی خودکار موقعیت</span>
+                    <input type="checkbox" id="setting-auto-loc" checked class="w-4 h-4 accent-blue-600 rounded cursor-pointer">
                 </div>
             </div>
             <button onclick="closeRadiusSettingsModal()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition">ذخیره تنظیمات</button>
@@ -318,7 +375,7 @@
                 <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-sm shadow">🌐</div>
                 <div class="flex-1">
                     <h4 class="font-bold text-xs text-white">گروه عمومی شعاعی (مخصوص شعاع فعلی)</h4>
-                    <p class="text-[10px] text-slate-400 mt-0.5">ارسال و دریافت پیام • حذف زمان‌بندی‌شده</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">ارسال و دریافت پیام برای افراد داخل شعاع • حذف زمان‌بندی‌شده</p>
                 </div>
             </div>
         </div>
@@ -434,7 +491,7 @@
         if(tg) tg.expand();
 
         let currentUser = null, selectedTargetUser = null, currentChatType = 'pv', currentChatTargetId = null;
-        let map, userMarkersOnMap = {};
+        let map, myLocationMarker = null, userMarkersOnMap = {};
         let radiusCircle = null;
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
         let activeRadiusKm = 15;
@@ -450,6 +507,7 @@
         let isVoiceRecordingActive = false;
         let voiceTimer = null;
         let cachedMessages = {};
+        let isPickingLocation = false;
         let searchDebounceTimer = null;
 
         const user = tg?.initDataUnsafe?.user || { 
@@ -481,6 +539,13 @@
         });
 
         function handleMobileBackButton() {
+            if(isPickingLocation) {
+                isPickingLocation = false;
+                document.getElementById('map').style.cursor = '';
+                showToast("انتخاب لوکیشن لغو شد");
+                return;
+            }
+
             const radiusModal = document.getElementById('radius-settings-modal');
             if(!radiusModal.classList.contains('hidden')) {
                 closeRadiusSettingsModal();
@@ -582,11 +647,12 @@
             currentCoords = { lat: latitude, lng: longitude };
             if(map) map.setView([latitude, longitude], 16, { animate: true });
             updateRadiusCircleOnMap();
+            updateMyLocation(latitude, longitude);
             
             document.getElementById('google-suggestions-list').style.display = 'none';
             document.getElementById('google-map-search-input').value = displayName;
             document.getElementById('google-search-container').classList.remove('expanded');
-            showToast("موقعیت پیدا و انتخاب شد");
+            showToast("موقعیت پیدا و ثبت شد");
         }
 
         function onRadiusSliderChange(val) {
@@ -608,6 +674,28 @@
         function openRadiusSettingsModal() { document.getElementById('radius-settings-modal').classList.remove('hidden'); }
         function closeRadiusSettingsModal() { document.getElementById('radius-settings-modal').classList.add('hidden'); }
 
+        function startPickingLocationOnMap() {
+            closeRadiusSettingsModal();
+            isPickingLocation = true;
+            document.getElementById('map').style.cursor = 'crosshair';
+            showToast("لطفا روی نقطه دلخواه روی نقشه کلیک کنید");
+        }
+
+        function centerToMyLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    currentCoords.lat = position.coords.latitude;
+                    currentCoords.lng = position.coords.longitude;
+                    if(map) map.setView([currentCoords.lat, currentCoords.lng], 15, { animate: true });
+                    updateRadiusCircleOnMap();
+                    updateMyLocation(currentCoords.lat, currentCoords.lng);
+                    showToast("موقعیت شما به‌روز شد");
+                }, () => {
+                    showToast("دسترسی به موقعیت مکانی مقدور نیست");
+                }, { enableHighAccuracy: true, timeout: 5000 });
+            }
+        }
+
         function updateRadiusCircleOnMap() {
             if(!map) return;
             if(radiusCircle) map.removeLayer(radiusCircle);
@@ -618,6 +706,13 @@
                 fillColor: '#4285f4',
                 fillOpacity: 0.08
             }).addTo(map);
+
+            if(myLocationMarker) map.removeLayer(myLocationMarker);
+            const initial = (currentUser?.name || 'ک').charAt(0);
+            const myAvatarInner = currentUser?.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : initial;
+            const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner">${myAvatarInner}</div></div>`;
+            const myIcon = L.divIcon({ html: myHtml, iconSize: [64, 64], iconAnchor: [32, 32] });
+            myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -644,8 +739,32 @@
             map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 13);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
-            updateRadiusCircleOnMap();
-            initUserSession();
+            map.on('click', async (e) => {
+                if(isPickingLocation) {
+                    isPickingLocation = false;
+                    document.getElementById('map').style.cursor = '';
+                    const { lat, lng } = e.latlng;
+                    currentCoords = { lat, lng };
+                    map.setView([lat, lng], 15, { animate: true });
+                    updateRadiusCircleOnMap();
+                    await updateMyLocation(lat, lng);
+                    showToast("لوکیشن جدید با موفقیت ثبت شد");
+                }
+            });
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    currentCoords.lat = position.coords.latitude;
+                    currentCoords.lng = position.coords.longitude;
+                    if(map) map.setView([currentCoords.lat, currentCoords.lng], 14, { animate: true });
+                    updateRadiusCircleOnMap();
+                    initUserSession();
+                }, () => {
+                    initUserSession();
+                }, { enableHighAccuracy: true, timeout: 5000 });
+            } else {
+                initUserSession();
+            }
         });
 
         async function initUserSession() {
@@ -662,6 +781,8 @@
                     telegram_id: user.id, 
                     name: user.first_name, 
                     username: user.username, 
+                    latitude: currentCoords.lat, 
+                    longitude: currentCoords.lng,
                     last_seen: new Date().toISOString() 
                 };
                 const { data: inserted } = await supabaseClient.from('users').upsert(newUserData).select().single();
@@ -689,6 +810,8 @@
         async function updateMyHeartbeat() {
             if(!currentUser) return;
             await supabaseClient.from('users').update({ 
+                latitude: currentCoords.lat, 
+                longitude: currentCoords.lng, 
                 last_seen: new Date().toISOString() 
             }).eq('telegram_id', currentUser.telegram_id);
             fetchUsersData();
@@ -706,6 +829,13 @@
             }
             document.getElementById('profile-display-name').textContent = currentUser.name;
             document.getElementById('top-my-name').textContent = currentUser.name;
+        }
+
+        async function updateMyLocation(lat, lng) {
+            if(!currentUser) return;
+            currentCoords = { lat, lng };
+            await supabaseClient.from('users').update({ latitude: lat, longitude: lng, last_seen: new Date().toISOString() }).eq('telegram_id', currentUser.telegram_id);
+            fetchUsersData();
         }
 
         async function fetchUsersData() {
@@ -1092,6 +1222,13 @@
             const { data } = await query.order('created_at', { ascending: true });
             let filteredMessages = data || [];
 
+            if(currentChatType === 'group') {
+                filteredMessages = filteredMessages.filter(m => {
+                    if(!m.sender_lat || !m.sender_lng) return true;
+                    return calculateDistance(currentCoords.lat, currentCoords.lng, m.sender_lat, m.sender_lng) <= activeRadiusKm;
+                });
+            }
+
             if (currentChatType === 'pv') {
                 cachedMessages[currentChatTargetId] = filteredMessages;
             }
@@ -1284,7 +1421,9 @@
                 sender_id: currentUser.telegram_id,
                 sender_name: currentUser.name,
                 message: text,
-                is_read: false
+                is_read: false,
+                sender_lat: currentCoords.lat,
+                sender_lng: currentCoords.lng
             };
 
             if (currentChatType === 'pv') {
@@ -1318,7 +1457,9 @@
                 sender_id: currentUser.telegram_id,
                 sender_name: currentUser.name,
                 message,
-                is_read: false
+                is_read: false,
+                sender_lat: currentCoords.lat,
+                sender_lng: currentCoords.lng
             };
 
             if (replyingToMessage) {
@@ -1373,6 +1514,13 @@
                 loadMessages();
                 if (m.receiver_id === currentUser?.telegram_id && m.sender_id !== currentUser?.telegram_id && payload.eventType === 'INSERT') {
                     showToast(`پیام جدید از ${m.sender_name}`);
+                }
+            })
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'matches' }, payload => {
+                const newMatch = payload.new;
+                if (newMatch && newMatch.user2_id === currentUser?.telegram_id && newMatch.status === 'pending') {
+                    showToast("🔔 درخواست ارتباط جدید دارید!");
+                    loadMatchesAndRequests();
                 }
             })
             .on('presence', { event: 'sync' }, () => {
