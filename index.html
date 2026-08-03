@@ -27,7 +27,7 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
-        /* نشانگر دقیق موقعیت مکانی من با سایه متحرک بازشونده (Pulse) */
+        /* نشانگر دایره‌ای موقعیت من با سایه متحرک (Pulse) */
         .my-animated-marker {
             width: 68px;
             height: 68px;
@@ -59,7 +59,7 @@
             100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0), 0 0 0 0 rgba(66, 133, 244, 0); }
         }
 
-        /* نشانگر کاربران دیگر روی نقشه */
+        /* نشانگر دایره‌ای کاربران دیگر روی نقشه */
         .other-user-pin {
             width: 42px;
             height: 42px;
@@ -740,14 +740,11 @@
                 }
             });
 
-            // شروع ردیابی زنده و دقیق موقعیت کاربر (GPS Tracking)
             if (navigator.geolocation) {
                 watchPositionId = navigator.geolocation.watchPosition(
                     position => {
                         const newLat = position.coords.latitude;
                         const newLng = position.coords.longitude;
-                        
-                        // اگر تغییر موقعیت محسوس بود، نقشه و مارکر را آپدیت کن
                         if(newLat !== currentCoords.lat || newLng !== currentCoords.lng) {
                             currentCoords.lat = newLat;
                             currentCoords.lng = newLng;
@@ -755,14 +752,8 @@
                             updateMyLocation(newLat, newLng);
                         }
                     }, 
-                    error => {
-                        console.warn("Geolocation warning: ", error.message);
-                    }, 
-                    { 
-                        enableHighAccuracy: true, 
-                        timeout: 10000, 
-                        maximumAge: 0 
-                    }
+                    error => { console.warn("Geolocation warning: ", error.message); }, 
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
             }
 
