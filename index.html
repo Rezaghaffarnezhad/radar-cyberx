@@ -27,19 +27,20 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
+        /* نشانگر دقیق موقعیت مکانی من با سایه متحرک بازشونده (Pulse) */
         .my-animated-marker {
-            width: 64px;
-            height: 64px;
+            width: 68px;
+            height: 68px;
             border-radius: 50%;
-            background: rgba(66, 133, 244, 0.15);
+            background: rgba(66, 133, 244, 0.2);
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: google-radar-pulse 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+            animation: google-radar-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
         }
         .my-marker-inner {
-            width: 38px;
-            height: 38px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             border: 3px solid #ffffff;
             overflow: hidden;
@@ -49,15 +50,16 @@
             justify-content: center;
             font-weight: 700;
             color: white;
-            font-size: 13px;
-            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.6);
+            font-size: 14px;
+            box-shadow: 0 4px 18px rgba(66, 133, 244, 0.7);
         }
         @keyframes google-radar-pulse {
-            0% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.6), 0 0 0 0 rgba(66, 133, 244, 0.4); }
-            50% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(66, 133, 244, 0), 0 0 0 35px rgba(66, 133, 244, 0.15); }
-            100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0), 0 0 0 0 rgba(66, 133, 244, 0); }
+            0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7), 0 0 0 0 rgba(66, 133, 244, 0.4); }
+            50% { transform: scale(1.12); box-shadow: 0 0 0 18px rgba(66, 133, 244, 0), 0 0 0 32px rgba(66, 133, 244, 0.15); }
+            100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0), 0 0 0 0 rgba(66, 133, 244, 0); }
         }
 
+        /* نشانگر کاربران دیگر روی نقشه */
         .other-user-pin {
             width: 42px;
             height: 42px;
@@ -231,7 +233,7 @@
                         <span id="top-online-count" class="text-[11px] font-bold text-emerald-400">0 آنلاین</span>
                     </div>
 
-                    <!-- جستجوی آدرس با انتخاب ذره‌بین -->
+                    <!-- جستجوی آدرس -->
                     <div id="google-search-container" class="google-search-bar-container">
                         <button class="google-search-icon-btn" onclick="toggleGoogleSearchExpansion()">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -257,9 +259,9 @@
             <button onclick="openRadiusSettingsModal()" class="w-9 h-9 flex items-center justify-center text-white text-lg drop-shadow-xl hover:scale-110 active:scale-95 transition" title="تنظیمات شعاع">⚙️</button>
         </div>
 
-        <!-- نشانگر لوکیشن من -->
+        <!-- دکمه مرکزیت روی لوکیشن من -->
         <div class="absolute bottom-24 right-4 z-10 pointer-events-auto">
-            <button onclick="centerToMyLocation()" class="w-12 h-12 transparent-location-btn rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95" title="موقعیت من">
+            <button onclick="centerToMyLocation(true)" class="w-12 h-12 transparent-location-btn rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95" title="موقعیت من">
                 <svg class="w-7 h-7 text-blue-400 drop-shadow-md" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </button>
         </div>
@@ -307,7 +309,7 @@
         </div>
     </div>
 
-    <!-- مودال تنظیمات شعاع و انتخاب لوکیشن دستی روی نقشه -->
+    <!-- مودال تنظیمات شعاع و انتخاب لوکیشن دستی -->
     <div id="radius-settings-modal" class="hidden absolute inset-0 bg-black/70 z-40 flex items-center justify-center p-4" onclick="closeRadiusSettingsModal()">
         <div class="tg-card w-full max-w-sm rounded-2xl p-4 flex flex-col gap-4 shadow-2xl border border-slate-700" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -325,13 +327,8 @@
                 
                 <div class="bg-[#18222d] p-3 rounded-xl flex flex-col gap-2">
                     <span class="text-[11px] text-slate-300 font-bold">انتخاب لوکیشن دستی روی نقشه</span>
-                    <p class="text-[10px] text-slate-400 leading-relaxed">با زدن دکمه زیر، نقشه برای شما باز می‌شود. روی هر نقطه از نقشه کلیک کنید تا به عنوان لوکیشن شما ثبت شود.</p>
+                    <p class="text-[10px] text-slate-400 leading-relaxed">با زدن دکمه زیر، نقشه آماده انتخاب می‌شود. روی هر نقطه از نقشه کلیک کنید تا به عنوان لوکیشن شما ثبت شود.</p>
                     <button onclick="startPickingLocationOnMap()" class="py-2 bg-[#2b5278] hover:bg-[#336394] rounded-lg text-[11px] text-white transition flex items-center justify-center gap-1.5 font-medium">📍 انتخاب نقطه روی نقشه</button>
-                </div>
-
-                <div class="flex items-center justify-between bg-[#18222d] p-3 rounded-xl">
-                    <span class="text-[11px] text-slate-300">بروزرسانی خودکار موقعیت</span>
-                    <input type="checkbox" id="setting-auto-loc" checked class="w-4 h-4 accent-blue-600 rounded cursor-pointer">
                 </div>
             </div>
             <button onclick="closeRadiusSettingsModal()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition">ذخیره تنظیمات</button>
@@ -507,6 +504,7 @@
         let cachedMessages = {};
         let isPickingLocation = false;
         let searchDebounceTimer = null;
+        let watchPositionId = null;
 
         const user = tg?.initDataUnsafe?.user || { 
             id: Math.floor(Math.random() * 900000) + 100000, 
@@ -679,18 +677,10 @@
             showToast("لطفا روی نقطه دلخواه روی نقشه کلیک کنید");
         }
 
-        function centerToMyLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    currentCoords.lat = position.coords.latitude;
-                    currentCoords.lng = position.coords.longitude;
-                    if(map) map.setView([currentCoords.lat, currentCoords.lng], 15, { animate: true });
-                    updateRadiusCircleOnMap();
-                    updateMyLocation(currentCoords.lat, currentCoords.lng);
-                    showToast("موقعیت شما به‌روز شد");
-                }, () => {
-                    showToast("دسترسی به موقعیت مکانی مقدور نیست");
-                }, { enableHighAccuracy: true, timeout: 5000 });
+        function centerToMyLocation(forced = false) {
+            if(map) {
+                map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+                if(forced) showToast("موقعیت شما روی نقشه مرکز شد");
             }
         }
 
@@ -709,7 +699,7 @@
             const initial = (currentUser?.name || 'ک').charAt(0);
             const myAvatarInner = currentUser?.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : initial;
             const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner">${myAvatarInner}</div></div>`;
-            const myIcon = L.divIcon({ html: myHtml, iconSize: [64, 64], iconAnchor: [32, 32] });
+            const myIcon = L.divIcon({ html: myHtml, iconSize: [68, 68], iconAnchor: [34, 34] });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
 
@@ -734,7 +724,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
-            map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 13);
+            map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 15);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
             map.on('click', async (e) => {
@@ -743,26 +733,40 @@
                     document.getElementById('map').style.cursor = '';
                     const { lat, lng } = e.latlng;
                     currentCoords = { lat, lng };
-                    map.setView([lat, lng], 15, { animate: true });
+                    map.setView([lat, lng], 16, { animate: true });
                     updateRadiusCircleOnMap();
                     await updateMyLocation(lat, lng);
                     showToast("لوکیشن جدید با موفقیت ثبت شد");
                 }
             });
 
+            // شروع ردیابی زنده و دقیق موقعیت کاربر (GPS Tracking)
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    currentCoords.lat = position.coords.latitude;
-                    currentCoords.lng = position.coords.longitude;
-                    if(map) map.setView([currentCoords.lat, currentCoords.lng], 14, { animate: true });
-                    updateRadiusCircleOnMap();
-                    initUserSession();
-                }, () => {
-                    initUserSession();
-                }, { enableHighAccuracy: true, timeout: 5000 });
-            } else {
-                initUserSession();
+                watchPositionId = navigator.geolocation.watchPosition(
+                    position => {
+                        const newLat = position.coords.latitude;
+                        const newLng = position.coords.longitude;
+                        
+                        // اگر تغییر موقعیت محسوس بود، نقشه و مارکر را آپدیت کن
+                        if(newLat !== currentCoords.lat || newLng !== currentCoords.lng) {
+                            currentCoords.lat = newLat;
+                            currentCoords.lng = newLng;
+                            updateRadiusCircleOnMap();
+                            updateMyLocation(newLat, newLng);
+                        }
+                    }, 
+                    error => {
+                        console.warn("Geolocation warning: ", error.message);
+                    }, 
+                    { 
+                        enableHighAccuracy: true, 
+                        timeout: 10000, 
+                        maximumAge: 0 
+                    }
+                );
             }
+
+            initUserSession();
         });
 
         async function initUserSession() {
@@ -881,12 +885,12 @@
                 const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
                 const isRecent = lastSeenDate && (now - lastSeenDate < 180000);
                 
-                if(onlineUsersMap[u.telegram_id] || isRecent || u.telegram_id === currentUser?.telegram_id) {
+                if(onlineUsersMap[u.telegram_id] || isRecent) {
                     onlineCount++;
                 }
             });
             
-            if(onlineCount === 0 && currentUser) onlineCount = 1;
+            if(currentUser && onlineCount === 0) onlineCount = 1;
             document.getElementById('top-online-count').textContent = `${onlineCount} آنلاین`;
         }
 
