@@ -59,10 +59,10 @@
             100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0), 0 0 0 0 rgba(66, 133, 244, 0); }
         }
 
-        /* نشانگر کاربران دیگر روی نقشه */
+        /* نشانگر کاربران دیگر روی نقشه با عکس پروفایل */
         .other-user-pin {
-            width: 42px;
-            height: 42px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             background: #17212b;
             border: 2.5px solid #22c55e;
@@ -71,9 +71,9 @@
             justify-content: center;
             font-weight: 700;
             color: white;
-            font-size: 12px;
+            font-size: 13px;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.5);
             cursor: pointer;
             transition: transform 0.2s ease;
         }
@@ -259,7 +259,7 @@
             <button onclick="openRadiusSettingsModal()" class="w-9 h-9 flex items-center justify-center text-white text-lg drop-shadow-xl hover:scale-110 active:scale-95 transition" title="تنظیمات شعاع">⚙️</button>
         </div>
 
-        <!-- نشانگر لوکیشن من (سمت راست پایین) -->
+        <!-- نشانگر لوکیشن من -->
         <div class="absolute bottom-24 right-4 z-10 pointer-events-auto">
             <button onclick="centerToMyLocation()" class="w-12 h-12 transparent-location-btn rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95" title="موقعیت من">
                 <svg class="w-7 h-7 text-blue-400 drop-shadow-md" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -340,10 +340,10 @@
         </div>
     </div>
 
-    <!-- مودال لیست افراد آنلاین و قابل مشاهده در شعاع -->
+    <!-- مودال لیست افراد آنلاین -->
     <div id="online-users-modal" class="hidden absolute inset-0 tg-bg z-40 flex flex-col">
         <div class="tg-header px-4 py-3 flex items-center justify-between">
-            <h3 class="font-bold text-xs text-white">افراد قابل مشاهده در شعاع</h3>
+            <h3 class="font-bold text-xs text-white">افراد آنلاین داخل اپ</h3>
             <button onclick="closeOnlineUsersModal()" class="text-slate-400 text-sm px-2 py-1 rounded-lg hover:bg-white/5 transition">✕</button>
         </div>
         <div id="online-users-list-container" class="flex-1 p-3 overflow-y-auto flex flex-col gap-1.5"></div>
@@ -710,6 +710,8 @@
             if(myLocationMarker) map.removeLayer(myLocationMarker);
             const initial = (currentUser?.name || 'ک').charAt(0);
             const myAvatarInner = currentUser?.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : initial;
+            
+            // دایره متحرک انیمیشنی (Pulse) مختص شما
             const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner">${myAvatarInner}</div></div>`;
             const myIcon = L.divIcon({ html: myHtml, iconSize: [64, 64], iconAnchor: [32, 32] });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
@@ -861,10 +863,11 @@
 
             visibleUsers.forEach(u => {
                 const initial = (u.name || 'ک').charAt(0);
+                // نشانگر کاربران دیگر با عکس پروفایل یا حرف اول نام
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : initial;
                 const html = `<div class="other-user-pin">${avatarInner}</div>`;
                 
-                const icon = L.divIcon({ html, iconSize: [42, 42], iconAnchor: [21, 21] });
+                const icon = L.divIcon({ html, iconSize: [44, 44], iconAnchor: [22, 22] });
                 const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
                 
                 marker.on('click', () => {
@@ -876,25 +879,36 @@
         }
 
         function updateOnlineCountUI(usersList) {
-            const visibleUsersInRadius = usersList.filter(u => {
-                if (!u.latitude || !u.longitude || u.telegram_id === currentUser?.telegram_id) return false;
-                return calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude) <= activeRadiusKm;
+            let onlineCount = 0;
+            const now = new Date();
+            
+            usersList.forEach(u => {
+                const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
+                const isRecent = lastSeenDate && (now - lastSeenDate < 180000);
+                
+                if(onlineUsersMap[u.telegram_id] || isRecent) {
+                    onlineCount++;
+                }
             });
             
-            document.getElementById('top-online-count').textContent = `${visibleUsersInRadius.length} در شعاع`;
+            if(currentUser && onlineCount === 0) onlineCount = 1;
+            document.getElementById('top-online-count').textContent = `${onlineCount} آنلاین`;
         }
 
         function openOnlineUsersModal() {
             const container = document.getElementById('online-users-list-container');
+            const now = new Date();
             
-            const visibleUsersInRadius = activeUsersGlobalList.filter(u => {
-                if (!u.latitude || !u.longitude || u.telegram_id === currentUser?.telegram_id) return false;
-                return calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude) <= activeRadiusKm;
+            const onlineUsers = activeUsersGlobalList.filter(u => {
+                if(u.telegram_id === currentUser?.telegram_id) return true;
+                const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
+                const isRecent = lastSeenDate && (now - lastSeenDate < 180000);
+                return onlineUsersMap[u.telegram_id] || isRecent;
             });
             
-            container.innerHTML = visibleUsersInRadius.length ? visibleUsersInRadius.map(u => {
+            container.innerHTML = onlineUsers.length ? onlineUsers.map(u => {
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : (u.name || 'ک').charAt(0);
-                const distanceVal = calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude).toFixed(1);
+                const isMeLabel = u.telegram_id === currentUser?.telegram_id ? ' (شما)' : '';
                 return `
                     <div onclick="closeOnlineUsersModal(); openUserProfile(${u.telegram_id})" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
                         <div class="relative w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden">
@@ -902,12 +916,12 @@
                             <div class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#17212b]"></div>
                         </div>
                         <div class="flex-1">
-                            <h4 class="font-bold text-xs text-white">${u.name}</h4>
-                            <p class="text-[10px] text-emerald-400 mt-0.5">فاصله: حدود ${distanceVal} کیلومتر از شما</p>
+                            <h4 class="font-bold text-xs text-white">${u.name}${isMeLabel}</h4>
+                            <p class="text-[10px] text-emerald-400 mt-0.5">آنلاین و حاضر در اپ</p>
                         </div>
                     </div>
                 `;
-            }).join('') : '<div class="text-center text-xs text-slate-400 py-6">هیچ کاربری در شعاع انتخابی شما یافت نشد. شعاع را افزایش دهید.</div>';
+            }).join('') : '<div class="text-center text-xs text-slate-400 py-6">هیچ کاربر آنلاین دیگری در اپ یافت نشد.</div>';
 
             document.getElementById('online-users-modal').classList.remove('hidden');
         }
@@ -1503,13 +1517,6 @@
                 loadMessages();
                 if (m.receiver_id === currentUser?.telegram_id && m.sender_id !== currentUser?.telegram_id && payload.eventType === 'INSERT') {
                     showToast(`پیام جدید از ${m.sender_name}`);
-                }
-            })
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'matches' }, payload => {
-                const newMatch = payload.new;
-                if (newMatch && newMatch.user2_id === currentUser?.telegram_id && newMatch.status === 'pending') {
-                    showToast("🔔 درخواست ارتباط جدید دارید!");
-                    loadMatchesAndRequests();
                 }
             })
             .on('presence', { event: 'sync' }, () => {
