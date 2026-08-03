@@ -627,11 +627,12 @@
             currentCoords = { lat: latitude, lng: longitude };
             if(map) map.setView([latitude, longitude], 16, { animate: true });
             updateRadiusCircleOnMap();
+            updateMyLocation(latitude, longitude);
             
             document.getElementById('google-suggestions-list').style.display = 'none';
             document.getElementById('google-map-search-input').value = displayName;
             document.getElementById('google-search-container').classList.remove('expanded');
-            showToast("موقعیت پیدا شد");
+            showToast("موقعیت پیدا و ثبت شد");
         }
 
         function onRadiusSliderChange(val) {
@@ -731,6 +732,7 @@
                 }
             });
 
+            // دریافت اولیه لوکیشن با دقت بالا
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
                     currentCoords.lat = position.coords.latitude;
@@ -776,7 +778,9 @@
 
             fetchUsersData();
             initRealtimeGlobal();
-            setInterval(updateMyHeartbeat, 10000);
+            
+            // بهبود نرخ بروزرسانی (هر 15 ثانیه برای بهینه‌سازی سرعت و ترافیک شبکه)
+            setInterval(updateMyHeartbeat, 15000);
         });
 
         async function updateMyHeartbeat() {
@@ -815,7 +819,7 @@
             if (data) {
                 activeUsersGlobalList = data;
                 
-                // فیلتر کاربران برای نمایش روی نقشه بر اساس شعاع انتخابی
+                // فیلتر کاربران بر اساس شعاع انتخابی نقشه
                 const mapUsers = data.filter(u => {
                     if (!u.latitude || !u.longitude || u.telegram_id === currentUser?.telegram_id) return false;
                     return calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude) <= activeRadiusKm;
@@ -828,7 +832,7 @@
                 
                 data.forEach(u => {
                     const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
-                    const isRecent = lastSeenDate && (now - lastSeenDate < 120000);
+                    const isRecent = lastSeenDate && (now - lastSeenDate < 180000); // 3 دقیقه بازه آنلاین بودن
                     
                     if(onlineUsersMap[u.telegram_id] || isRecent) {
                         onlineCount++;
@@ -863,11 +867,10 @@
             const container = document.getElementById('online-users-list-container');
             const now = new Date();
             
-            // نمایش تمامی افراد آنلاین و حاضر در اپ (بدون محدودیت شعاع جغرافیایی)
             const onlineUsers = activeUsersGlobalList.filter(u => {
                 if(u.telegram_id === currentUser?.telegram_id) return true;
                 const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
-                const isRecent = lastSeenDate && (now - lastSeenDate < 120000);
+                const isRecent = lastSeenDate && (now - lastSeenDate < 180000);
                 return onlineUsersMap[u.telegram_id] || isRecent;
             });
             
@@ -1472,6 +1475,9 @@
 
             globalChannel = supabaseClient.channel('global-app-sync', {
                 config: { presence: { key: String(currentUser.telegram_id) } },
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
+                fetchUsersData();
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
                 const m = payload.new;
