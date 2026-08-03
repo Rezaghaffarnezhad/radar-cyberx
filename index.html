@@ -340,10 +340,10 @@
         </div>
     </div>
 
-    <!-- مودال لیست افراد آنلاین -->
+    <!-- مودال لیست افراد آنلاین و قابل مشاهده در شعاع -->
     <div id="online-users-modal" class="hidden absolute inset-0 tg-bg z-40 flex flex-col">
         <div class="tg-header px-4 py-3 flex items-center justify-between">
-            <h3 class="font-bold text-xs text-white">افراد آنلاین داخل اپ</h3>
+            <h3 class="font-bold text-xs text-white">افراد قابل مشاهده در شعاع</h3>
             <button onclick="closeOnlineUsersModal()" class="text-slate-400 text-sm px-2 py-1 rounded-lg hover:bg-white/5 transition">✕</button>
         </div>
         <div id="online-users-list-container" class="flex-1 p-3 overflow-y-auto flex flex-col gap-1.5"></div>
@@ -876,36 +876,25 @@
         }
 
         function updateOnlineCountUI(usersList) {
-            let onlineCount = 0;
-            const now = new Date();
-            
-            usersList.forEach(u => {
-                const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
-                const isRecent = lastSeenDate && (now - lastSeenDate < 180000);
-                
-                if(onlineUsersMap[u.telegram_id] || isRecent) {
-                    onlineCount++;
-                }
+            const visibleUsersInRadius = usersList.filter(u => {
+                if (!u.latitude || !u.longitude || u.telegram_id === currentUser?.telegram_id) return false;
+                return calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude) <= activeRadiusKm;
             });
             
-            if(currentUser && onlineCount === 0) onlineCount = 1;
-            document.getElementById('top-online-count').textContent = `${onlineCount} آنلاین`;
+            document.getElementById('top-online-count').textContent = `${visibleUsersInRadius.length} در شعاع`;
         }
 
         function openOnlineUsersModal() {
             const container = document.getElementById('online-users-list-container');
-            const now = new Date();
             
-            const onlineUsers = activeUsersGlobalList.filter(u => {
-                if(u.telegram_id === currentUser?.telegram_id) return true;
-                const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
-                const isRecent = lastSeenDate && (now - lastSeenDate < 180000);
-                return onlineUsersMap[u.telegram_id] || isRecent;
+            const visibleUsersInRadius = activeUsersGlobalList.filter(u => {
+                if (!u.latitude || !u.longitude || u.telegram_id === currentUser?.telegram_id) return false;
+                return calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude) <= activeRadiusKm;
             });
             
-            container.innerHTML = onlineUsers.length ? onlineUsers.map(u => {
+            container.innerHTML = visibleUsersInRadius.length ? visibleUsersInRadius.map(u => {
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : (u.name || 'ک').charAt(0);
-                const isMeLabel = u.telegram_id === currentUser?.telegram_id ? ' (شما)' : '';
+                const distanceVal = calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude).toFixed(1);
                 return `
                     <div onclick="closeOnlineUsersModal(); openUserProfile(${u.telegram_id})" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
                         <div class="relative w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden">
@@ -913,12 +902,12 @@
                             <div class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#17212b]"></div>
                         </div>
                         <div class="flex-1">
-                            <h4 class="font-bold text-xs text-white">${u.name}${isMeLabel}</h4>
-                            <p class="text-[10px] text-emerald-400 mt-0.5">آنلاین و حاضر در اپ</p>
+                            <h4 class="font-bold text-xs text-white">${u.name}</h4>
+                            <p class="text-[10px] text-emerald-400 mt-0.5">فاصله: حدود ${distanceVal} کیلومتر از شما</p>
                         </div>
                     </div>
                 `;
-            }).join('') : '<div class="text-center text-xs text-slate-400 py-6">هیچ کاربر آنلاین دیگری در اپ یافت نشد.</div>';
+            }).join('') : '<div class="text-center text-xs text-slate-400 py-6">هیچ کاربری در شعاع انتخابی شما یافت نشد. شعاع را افزایش دهید.</div>';
 
             document.getElementById('online-users-modal').classList.remove('hidden');
         }
