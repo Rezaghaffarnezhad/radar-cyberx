@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
         body, html { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #0e1621; color: #f5f5f5; font-family: 'Vazirmatn', sans-serif; }
@@ -27,7 +27,7 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
-        /* نشانگر موقعیت مکانی من با رادار متحرک پیشرفته */
+        /* نشانگر موقعیت مکانی من با سایه متحرک بازشونده (Pulse) */
         .my-animated-marker {
             width: 64px;
             height: 64px;
@@ -494,7 +494,7 @@
         let map, myLocationMarker = null, userMarkersOnMap = {};
         let radiusCircle = null;
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
-        let activeRadiusKm = 15; // شعاع پیش‌فرض افزایش یافته تا کاربران براحتی همدیگر را ببینند
+        let activeRadiusKm = 15;
         let activePrivateChannel = null;
         let globalChannel = null;
         let onlineUsersMap = {};
@@ -752,7 +752,6 @@
                 }
             });
 
-            // دریافت لوکیشن کاربر
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
                     currentCoords.lat = position.coords.latitude;
@@ -805,7 +804,6 @@
             await fetchUsersData();
             initRealtimeGlobal();
             
-            // ارسال پالس زنده هر 10 ثانیه برای ثبت موقعیت و آنلاین بودن
             setInterval(updateMyHeartbeat, 10000);
         }
 
@@ -852,11 +850,9 @@
         function renderUsersOnMap() {
             if(!map || !currentUser) return;
 
-            // پاکسازی مارکرهای قبلی روی نقشه
             Object.values(userMarkersOnMap).forEach(marker => map.removeLayer(marker));
             userMarkersOnMap = {};
 
-            // فیلتر کاربران بر اساس شعاع جغرافیایی
             const visibleUsers = activeUsersGlobalList.filter(u => {
                 if (!u.latitude || !u.longitude || u.telegram_id === currentUser.telegram_id) return false;
                 const distance = calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
@@ -885,7 +881,7 @@
             
             usersList.forEach(u => {
                 const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
-                const isRecent = lastSeenDate && (now - lastSeenDate < 180000); // 3 دقیقه اخیر
+                const isRecent = lastSeenDate && (now - lastSeenDate < 180000);
                 
                 if(onlineUsersMap[u.telegram_id] || isRecent) {
                     onlineCount++;
