@@ -59,10 +59,10 @@
             100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0), 0 0 0 0 rgba(66, 133, 244, 0); }
         }
 
-        /* نشانگر کاربران دیگر روی نقشه با عکس پروفایل */
+        /* نشانگر کاربران دیگر روی نقشه (دو شکل/پین فعال شده) */
         .other-user-pin {
-            width: 44px;
-            height: 44px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             background: #17212b;
             border: 2.5px solid #22c55e;
@@ -71,9 +71,9 @@
             justify-content: center;
             font-weight: 700;
             color: white;
-            font-size: 13px;
+            font-size: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
             cursor: pointer;
             transition: transform 0.2s ease;
         }
@@ -710,8 +710,6 @@
             if(myLocationMarker) map.removeLayer(myLocationMarker);
             const initial = (currentUser?.name || 'ک').charAt(0);
             const myAvatarInner = currentUser?.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : initial;
-            
-            // دایره متحرک انیمیشنی (Pulse) مختص شما
             const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner">${myAvatarInner}</div></div>`;
             const myIcon = L.divIcon({ html: myHtml, iconSize: [64, 64], iconAnchor: [32, 32] });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
@@ -863,11 +861,10 @@
 
             visibleUsers.forEach(u => {
                 const initial = (u.name || 'ک').charAt(0);
-                // نشانگر کاربران دیگر با عکس پروفایل یا حرف اول نام
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : initial;
                 const html = `<div class="other-user-pin">${avatarInner}</div>`;
                 
-                const icon = L.divIcon({ html, iconSize: [44, 44], iconAnchor: [22, 22] });
+                const icon = L.divIcon({ html, iconSize: [42, 42], iconAnchor: [21, 21] });
                 const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
                 
                 marker.on('click', () => {
