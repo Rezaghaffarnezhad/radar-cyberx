@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - رادار و پیام‌رسان آنی</title>
+    <title>تلسکوپ - رادار و پیام‌رسان آنی سراسری</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -88,7 +88,7 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ رادار و پیام‌رسان آنی</span>
+                    <span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ رادار و پیام‌رسان سراسری</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
@@ -202,7 +202,7 @@
         let currentReceiverId = null;
         let replyingToMessage = null;
         let editingMessageId = null;
-        let activeMessagesArray = []; // آرشیو حافظه موقت برای رندر آنی
+        let activeMessagesArray = [];
         let isTypingSent = false;
 
         const tgUser = tg?.initDataUnsafe?.user;
@@ -330,7 +330,6 @@
             if (!document.getElementById('users-list-modal').classList.contains('hidden')) renderUsersList(onlineUsersList);
         }
 
-        // --- باز کردن چت و ایجاد کانال اختصاصی Broadcast ---
         function openChatModal(type, receiverId, receiverName, receiverAvatar = '') {
             currentChatType = type;
             currentReceiverId = receiverId;
@@ -407,7 +406,6 @@
             if (chatRealtimeChannel) { supabaseClient.removeChannel(chatRealtimeChannel); chatRealtimeChannel = null; }
         }
 
-        // --- ارسال، ویرایش و حذف لحظه‌ای ---
         async function handleSendOrEditMessage() {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
@@ -485,7 +483,6 @@
             } catch (err) { console.error("Error fetching messages:", err); }
         }
 
-        // --- سیستم صاعقه‌آسا Realtime برای اعمال تغییرات به صورت آنی ---
         function initGlobalMessagesRealtime() {
             if (!supabaseClient) return;
             supabaseClient
@@ -508,20 +505,17 @@
                     };
 
                     if (payload.eventType === 'INSERT' && isRelevant(newMsg)) {
-                        // افزودن لحظه‌ای به آرایه بدون درخواست مجدد به سرور
                         if (!activeMessagesArray.some(m => m.id === newMsg.id)) {
                             activeMessagesArray.push(newMsg);
                             renderMessages(activeMessagesArray);
                         }
                     } else if (payload.eventType === 'UPDATE' && isRelevant(newMsg)) {
-                        // آپدیت لحظه‌ای متن ویرایش شده
                         const index = activeMessagesArray.findIndex(m => m.id === newMsg.id);
                         if (index !== -1) {
                             activeMessagesArray[index] = newMsg;
                             renderMessages(activeMessagesArray);
                         }
                     } else if (payload.eventType === 'DELETE' && oldMsg) {
-                        // حذف لحظه‌ای از لیست
                         activeMessagesArray = activeMessagesArray.filter(m => m.id !== oldMsg.id);
                         renderMessages(activeMessagesArray);
                     }
