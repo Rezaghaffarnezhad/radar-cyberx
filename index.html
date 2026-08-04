@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - ردیابی و همگام‌سازی لحظه‌ای کاربران</title>
+    <title>تلسکوپ - ردیابی و اعلام ورود زنده کاربران</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -72,6 +72,15 @@
             border-radius: 50%;
         }
 
+        /* انیمیشن اعلان ورود */
+        #toast-notification {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateY(-120%);
+        }
+        #toast-notification.show {
+            transform: translateY(0);
+        }
+
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
     </style>
@@ -81,11 +90,25 @@
     <div class="relative w-full h-full">
         <div id="map" class="map-container dark-map"></div>
         
+        <!-- اعلان شناور ورود کاربر جدید -->
+        <div id="toast-container" class="absolute top-16 left-3 right-3 z-30 flex justify-center pointer-events-none">
+            <div id="toast-notification" class="glass-box px-4 py-3 rounded-2xl flex items-center gap-3 shadow-2xl border border-emerald-500/30 max-w-sm w-full pointer-events-auto">
+                <div id="toast-avatar" class="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center font-bold text-white text-sm overflow-hidden shrink-0 border border-emerald-400">
+                    🔔
+                </div>
+                <div class="flex flex-col flex-1">
+                    <span class="text-[10px] text-emerald-400 font-bold">🎉 کاربر جدید وارد شد!</span>
+                    <span id="toast-text" class="text-xs font-bold text-white truncate">نام کاربر</span>
+                </div>
+                <button onclick="hideToast()" class="text-slate-400 hover:text-white px-1 text-sm">✕</button>
+            </div>
+        </div>
+
         <!-- هدر بالای صفحه -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ متصل به ساب‌پیس</span>
+                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ رادار آنلاینِ فعال</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
@@ -122,7 +145,7 @@
             </div>
 
             <div id="users-scroll-container" class="flex flex-col gap-2 overflow-y-auto max-h-[45vh] pr-1">
-                <div class="text-center text-xs text-slate-400 py-6">در حال بارگذاری لیست افراد آنلاین...</div>
+                <div class="text-center text-xs text-slate-400 py-6">در حال بارگذاری لیست...</div>
             </div>
 
             <button onclick="closeUsersListModal()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-xl font-medium text-xs text-white transition mt-1">بستن</button>
@@ -148,7 +171,9 @@
         let map = null, myLocationMarker = null, radiusCircle = null;
         let markersLayerGroup = L.layerGroup(); 
         let onlineUsersList = []; 
-        let currentCoords = { lat: 35.6892, lng: 51.3890 }; // پیش‌فرض تهران
+        let knownUserIds = new Set(); // برای شناسایی افراد کاملاً جدید
+        let isInitialLoad = true;
+        let currentCoords = { lat: 35.6892, lng: 51.3890 }; 
         let activeRadiusKm = 15;
         let isFirstCenter = true;
 
@@ -169,7 +194,6 @@
                 setupUserUI();
                 updateMapElements();
 
-                // گرفتن لوکیشن با کمی تلورانس تصادفی اندک اگر دو اکانت روی یک سیستم تست می‌شوند تا روی هم نیفتند
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
                         (position) => {
@@ -183,7 +207,6 @@
                             saveAndSyncData();
                         },
                         (error) => {
-                            console.warn("GPS error, using default/random offset:", error);
                             saveAndSyncData();
                         },
                         { enableHighAccuracy: true, timeout: 10000 }
@@ -192,7 +215,6 @@
                     saveAndSyncData();
                 }
 
-                // راه‌اندازی اشتراک Realtime برای دریافت آنی ورود بقیه
                 setupRealtimeSubscription();
 
             } catch (err) {
@@ -244,7 +266,7 @@
         async function saveAndSyncData() {
             if (!supabaseClient) return;
             try {
-                const { error } = await supabaseClient.from('users').upsert({
+                await supabaseClient.from('users').upsert({
                     id: currentUser.id,
                     name: currentUser.name,
                     username: currentUser.username,
@@ -254,8 +276,7 @@
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'id' });
 
-                if (error) console.error("Supabase upsert error:", error);
-                else fetchAllUsers();
+                fetchAllUsers();
             } catch (err) {
                 console.error("Error saving location:", err);
             }
@@ -265,10 +286,7 @@
             if (!supabaseClient) return;
             try {
                 const { data, error } = await supabaseClient.from('users').select('*');
-                if (error) {
-                    console.error("Fetch error:", error);
-                    return;
-                }
+                if (error) return;
                 if (data) {
                     processUsersData(data);
                 }
@@ -283,12 +301,9 @@
             supabaseClient
                 .channel('public:users')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
-                    console.log('تغییر Realtime دریافت شد:', payload);
                     fetchAllUsers(); 
                 })
-                .subscribe((status) => {
-                    console.log("وضعیت کانال Realtime ساب‌پیس:", status);
-                });
+                .subscribe();
 
             fetchAllUsers();
         }
@@ -297,7 +312,6 @@
             markersLayerGroup.clearLayers();
             onlineUsersList = [];
 
-            // افزودن کاربر جاری
             onlineUsersList.push({
                 id: currentUser.id,
                 name: currentUser.name,
@@ -310,7 +324,15 @@
             });
 
             data.forEach(user => {
-                if (String(user.id) === String(currentUser.id)) return;
+                const userIdStr = String(user.id);
+
+                // بررسی ورود کاربر جدید (به غیر از خود کاربر فعلی)
+                if (!isInitialLoad && userIdStr !== String(currentUser.id) && !knownUserIds.has(userIdStr)) {
+                    showNewUserNotification(user);
+                }
+                knownUserIds.add(userIdStr);
+
+                if (userIdStr === String(currentUser.id)) return;
                 if (!user.lat || !user.lng) return;
 
                 const distanceKm = getDistanceFromLatLonInKm(currentCoords.lat, currentCoords.lng, user.lat, user.lng);
@@ -336,11 +358,59 @@
                 markersLayerGroup.addLayer(marker);
             });
 
+            isInitialLoad = false;
             document.getElementById('online-count-badge').textContent = onlineUsersList.length;
 
             const modal = document.getElementById('users-list-modal');
             if (!modal.classList.contains('hidden')) {
                 renderUsersList(onlineUsersList);
+            }
+        }
+
+        let toastTimeout = null;
+        function showNewUserNotification(user) {
+            const toast = document.getElementById('toast-notification');
+            const toastText = document.getElementById('toast-text');
+            const toastAvatar = document.getElementById('toast-avatar');
+
+            toastText.textContent = `${user.name || 'یک کاربر'} وارد مینی‌اپ شد!`;
+            if (user.avatar_url) {
+                toastAvatar.innerHTML = `<img src="${user.avatar_url}" class="w-full h-full object-cover">`;
+            } else {
+                toastAvatar.innerHTML = user.name ? user.name.charAt(0) : '👤';
+            }
+
+            // پخش صدای اعلان ملایم
+            playNotificationSound();
+
+            toast.classList.add('show');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                hideToast();
+            }, 5000);
+        }
+
+        function hideToast() {
+            document.getElementById('toast-notification').classList.remove('show');
+        }
+
+        function playNotificationSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // نت D5
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // نت A5
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } catch (e) {
+                // Ignore audio restriction if not interacted yet
             }
         }
 
