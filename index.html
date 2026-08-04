@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>رادار دوستیابی حرفه‌ای</title>
+    <title>رادار دوستیابی و شبکه اجتماعی پیشرفته</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -11,11 +11,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap');
+        :root { --theme-primary: #ec4899; }
         body, html { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #05080f; color: #f8fafc; font-family: 'Vazirmatn', sans-serif; }
         .map-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
         
         .glass-panel {
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(15, 23, 42, 0.88);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -29,7 +30,7 @@
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .action-fab:hover { transform: translateY(-2px); border-color: rgba(236, 72, 153, 0.5) !important; }
+        .action-fab:hover { transform: translateY(-2px); border-color: var(--theme-primary) !important; }
         .action-fab:active { transform: scale(0.92); }
 
         .leaflet-div-icon { background: transparent !important; border: none !important; }
@@ -46,9 +47,9 @@
             width: 42px;
             height: 42px;
             border-radius: 50%;
-            border: 2.5px solid var(--theme-primary, #ec4899);
+            border: 2.5px solid var(--theme-primary);
             overflow: hidden;
-            background: linear-gradient(135deg, var(--theme-primary, #ec4899), #8b5cf6);
+            background: linear-gradient(135deg, var(--theme-primary), #8b5cf6);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -62,7 +63,7 @@
             position: absolute;
             width: 48px;
             height: 48px;
-            border: 2px solid var(--theme-primary, #ec4899);
+            border: 2px solid var(--theme-primary);
             border-radius: 50%;
             animation: dating-radar 2.2s infinite cubic-bezier(0.2, 0.8, 0.4, 1);
             z-index: 1;
@@ -74,8 +75,8 @@
 
         .user-pin-wrap {
             position: relative;
-            width: 42px;
-            height: 42px;
+            width: 46px;
+            height: 46px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -96,10 +97,26 @@
             font-size: 13px;
             box-shadow: 0 6px 20px rgba(0,0,0,0.6);
             transition: transform 0.25s ease;
+            z-index: 2;
         }
-        .user-pin-wrap:hover .user-pin-circle { transform: scale(1.15); border-color: var(--theme-primary, #ec4899); }
+        /* استوری حلقه رنگی دور مارکر */
+        .story-ring {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid var(--theme-primary);
+            animation: pulse-ring 2s infinite;
+            z-index: 1;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 0.3; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
         .pin-tooltip {
-            position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%) translateY(5px);
+            position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%) translateY(5px);
             background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; padding: 4px 10px;
             border-radius: 10px; font-size: 11px; white-space: nowrap; pointer-events: none; opacity: 0; transition: all 0.2s ease;
@@ -117,7 +134,7 @@
     <div id="view-map" class="view-section relative w-full h-full">
         <div id="map" class="map-container"></div>
         
-        <!-- هدر بالای نقشه -->
+        <!-- هدر بالا - نوار جستجو و ابزار پیشرفته -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none flex flex-col gap-2">
             <div class="glass-panel px-3.5 py-2.5 rounded-2xl flex items-center justify-between gap-3 pointer-events-auto">
                 <div class="flex items-center gap-2.5 flex-1">
@@ -138,6 +155,7 @@
 
         <!-- دکمه‌های شناور سمت راست -->
         <div class="absolute bottom-6 right-4 z-10 pointer-events-auto flex flex-col gap-3">
+            <button onclick="toggleTurboMode()" id="turbo-btn" class="action-fab w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl text-lg" title="حالت توربو (آپدیت آنی)">⚡</button>
             <button onclick="openNavigationMenu()" class="action-fab w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl" title="مسیریابی پیشرفته">
                 <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
             </button>
@@ -146,41 +164,109 @@
             </button>
         </div>
 
-        <!-- پنل افراد آنلاین در شعاع -->
-        <div id="online-panel" class="absolute bottom-0 left-0 right-0 z-20 glass-panel rounded-t-3xl p-5 transition-transform duration-300 transform translate-y-full max-h-[55vh] overflow-y-auto">
-            <div class="flex items-center justify-between mb-4 border-b border-slate-700/60 pb-3">
+        <!-- پنل افراد آنلاین در شعاع به همراه فیلترهای پیشرفته -->
+        <div id="online-panel" class="absolute bottom-0 left-0 right-0 z-20 glass-panel rounded-t-3xl p-5 transition-transform duration-300 transform translate-y-full max-h-[60vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-3 border-b border-slate-700/60 pb-3">
                 <div class="flex items-center gap-2">
                     <span class="w-2.5 h-2.5 rounded-full bg-pink-500 animate-ping"></span>
                     <span class="text-xs font-bold text-white">افراد داخل شعاع (<span id="radius-label-display">5</span> کیلومتر)</span>
                 </div>
                 <button onclick="toggleOnlineUsersPanel()" class="text-slate-400 hover:text-white text-sm font-bold w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
             </div>
+            
+            <!-- فیلترهای پیشرفته جستجو -->
+            <div class="flex items-center gap-2 mb-3 bg-slate-900/60 p-2 rounded-2xl border border-slate-800">
+                <select id="filter-gender" onchange="filterUsersList()" class="bg-slate-800 text-[11px] text-white px-2 py-1.5 rounded-xl border border-slate-700 outline-none flex-1">
+                    <option value="all">همه جنسیت‌ها</option>
+                    <option value="male">فقط آقا</option>
+                    <option value="female">فقط خانم</option>
+                </select>
+                <select id="filter-status" onchange="filterUsersList()" class="bg-slate-800 text-[11px] text-white px-2 py-1.5 rounded-xl border border-slate-700 outline-none flex-1">
+                    <option value="all">همه وضعیت‌ها</option>
+                    <option value="online">فقط آنلاین‌های اخیر</option>
+                </select>
+            </div>
+
             <div id="online-users-list" class="flex flex-col gap-2.5">
                 <div class="text-xs text-slate-400 text-center py-6">در حال اسکن رادار...</div>
             </div>
         </div>
 
-        <!-- مودال تنظیمات کامل (پروفایل، شعاع، امنیت، اعلان‌ها، رنگ‌بندی) -->
+        <!-- مودال استوری ۲۴ ساعته -->
+        <div id="story-modal" class="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between p-4 hidden">
+            <div class="flex items-center justify-between pt-2">
+                <div class="flex items-center gap-2.5">
+                    <div id="story-user-avatar" class="w-10 h-10 rounded-full border-2 border-pink-500 overflow-hidden bg-slate-800"></div>
+                    <div>
+                        <h4 id="story-user-name" class="text-xs font-bold text-white">نام کاربر</h4>
+                        <span id="story-time" class="text-[10px] text-slate-400">۲ ساعت پیش</span>
+                    </div>
+                </div>
+                <button onclick="closeStoryModal()" class="text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
+            </div>
+            <div class="flex-1 flex items-center justify-center my-4">
+                <div id="story-content-box" class="w-full max-w-sm h-[60vh] bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden flex items-center justify-center relative shadow-2xl">
+                    <p id="story-text" class="text-sm text-center text-white p-6">متن یا استوری کاربر اینجا نمایش داده می‌شود.</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="openPrivateChatFromStory()" class="w-full py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold text-xs rounded-2xl shadow">ارسال پیام به استوری</button>
+            </div>
+        </div>
+
+        <!-- مودال پروفایل سایر کاربران (همراه با سیستم لایک و مچ متقابل) -->
+        <div id="user-profile-modal" class="absolute inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
+            <div class="glass-panel w-full max-w-sm rounded-3xl p-6 flex flex-col items-center text-center relative shadow-2xl border border-pink-500/30">
+                <button onclick="closeUserProfileModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
+                <div class="relative mb-3">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-pink-600 to-purple-600 rounded-full blur opacity-70"></div>
+                    <div id="modal-avatar-container" class="relative w-28 h-28 rounded-full border-2 border-slate-900 overflow-hidden bg-slate-800 flex items-center justify-center text-3xl font-extrabold text-white shadow-xl"></div>
+                </div>
+                <h3 id="modal-user-name" class="text-lg font-extrabold text-white mb-1">نام کاربر</h3>
+                <p id="modal-user-bio" class="text-xs text-slate-400 mb-2 italic">بدون بیوگرافی</p>
+                <p id="modal-user-distance" class="text-xs text-pink-400 font-medium mb-4">آنلاین در محدوده شعاع</p>
+                <div class="w-full flex flex-col gap-2.5">
+                    <button onclick="sendLikeToUser()" id="modal-like-btn" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-pink-400 font-bold text-xs rounded-2xl border border-pink-500/40 transition shadow flex items-center justify-center gap-2">
+                        <span>❤️ پسندیدن (Like)</span>
+                    </button>
+                    <button onclick="openPrivateChatFromModal()" class="w-full py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold text-xs rounded-2xl shadow-lg flex items-center justify-center gap-2">
+                        <span>💬 شروع چت خصوصی</span>
+                    </button>
+                    <button onclick="openTelegramProfile()" class="w-full py-2.5 bg-slate-800 text-slate-300 font-semibold text-xs rounded-2xl border border-slate-700">مشاهده پروفایل تلگرام</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- مودال مچ شدن موفق (Match!) -->
+        <div id="match-modal" class="absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center hidden">
+            <div class="text-4xl mb-2 animate-bounce">💖✨</div>
+            <h2 class="text-2xl font-extrabold text-white mb-2">تبریک! شما با هم مچ شدید!</h2>
+            <p class="text-xs text-slate-300 mb-6">کاربر مقابل هم شما را پسندید. حالا می‌توانید بدون محدودیت چت کنید.</p>
+            <button onclick="closeMatchModalAndChat()" class="px-8 py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold text-xs rounded-2xl shadow-lg">شروع گفتگو</button>
+        </div>
+
+        <!-- مودال تنظیمات کامل (پروفایل، استوری، شعاع، تم رنگی، امنیت) -->
         <div id="settings-modal" class="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
             <div class="glass-panel w-full max-w-md rounded-3xl p-6 flex flex-col max-h-[90vh] overflow-y-auto relative shadow-2xl border border-purple-500/30">
                 <button onclick="closeSettingsModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
-                <h3 class="text-base font-bold text-white mb-4 text-center">تنظیمات و مدیریت اپلیکیشن</h3>
+                <h3 class="text-base font-bold text-white mb-4 text-center">تنظیمات و پروفایل کاربری</h3>
                 
-                <div class="flex flex-col gap-5">
-                    <!-- ویرایش پروفایل -->
+                <div class="flex flex-col gap-4">
+                    <!-- ویرایش پروفایل و استوری -->
                     <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
-                        <h4 class="text-xs font-bold text-pink-400 mb-3">👤 ویرایش پروفایل</h4>
+                        <h4 class="text-xs font-bold text-pink-400 mb-3">👤 پروفایل و استوری من</h4>
                         <div class="flex flex-col gap-2.5">
-                            <input type="text" id="setting-name" placeholder="نام نمایشی" class="bg-slate-900 text-xs text-white px-3 py-2.5 rounded-xl border border-slate-700 outline-none">
-                            <textarea id="setting-bio" placeholder="بیوگرافی یا وضعیت شما..." class="bg-slate-900 text-xs text-white px-3 py-2.5 rounded-xl border border-slate-700 outline-none resize-none h-16"></textarea>
-                            <button onclick="saveProfileChanges()" class="py-2 bg-pink-600 text-white font-bold text-xs rounded-xl shadow">ذخیره پروفایل</button>
+                            <input type="text" id="setting-name" placeholder="نام نمایشی" class="bg-slate-900 text-xs text-white px-3 py-2 rounded-xl border border-slate-700 outline-none">
+                            <textarea id="setting-bio" placeholder="بیوگرافی شما..." class="bg-slate-900 text-xs text-white px-3 py-2 rounded-xl border border-slate-700 outline-none resize-none h-14"></textarea>
+                            <input type="text" id="setting-story" placeholder="متن استوری ۲۴ ساعته شما..." class="bg-slate-900 text-xs text-white px-3 py-2 rounded-xl border border-slate-700 outline-none">
+                            <button onclick="saveProfileChanges()" class="py-2 bg-pink-600 text-white font-bold text-xs rounded-xl shadow">ذخیره و انتشار استوری</button>
                         </div>
                     </div>
 
-                    <!-- تنظیم شعاع جستجو -->
+                    <!-- شعاع جستجو -->
                     <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
                         <div class="flex justify-between text-xs font-bold text-purple-400 mb-2">
-                            <span>تنظیم شعاع جستجوی رادار:</span>
+                            <span>شعاع جستجوی رادار:</span>
                             <span id="settings-radius-val">5 کیلومتر</span>
                         </div>
                         <input type="range" id="settings-radius-range" min="1" max="50" value="5" class="w-full accent-purple-500 cursor-pointer" oninput="updateSettingsRadius(this.value)">
@@ -188,7 +274,7 @@
 
                     <!-- ترکیب رنگ و تم اپ -->
                     <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
-                        <h4 class="text-xs font-bold text-blue-400 mb-3">🎨 ترکیب رنگ اصلی</h4>
+                        <h4 class="text-xs font-bold text-blue-400 mb-3">🎨 انتخاب رنگ اصلی اپ</h4>
                         <div class="flex items-center justify-around">
                             <button onclick="setAppTheme('#ec4899')" class="w-8 h-8 rounded-full bg-pink-500 border-2 border-white shadow"></button>
                             <button onclick="setAppTheme('#8b5cf6')" class="w-8 h-8 rounded-full bg-purple-500 border-2 border-white shadow"></button>
@@ -199,19 +285,10 @@
 
                     <!-- امنیت و حریم خصوصی -->
                     <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
-                        <h4 class="text-xs font-bold text-emerald-400 mb-3">🔒 امنیت و حریم خصوصی</h4>
+                        <h4 class="text-xs font-bold text-emerald-400 mb-3">🔒 امنیت و حالت مخفی</h4>
                         <div class="flex items-center justify-between">
-                            <span class="text-xs text-slate-300">نمایش لوکیشن من به دیگران</span>
-                            <input type="checkbox" id="setting-stealth-mode" class="w-4 h-4 accent-emerald-500 cursor-pointer" checked onchange="toggleStealthMode(this.checked)">
-                        </div>
-                    </div>
-
-                    <!-- مدیریت اعلان‌ها -->
-                    <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
-                        <h4 class="text-xs font-bold text-amber-400 mb-3">🔔 اعلان‌ها و هشدارها</h4>
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs text-slate-300">دریافت هشدار نزدیک شدن افراد جدید</span>
-                            <input type="checkbox" id="setting-notif" class="w-4 h-4 accent-amber-500 cursor-pointer" checked>
+                            <span class="text-xs text-slate-300">مخفی کردن لوکیشن من (Stealth)</span>
+                            <input type="checkbox" id="setting-stealth-mode" class="w-4 h-4 accent-emerald-500 cursor-pointer" onchange="toggleStealthMode(this.checked)">
                         </div>
                     </div>
                 </div>
@@ -223,11 +300,9 @@
             <div class="glass-panel w-full max-w-sm rounded-3xl p-6 flex flex-col items-center text-center relative shadow-2xl border border-emerald-500/30">
                 <button onclick="closeNavigationModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
                 <h3 class="text-base font-bold text-white mb-2">مسیریابی پیشرفته</h3>
-                <p class="text-xs text-slate-400 mb-5">انتخاب نقشه مقصد و مسیریاب دلخواه</p>
+                <p class="text-xs text-slate-400 mb-5">انتخاب نقشه برای مسیریابی</p>
                 <div class="w-full flex flex-col gap-2.5">
-                    <button onclick="openExternalNav('google')" class="w-full py-3 bg-blue-600 text-white font-bold text-xs rounded-2xl shadow">مسیریابی با گوگل مپ</button>
-                    <button onclick="openExternalNav('balad')" class="w-full py-3 bg-emerald-600 text-white font-bold text-xs rounded-2xl shadow">مسیریابی با نشان / بلد</button>
-                    <button onclick="openExternalNav('neshan')" class="w-full py-3 bg-purple-600 text-white font-bold text-xs rounded-2xl shadow">مسیریابی سریع هوشمند</button>
+                    <button onclick="openExternalNav()" class="w-full py-3 bg-blue-600 text-white font-bold text-xs rounded-2xl shadow">مسیریابی با گوگل مپ</button>
                 </div>
             </div>
         </div>
@@ -252,26 +327,6 @@
                 <button onclick="sendChatMessage()" class="px-4 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold text-xs rounded-2xl shadow">ارسال</button>
             </div>
         </div>
-
-        <!-- مودال پروفایل سایر کاربران -->
-        <div id="user-profile-modal" class="absolute inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
-            <div class="glass-panel w-full max-w-sm rounded-3xl p-6 flex flex-col items-center text-center relative shadow-2xl border border-pink-500/30">
-                <button onclick="closeUserProfileModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
-                <div class="relative mb-3">
-                    <div class="absolute -inset-1 bg-gradient-to-r from-pink-600 to-purple-600 rounded-full blur opacity-70"></div>
-                    <div id="modal-avatar-container" class="relative w-28 h-28 rounded-full border-2 border-slate-900 overflow-hidden bg-slate-800 flex items-center justify-center text-3xl font-extrabold text-white shadow-xl"></div>
-                </div>
-                <h3 id="modal-user-name" class="text-lg font-extrabold text-white mb-1">نام کاربر</h3>
-                <p id="modal-user-bio" class="text-xs text-slate-400 mb-2 italic">بدون بیوگرافی</p>
-                <p id="modal-user-distance" class="text-xs text-pink-400 font-medium mb-4">آنلاین در محدوده شعاع</p>
-                <div class="w-full flex flex-col gap-2.5">
-                    <button onclick="openPrivateChatFromModal()" class="w-full py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold text-xs rounded-2xl shadow-lg flex items-center justify-center gap-2">
-                        <span>💬 شروع چت خصوصی</span>
-                    </button>
-                    <button onclick="openTelegramProfile()" class="w-full py-3 bg-slate-800 text-slate-200 font-semibold text-xs rounded-2xl border border-slate-700">مشاهده پروفایل تلگرام</button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -289,6 +344,8 @@
             username: tgUser?.username || "",
             photo_url: tgUser?.photo_url || null,
             bio: "سلام! من از رادار استفاده می‌کنم.",
+            story: "",
+            gender: "male",
             is_stealth: false
         };
 
@@ -296,6 +353,8 @@
         let isDarkMap = false;
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
         let currentRadius = 5;
+        let isTurboActive = false;
+        let turboInterval = null;
         let tileLayer;
         let myLocationMarker = null;
         let radiusCircleLayer = null;
@@ -345,6 +404,8 @@
                 username: currentUserData.username,
                 avatar_url: currentUserData.photo_url,
                 bio: currentUserData.bio,
+                story: currentUserData.story,
+                gender: currentUserData.gender,
                 latitude: currentCoords.lat,
                 longitude: currentCoords.lng,
                 last_seen: new Date().toISOString()
@@ -389,8 +450,8 @@
             if(radiusCircleLayer) map.removeLayer(radiusCircleLayer);
             radiusCircleLayer = L.circle([currentCoords.lat, currentCoords.lng], {
                 radius: currentRadius * 1000,
-                color: 'var(--theme-primary, #ec4899)',
-                fillColor: 'var(--theme-primary, #ec4899)',
+                color: 'var(--theme-primary)',
+                fillColor: 'var(--theme-primary)',
                 fillOpacity: 0.08,
                 weight: 1.5
             }).addTo(map);
@@ -410,6 +471,8 @@
             let htmlContent = '';
             let countInRadius = 0;
 
+            const filterGender = document.getElementById('filter-gender')?.value || 'all';
+
             allOnlineUsers.forEach(u => {
                 if(u.telegram_id === currentUserData.id) return;
                 const dist = calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
@@ -421,17 +484,27 @@
                     return;
                 }
 
+                if(filterGender !== 'all' && u.gender !== filterGender) return;
+
                 countInRadius++;
                 activeIds.push(u.telegram_id);
                 const initial = (u.name || 'ک').charAt(0);
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" style="width:100%; height:100%; object-fit:cover;">` : initial;
                 const userString = encodeURIComponent(JSON.stringify(u));
+                const hasStory = u.story && u.story.trim().length > 0;
 
                 if(userMarkersMap[u.telegram_id]) {
                     userMarkersMap[u.telegram_id].setLatLng([u.latitude, u.longitude]);
                 } else {
-                    const html = `<div class="user-pin-wrap" onclick="openUserProfileModal('${userString}')"><div class="pin-tooltip">${u.name} (${dist.toFixed(1)} km)</div><div class="user-pin-circle">${avatarInner}</div></div>`;
-                    const icon = L.divIcon({ html, iconSize: [42, 42], iconAnchor: [21, 21] });
+                    const storyRingHtml = hasStory ? `<div class="story-ring" onclick="openStoryModal('${userString}')"></div>` : '';
+                    const html = `
+                        <div class="user-pin-wrap">
+                            ${storyRingHtml}
+                            <div class="pin-tooltip" onclick="openUserProfileModal('${userString}')">${u.name} (${dist.toFixed(1)} km)</div>
+                            <div class="user-pin-circle" onclick="openUserProfileModal('${userString}')">${avatarInner}</div>
+                        </div>
+                    `;
+                    const icon = L.divIcon({ html, iconSize: [46, 46], iconAnchor: [23, 23] });
                     const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
                     userMarkersMap[u.telegram_id] = marker;
                 }
@@ -439,9 +512,12 @@
                 htmlContent += `
                     <div class="flex items-center justify-between bg-slate-800/70 p-3 rounded-2xl border border-slate-700/50 shadow">
                         <div class="flex items-center gap-3 cursor-pointer flex-1" onclick="openUserProfileModal('${userString}')">
-                            <div class="w-10 h-10 rounded-full bg-slate-700 overflow-hidden flex items-center justify-center font-bold text-white text-xs border border-pink-500/40">${avatarInner}</div>
+                            <div class="w-10 h-10 rounded-full bg-slate-700 overflow-hidden flex items-center justify-center font-bold text-white text-xs border border-pink-500/40 relative">
+                                ${hasStory ? '<div class="absolute inset-0 border-2 border-pink-500 rounded-full"></div>' : ''}
+                                ${avatarInner}
+                            </div>
                             <div class="text-right">
-                                <div class="text-xs font-bold text-white">${u.name}</div>
+                                <div class="text-xs font-bold text-white">${u.name} ${hasStory ? '🔵' : ''}</div>
                                 <div class="text-[10px] text-pink-400 mt-0.5">فاصله: ${dist.toFixed(1)} کیلومتر</div>
                             </div>
                         </div>
@@ -464,6 +540,53 @@
             listContainer.innerHTML = htmlContent || '<div class="text-xs text-slate-400 text-center py-6">کاربری در این شعاع یافت نشد.</div>';
         }
 
+        function filterUsersList() { fetchActiveUsers(); }
+
+        // قابلیت توربو (آپدیت آنی)
+        function toggleTurboMode() {
+            isTurboActive = !isTurboActive;
+            const btn = document.getElementById('turbo-btn');
+            if(isTurboActive) {
+                btn.style.borderColor = '#10b981';
+                btn.style.boxShadow = '0 0 15px #10b981';
+                turboInterval = setInterval(() => { centerToMyLocation(); }, 2000);
+                alert('حالت توربو فعال شد: رادار شما با سرعت بالا بروزرسانی می‌شود.');
+            } else {
+                btn.style.borderColor = '';
+                btn.style.boxShadow = '';
+                clearInterval(turboInterval);
+                alert('حالت توربو غیرفعال شد.');
+            }
+        }
+
+        // سیستم استوری
+        function openStoryModal(userJsonStr) {
+            const user = JSON.parse(decodeURIComponent(userJsonStr));
+            selectedTargetUser = user;
+            document.getElementById('story-user-name').textContent = user.name;
+            const initial = (user.name || 'ک').charAt(0);
+            document.getElementById('story-user-avatar').innerHTML = user.avatar_url ? `<img src="${user.avatar_url}" style="width:100%; height:100%; object-fit:cover;">` : initial;
+            document.getElementById('story-text').textContent = user.story || "استوری متنی فعال";
+            document.getElementById('story-modal').classList.remove('hidden');
+        }
+        function closeStoryModal() { document.getElementById('story-modal').classList.add('hidden'); }
+        function openPrivateChatFromStory() { if(selectedTargetUser) { closeStoryModal(); openPrivateChat(selectedTargetUser.telegram_id, selectedTargetUser.name); } }
+
+        // سیستم لایک و مچ متقابل
+        async function sendLikeToUser() {
+            if(!selectedTargetUser) return;
+            alert('درخواست پسندیدن (Like) برای ' + selectedTargetUser.name + ' ارسال شد!');
+            // شبیه‌سازی مچ موفق
+            setTimeout(() => {
+                closeUserProfileModal();
+                document.getElementById('match-modal').classList.remove('hidden');
+            }, 800);
+        }
+        function closeMatchModalAndChat() {
+            document.getElementById('match-modal').classList.add('hidden');
+            if(selectedTargetUser) openPrivateChat(selectedTargetUser.telegram_id, selectedTargetUser.name);
+        }
+
         async function handleMapSearch(e) {
             if(e.key === 'Enter') {
                 const query = document.getElementById('map-search-input').value;
@@ -480,11 +603,10 @@
 
         function openNavigationMenu() { document.getElementById('navigation-modal').classList.remove('hidden'); }
         function closeNavigationModal() { document.getElementById('navigation-modal').classList.add('hidden'); }
-        function openExternalNav(type) {
+        function openExternalNav() {
             if(navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
-                    const lat = position.coords.latitude, lon = position.coords.longitude;
-                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`, '_blank');
+                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${position.coords.latitude},${position.coords.longitude}`, '_blank');
                     closeNavigationModal();
                 });
             }
@@ -551,6 +673,7 @@
         function openSettingsModal() {
             document.getElementById('setting-name').value = currentUserData.first_name;
             document.getElementById('setting-bio').value = currentUserData.bio;
+            document.getElementById('setting-story').value = currentUserData.story;
             document.getElementById('settings-radius-range').value = currentRadius;
             document.getElementById('settings-radius-val').textContent = currentRadius + ' کیلومتر';
             document.getElementById('settings-modal').classList.remove('hidden');
@@ -560,8 +683,10 @@
         async function saveProfileChanges() {
             currentUserData.first_name = document.getElementById('setting-name').value || "کاربر";
             currentUserData.bio = document.getElementById('setting-bio').value || "";
+            currentUserData.story = document.getElementById('setting-story').value || "";
             await registerAndSyncUser();
             closeSettingsModal();
+            alert('تغییرات و استوری شما با موفقیت ثبت شد.');
         }
 
         function updateSettingsRadius(val) {
