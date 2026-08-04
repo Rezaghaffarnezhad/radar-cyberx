@@ -510,10 +510,14 @@
         let isPickingLocation = false;
         let searchDebounceTimer = null;
 
-        const user = tg?.initDataUnsafe?.user || { 
-            id: Math.floor(Math.random() * 900000) + 100000, 
-            first_name: "کاربر " + Math.floor(Math.random() * 100), 
-            username: "user_" + Math.random().toString(36).substring(7) 
+        // دریافت اطلاعات کاربر مستقیم از تلگرام با مقادیر امن پیش‌فرض
+        const telegramUser = tg?.initDataUnsafe?.user;
+        let user = { 
+            id: telegramUser?.id || Math.floor(Math.random() * 900000) + 100000, 
+            first_name: telegramUser?.first_name || ("کاربر " + Math.floor(Math.random() * 100)), 
+            last_name: telegramUser?.last_name || "",
+            username: telegramUser?.username || ("user_" + Math.random().toString(36).substring(7)),
+            photo_url: telegramUser?.photo_url || null
         };
 
         function showToast(text) {
@@ -711,7 +715,6 @@
             const initial = (currentUser?.name || 'ک').charAt(0);
             const myAvatarInner = currentUser?.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : initial;
             
-            // دایره متحرک انیمیشنی (Pulse) مختص شما
             const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner">${myAvatarInner}</div></div>`;
             const myIcon = L.divIcon({ html: myHtml, iconSize: [64, 64], iconAnchor: [32, 32] });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
@@ -770,6 +773,8 @@
         });
 
         async function initUserSession() {
+            const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+
             const { data } = await supabaseClient
                 .from('users')
                 .select('*')
@@ -778,11 +783,21 @@
 
             if (data) {
                 currentUser = data;
+                // اگر کاربر تلگرام عکس یا نام جدید داشت و در دیتابیس ثبت نشده بود، به‌روزرسانی شود
+                let updates = {};
+                if (!currentUser.avatar_url && user.photo_url) updates.avatar_url = user.photo_url;
+                if (!currentUser.username && user.username) updates.username = user.username;
+                
+                if (Object.keys(updates).length > 0) {
+                    await supabaseClient.from('users').update(updates).eq('telegram_id', user.id);
+                    Object.assign(currentUser, updates);
+                }
             } else {
                 const newUserData = { 
                     telegram_id: user.id, 
-                    name: user.first_name, 
-                    username: user.username, 
+                    name: fullName || "کاربر تلگرام", 
+                    username: user.username || "", 
+                    avatar_url: user.photo_url || "",
                     latitude: currentCoords.lat, 
                     longitude: currentCoords.lng,
                     last_seen: new Date().toISOString() 
@@ -795,7 +810,7 @@
             document.getElementById('input-my-username').value = currentUser.username || '';
             document.getElementById('input-my-bio').value = currentUser.bio || '';
             
-            const savedAvatar = localStorage.getItem('saved_user_avatar_' + user.id);
+            const savedAvatar = localStorage.getItem('saved_user_avatar_' + user.id) || currentUser.avatar_url;
             if(savedAvatar) {
                 currentUser.avatar_url = savedAvatar;
             }
