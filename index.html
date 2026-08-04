@@ -252,7 +252,8 @@
                     if(map) map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
                     updateRadiusCircleOnMap();
                     updateMyHeartbeat();
-                }, () => {
+                }, (error) => {
+                    console.warn("Geolocation error or permission denied:", error.message);
                     updateRadiusCircleOnMap();
                 }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
             } else {
@@ -626,7 +627,6 @@
 
             if(myLocationMarker) map.removeLayer(myLocationMarker);
             
-            // حذف کامل شکل دایره‌ای نشانگر و استفاده از یک پین مکان‌یاب استاندارد و زیبا
             const avatarInner = currentUser.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : currentUser.name.charAt(0);
             const myHtml = `
                 <div style="width: 44px; height: 44px; border-radius: 50%; background: #2563eb; border: 3px solid #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.8);">
