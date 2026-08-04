@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نقشه افراد واقعی آنلاین</title>
+    <title>نقشه رادار زنده تلگرام</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
@@ -31,49 +32,61 @@
         .g-fab-btn:hover { background: rgba(35, 46, 60, 0.95) !important; transform: scale(1.05); }
         .g-fab-btn:active { transform: scale(0.95); }
 
-        /* نشانگر من با تک حلقه بازشونده ظریف */
+        /* نشانگر من با تک حلقه بازشونده */
         .pulse-marker-container {
             position: relative;
-            width: 44px;
-            height: 44px;
+            width: 50px;
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         .pulse-core {
-            width: 16px;
-            height: 16px;
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            border: 2.5px solid #ffffff;
+            width: 38px;
+            height: 38px;
+            background: #1a73e8;
+            border: 3px solid #ffffff;
             border-radius: 50%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 13px;
+            box-shadow: 0 4px 15px rgba(26, 115, 232, 0.7);
             z-index: 2;
         }
         .pulse-ring {
             position: absolute;
-            width: 40px;
-            height: 40px;
-            border: 1.5px solid rgba(59, 130, 246, 0.8);
+            width: 44px;
+            height: 44px;
+            border: 2px solid rgba(26, 115, 232, 0.8);
             border-radius: 50%;
             animation: single-radar 2s infinite cubic-bezier(0.2, 0.8, 0.4, 1);
             z-index: 1;
         }
         @keyframes single-radar {
-            0% { transform: scale(0.5); opacity: 1; }
-            100% { transform: scale(2.3); opacity: 0; }
+            0% { transform: scale(0.6); opacity: 1; }
+            100% { transform: scale(2.4); opacity: 0; }
         }
 
-        /* مارکر افراد واقعی آنلاین */
-        .real-user-marker {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, #10b981, #059669);
-            border: 2.5px solid #ffffff;
+        /* مارکر سایر کاربران واقعی با عکس پروفایل */
+        .other-user-marker {
+            width: 38px;
+            height: 38px;
+            background: #ffffff;
+            border: 3px solid #10b981;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.7);
+            font-weight: 700;
+            color: #10b981;
+            font-size: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            cursor: pointer;
         }
 
         .leaflet-container { background-color: #070b12 !important; }
@@ -88,7 +101,7 @@
     <div id="view-map" class="view-section relative w-full h-full">
         <div id="map" class="map-container"></div>
         
-        <!-- نوار جستجو و ابزار بالا -->
+        <!-- نوار بالا -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none flex flex-col gap-2">
             <div class="g-search-box px-3.5 py-2.5 rounded-2xl flex items-center justify-between gap-3 pointer-events-auto">
                 <div class="flex items-center gap-2.5 flex-1">
@@ -97,7 +110,7 @@
                 </div>
                 <div class="flex items-center gap-2 border-r border-slate-700 pr-2.5">
                     <button onclick="toggleMapTheme()" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm text-slate-300 hover:text-white transition" title="تغییر لایه نقشه">🗺️</button>
-                    <button onclick="toggleOnlineUsersPanel()" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm text-emerald-400 hover:text-emerald-300 transition relative" title="افراد واقعی آنلاین">
+                    <button onclick="toggleOnlineUsersPanel()" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm text-emerald-400 hover:text-emerald-300 transition relative" title="افراد آنلاین">
                         👥
                         <span id="online-count-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-[10px] font-bold text-white rounded-full flex items-center justify-center">0</span>
                     </button>
@@ -105,156 +118,188 @@
             </div>
         </div>
 
-        <!-- دکمه‌های شناور سمت راست -->
+        <!-- دکمه‌های شناور -->
         <div class="absolute bottom-6 right-4 z-10 pointer-events-auto flex flex-col gap-3">
-            <button onclick="openRouting()" class="g-fab-btn w-12 h-12 rounded-2xl flex items-center justify-center text-white transition shadow-xl" title="مسیریابی">
-                <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-            </button>
             <button onclick="centerToMyLocation()" class="g-fab-btn w-12 h-12 rounded-2xl flex items-center justify-center text-white transition shadow-xl" title="موقعیت من">
                 <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </button>
         </div>
 
-        <!-- پنل کشویی نمایش افراد واقعی آنلاین -->
+        <!-- پنل افراد آنلاین -->
         <div id="online-panel" class="absolute bottom-0 left-0 right-0 z-20 g-search-box rounded-t-3xl p-4 transition-transform duration-300 transform translate-y-full max-h-[50vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-3 border-b border-slate-700/60 pb-2">
                 <div class="flex items-center gap-2">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span class="text-xs font-bold text-white">کاربران واقعی آنلاین</span>
+                    <span class="text-xs font-bold text-white">کاربران آنلاین در اپلیکیشن</span>
                 </div>
                 <button onclick="toggleOnlineUsersPanel()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
             </div>
             <div id="online-users-list" class="flex flex-col gap-2">
-                <!-- لیست کاربران واقعی از سرور یا پایگاه داده بارگذاری خواهد شد -->
-                <div class="text-xs text-slate-400 text-center py-4">در حال دریافت اطلاعات کاربران آنلاین...</div>
+                <div class="text-xs text-slate-400 text-center py-4">در حال بارگذاری کاربران...</div>
             </div>
         </div>
     </div>
 
     <script>
+        const SUPABASE_URL = "https://dxdskvkcmovotzxixxhd.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_3-rNuWmg9jAyPPQ89hE4ZQ_avo0wsPd";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let tg = window.Telegram?.WebApp;
+        if(tg) tg.expand();
+
+        const tgUser = tg?.initDataUnsafe?.user;
+        const currentUserData = {
+            id: tgUser?.id || Math.floor(Math.random() * 900000) + 100000,
+            first_name: [tgUser?.first_name, tgUser?.last_name].filter(Boolean).join(' ') || "کاربر مهمان",
+            username: tgUser?.username || "user_" + Math.random().toString(36).substring(7),
+            photo_url: tgUser?.photo_url || null
+        };
+
         let map;
         let isDarkMap = false;
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
         let tileLayer;
         let myLocationMarker = null;
-        let realUserMarkers = {};
+        let userMarkersMap = {};
+        let allOnlineUsers = [];
 
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
             map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 14);
-            
             tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
-            updateMyLocationMarkerOnMap();
-            fetchRealOnlineUsers();
-
-            // دریافت موقعیت واقعی کاربر جاری
             if (navigator.geolocation) {
-                navigator.geolocation.watchPosition(position => {
+                navigator.geolocation.getCurrentPosition(async position => {
                     currentCoords.lat = position.coords.latitude;
                     currentCoords.lng = position.coords.longitude;
-                    if(map && !myLocationMarker) {
-                        map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
-                    }
-                    updateMyLocationMarkerOnMap();
-                    // ارسال لوکیشن خود به سرور (در صورت نیاز به ثبت آنلاین بودن)
-                    // sendMyLiveLocationToBackend(currentCoords.lat, currentCoords.lng);
-                }, (error) => { console.warn(error); }, { enableHighAccuracy: true, maximumAge: 10000 });
+                    if(map) map.setView([currentCoords.lat, currentCoords.lng], 15, { animate: true });
+                    await registerAndSyncUser();
+                }, async () => {
+                    await registerAndSyncUser();
+                }, { enableHighAccuracy: true, timeout: 5000 });
+            } else {
+                await registerAndSyncUser();
             }
 
-            // بروزرسانی موقعیت افراد واقعی هر 10 ثانیه یکبار از سرور
-            setInterval(fetchRealOnlineUsers, 10000);
+            // همگام‌سازی لحظه‌ای با دیتابیس
+            supabaseClient.channel('realtime_users')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
+                    fetchActiveUsers();
+                })
+                .subscribe();
+
+            setInterval(updateMyHeartbeat, 10000);
         });
 
-        function updateMyLocationMarkerOnMap() {
+        async function registerAndSyncUser() {
+            const payload = {
+                telegram_id: currentUserData.id,
+                name: currentUserData.first_name,
+                username: currentUserData.username,
+                avatar_url: currentUserData.photo_url,
+                latitude: currentCoords.lat,
+                longitude: currentCoords.lng,
+                last_seen: new Date().toISOString()
+            };
+
+            await supabaseClient.from('users').upsert(payload);
+            updateMyLocationMarker();
+            fetchActiveUsers();
+        }
+
+        async function updateMyHeartbeat() {
+            await supabaseClient.from('users').update({
+                latitude: currentCoords.lat,
+                longitude: currentCoords.lng,
+                last_seen: new Date().toISOString()
+            }).eq('telegram_id', currentUserData.id);
+            fetchActiveUsers();
+        }
+
+        async function fetchActiveUsers() {
+            const { data } = await supabaseClient.from('users').select('*');
+            if(data) {
+                allOnlineUsers = data;
+                renderUsersOnMapAndUI();
+            }
+        }
+
+        function updateMyLocationMarker() {
             if(!map) return;
             if(myLocationMarker) map.removeLayer(myLocationMarker);
-            
-            const customIcon = L.divIcon({
-                className: '',
-                html: '<div class="pulse-marker-container"><div class="pulse-ring"></div><div class="pulse-core"></div></div>',
-                iconSize: [44, 44],
-                iconAnchor: [22, 22]
-            });
 
-            myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon: customIcon }).addTo(map);
+            const initial = currentUserData.first_name.charAt(0);
+            const coreContent = currentUserData.photo_url 
+                ? `<img src="${currentUserData.photo_url}" class="w-full h-full object-cover">` 
+                : initial;
+
+            const html = `<div class="pulse-marker-container"><div class="pulse-ring"></div><div class="pulse-core">${coreContent}</div></div>`;
+            const icon = L.divIcon({ html, iconSize: [50, 50], iconAnchor: [25, 25] });
+            myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
 
-        // تابع دریافت افراد واقعی از سرور (بکنبد یا پایگاه داده)
-        function fetchRealOnlineUsers() {
-            /* 
-               نکته: در اینجا باید درخواست به API خودتان (مثل fetch('/api/get-online-users')) بزنید.
-               نمونه زیر ساختار داده‌های واقعی دریافتی را شبیه‌سازی می‌کند:
-            */
-            
-            // نمونه داده‌های دریافتی از سرور برای افراد واقعی:
-            const realUsersData = [
-                { id: 101, name: "رضا کریمی", lat: 35.6912, lng: 51.3910, avatar: "👨‍💻" },
-                { id: 102, name: "مریم ناصری", lat: 35.6845, lng: 51.3780, avatar: "👩‍💼" }
-            ];
-
-            updateRealUsersOnMapAndUI(realUsersData);
-        }
-
-        function updateRealUsersOnMapAndUI(users) {
+        function renderUsersOnMapAndUI() {
             const listContainer = document.getElementById('online-users-list');
-            document.getElementById('online-count-badge').textContent = users.length;
-            
-            if(users.length === 0) {
-                listContainer.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">کاربر آنلاین دیگری در اطراف شما نیست.</div>';
-                return;
-            }
+            document.getElementById('online-count-badge').textContent = allOnlineUsers.length;
 
-            let htmlContent = '';
             let activeIds = [];
+            let htmlContent = '';
 
-            users.forEach(user => {
-                activeIds.push(user.id);
+            allOnlineUsers.forEach(u => {
+                if(u.telegram_id === currentUserData.id) return; // کاربر جاری مستقیماً روی مپ با پالس است
+                activeIds.push(u.telegram_id);
 
-                // اضافه کردن یا بروزرسانی مارکر روی نقشه
-                if (realUserMarkers[user.id]) {
-                    realUserMarkers[user.id].setLatLng([user.lat, user.lng]);
+                const initial = (u.name || 'ک').charAt(0);
+                const markerInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : initial;
+
+                if(userMarkersMap[u.telegram_id]) {
+                    userMarkersMap[u.telegram_id].setLatLng([u.latitude, u.longitude]);
                 } else {
                     const icon = L.divIcon({
-                        className: '',
-                        html: `<div class="real-user-marker">${user.avatar || '👤'}</div>`,
-                        iconSize: [36, 36],
-                        iconAnchor: [18, 18]
+                        html: `<div class="other-user-marker">${markerInner}</div>`,
+                        iconSize: [38, 38],
+                        iconAnchor: [19, 19]
                     });
-                    const marker = L.marker([user.lat, user.lng], { icon }).addTo(map);
-                    marker.bindPopup(`<b style="font-family:Vazirmatn">${user.name}</b><br><span style="font-size:11px">آنلاین</span>`);
-                    realUserMarkers[user.id] = marker;
+                    const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
+                    marker.bindPopup(`<b style="font-family:Vazirmatn">${u.name}</b><br><span style="font-size:11px">آنلاین روی نقشه</span>`);
+                    userMarkersMap[u.telegram_id] = marker;
                 }
 
-                // ساخت لیست پنل
                 htmlContent += `
                     <div class="flex items-center justify-between bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/40">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-full bg-emerald-600/30 border border-emerald-500/50 flex items-center justify-center text-emerald-400 font-bold text-sm">${user.avatar || '👤'}</div>
+                            <div class="w-9 h-9 rounded-full bg-slate-700 overflow-hidden flex items-center justify-center font-bold text-white text-xs">${markerInner}</div>
                             <div>
-                                <div class="text-xs font-bold text-white">${user.name}</div>
+                                <div class="text-xs font-bold text-white">${u.name}</div>
                                 <div class="text-[10px] text-emerald-400">● آنلاین</div>
                             </div>
                         </div>
-                        <button onclick="focusOnUser(${user.lat}, ${user.lng})" class="px-3 py-1 bg-blue-600/80 hover:bg-blue-600 text-white text-[11px] rounded-lg transition">مشاهده</button>
+                        <button onclick="focusOnUser(${u.latitude}, ${u.longitude})" class="px-3 py-1 bg-blue-600/80 hover:bg-blue-600 text-white text-[11px] rounded-lg transition">مشاهده</button>
                     </div>
                 `;
             });
 
-            // حذف کاربرانی که دیگر آنلاین نیستند
-            for (let id in realUserMarkers) {
-                if (!activeIds.includes(Number(id))) {
-                    map.removeLayer(realUserMarkers[id]);
-                    delete realUserMarkers[id];
+            for(let id in userMarkersMap) {
+                if(!activeIds.includes(Number(id))) {
+                    map.removeLayer(userMarkersMap[id]);
+                    delete userMarkersMap[id];
                 }
             }
 
-            listContainer.innerHTML = htmlContent;
+            listContainer.innerHTML = htmlContent || '<div class="text-xs text-slate-400 text-center py-4">کاربر دیگری آنلاین نیست.</div>';
         }
 
         function centerToMyLocation() {
-            if(map) {
-                map.setView([currentCoords.lat, currentCoords.lng], 17, { animate: true });
-                updateMyLocationMarkerOnMap();
+            if(navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    currentCoords.lat = position.coords.latitude;
+                    currentCoords.lng = position.coords.longitude;
+                    if(map) {
+                        map.setView([currentCoords.lat, currentCoords.lng], 17, { animate: true });
+                        updateMyLocationMarker();
+                        updateMyHeartbeat();
+                    }
+                });
             }
         }
 
@@ -266,29 +311,22 @@
         }
 
         function toggleOnlineUsersPanel() {
-            const panel = document.getElementById('online-panel');
-            panel.classList.toggle('translate-y-full');
-        }
-
-        function openRouting() {
-            alert('قابلیت مسیریابی فعال شد. مقصد خود را روی نقشه انتخاب کنید.');
+            document.getElementById('online-panel').classList.toggle('translate-y-full');
         }
 
         function toggleMapTheme() {
             isDarkMap = !isDarkMap;
             const mapContainer = document.getElementById('map');
-            
-            if (tileLayer) map.removeLayer(tileLayer);
+            if(tileLayer) map.removeLayer(tileLayer);
 
-            if (isDarkMap) {
+            if(isDarkMap) {
                 mapContainer.classList.add('dark-map');
                 tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
             } else {
                 mapContainer.classList.remove('dark-map');
                 tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
             }
-            
-            setTimeout(() => { updateMyLocationMarkerOnMap(); }, 100);
+            setTimeout(() => { updateMyLocationMarker(); }, 100);
         }
     </script>
 </body>
