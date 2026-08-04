@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - نسخه کامل</title>
+    <title>تلسکوپ - نسخه کامل و ایمن‌شده</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -54,7 +54,7 @@
             </div>
         </div>
 
-        <!-- دکمه‌های کنترل سمت چپ (تنظیم شعاع + انتخاب دستی لوکیشن) -->
+        <!-- دکمه‌های کنترل سمت چپ (انتخاب دستی + تنظیم شعاع) -->
         <div class="absolute bottom-24 left-4 z-10 flex flex-col gap-2 pointer-events-auto">
             <button onclick="toggleManualPickMode()" id="manual-pick-btn" class="w-12 h-12 glass-box rounded-2xl flex items-center justify-center text-amber-400 shadow-xl transition hover:scale-105 active:scale-95" title="انتخاب دستی لوکیشن روی نقشه">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
@@ -93,22 +93,23 @@
     </div>
 
     <script>
-        // تنظیمات Supabase (اطلاعات پروژه خود را اینجا وارد کنید)
+        // اطلاعات اتصال به Supabase (جایگزین کنید)
         const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
         const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
         let supabaseClient = null;
+        
         try {
             if (window.supabase) {
                 supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             }
         } catch (e) {
-            console.warn("Supabase init error:", e);
+            console.warn("Supabase init warning:", e);
         }
 
         let tg = window.Telegram?.WebApp;
         if(tg) tg.expand();
 
-        let map, myLocationMarker = null, radiusCircle = null;
+        let map = null, myLocationMarker = null, radiusCircle = null;
         let isManualPicking = false;
         let currentCoords = { lat: 35.6892, lng: 51.3890 }; // پیش‌فرض تهران
         let activeRadiusKm = 15;
@@ -130,103 +131,125 @@
         };
 
         window.addEventListener('DOMContentLoaded', () => {
-            // ۱. راه‌اندازی نقشه
-            map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 15);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
+            try {
+                // ۱. راه‌اندازی نقشه
+                map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 15);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
-            setupUserUI();
-            updateMapElements();
+                setupUserUI();
+                updateMapElements();
 
-            // رویداد کلیک روی نقشه (برای انتخاب دستی)
-            map.on('click', (e) => {
-                if (isManualPicking) {
-                    currentCoords.lat = e.latlng.lat;
-                    currentCoords.lng = e.latlng.lng;
-                    updateMapElements();
-                    saveUserLocationToSupabase();
-                    toggleManualPickMode(); // خروج از حالت انتخاب دستی
-                }
-            });
-
-            // ۲. درخواست لوکیشن GPS
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    currentCoords.lat = position.coords.latitude;
-                    currentCoords.lng = position.coords.longitude;
-                    
-                    if(map) {
-                        map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+                // رویداد کلیک روی نقشه برای انتخاب دستی لوکیشن
+                map.on('click', (e) => {
+                    if (isManualPicking) {
+                        currentCoords.lat = e.latlng.lat;
+                        currentCoords.lng = e.latlng.lng;
                         updateMapElements();
+                        saveUserLocationToSupabase();
+                        toggleManualPickMode();
                     }
-                    document.getElementById('status-badge').textContent = "📍 لوکیشن فعال";
-                    saveUserLocationToSupabase();
-                }, (error) => {
-                    console.warn("Geolocation warning:", error.message);
-                    document.getElementById('status-badge').textContent = "⚠️ پیش‌فرض (GPS غیرفعال)";
-                    document.getElementById('status-badge').className = "text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1.5 rounded-xl";
-                }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+                });
+
+                // ۲. دریافت لوکیشن از دستگاه (GPS)
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            currentCoords.lat = position.coords.latitude;
+                            currentCoords.lng = position.coords.longitude;
+                            
+                            if(map) {
+                                map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+                                updateMapElements();
+                            }
+                            document.getElementById('status-badge').textContent = "📍 لوکیشن فعال";
+                            saveUserLocationToSupabase();
+                        }, 
+                        (error) => {
+                            console.warn("Geolocation warning:", error.message);
+                            document.getElementById('status-badge').textContent = "⚠️ پیش‌فرض (GPS غیرفعال)";
+                            document.getElementById('status-badge').className = "text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1.5 rounded-xl";
+                        }, 
+                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    );
+                }
+            } catch (err) {
+                console.error("Initialization error:", err);
             }
         });
 
         function setupUserUI() {
-            document.getElementById('top-my-name').textContent = currentUser.name;
-            const avatarEl = document.getElementById('top-my-avatar');
-            if(currentUser.avatar_url) {
-                avatarEl.innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">`;
-            } else {
-                avatarEl.textContent = currentUser.name.charAt(0) || 'ک';
+            try {
+                document.getElementById('top-my-name').textContent = currentUser.name;
+                const avatarEl = document.getElementById('top-my-avatar');
+                if(currentUser.avatar_url) {
+                    avatarEl.innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">`;
+                } else {
+                    avatarEl.textContent = currentUser.name.charAt(0) || 'ک';
+                }
+            } catch (e) {
+                console.warn("UI setup warning:", e);
             }
         }
 
+        // تابع اصلی رسم و به‌روزرسانی پین و شعاع (ایزوله شده از خطاها)
         function updateMapElements() {
-            if(!map) return;
+            try {
+                if(!map) return;
 
-            // پاکسازی لایه‌های قبلی برای جلوگیری از تداخل
-            if(radiusCircle) map.removeLayer(radiusCircle);
-            if(myLocationMarker) map.removeLayer(myLocationMarker);
+                // پاکسازی لایه‌های قبلی برای جلوگیری از گم شدن یا روی هم افتادن
+                if(radiusCircle) map.removeLayer(radiusCircle);
+                if(myLocationMarker) map.removeLayer(myLocationMarker);
 
-            // ۱. ترسیم دایره شعاع
-            radiusCircle = L.circle([currentCoords.lat, currentCoords.lng], {
-                radius: activeRadiusKm * 1000,
-                color: '#3b82f6',
-                weight: 1.5,
-                fillColor: '#3b82f6',
-                fillOpacity: 0.08
-            }).addTo(map);
+                // ۱. ترسیم دایره شعاع
+                radiusCircle = L.circle([currentCoords.lat, currentCoords.lng], {
+                    radius: activeRadiusKm * 1000,
+                    color: '#3b82f6',
+                    weight: 1.5,
+                    fillColor: '#3b82f6',
+                    fillOpacity: 0.08
+                }).addTo(map);
 
-            // ۲. ترسیم نشانگر اختصاصی کاربر
-            const avatarInner = currentUser.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : currentUser.name.charAt(0);
-            const pinHtml = `
-                <div style="width: 44px; height: 44px; border-radius: 50%; background: #2563eb; border: 3px solid #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.8);">
-                    ${avatarInner}
-                </div>
-            `;
-            const customIcon = L.divIcon({ 
-                html: pinHtml, 
-                iconSize: [44, 44], 
-                iconAnchor: [22, 22], 
-                className: 'my-center-pin' 
-            });
+                // ۲. ترسیم نشانگر اختصاصی کاربر
+                const avatarInner = currentUser.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : currentUser.name.charAt(0);
+                const pinHtml = `
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: #2563eb; border: 3px solid #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.8);">
+                        ${avatarInner}
+                    </div>
+                `;
+                const customIcon = L.divIcon({ 
+                    html: pinHtml, 
+                    iconSize: [44, 44], 
+                    iconAnchor: [22, 22], 
+                    className: 'my-center-pin' 
+                });
 
-            myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon: customIcon, zIndexOffset: 1000 }).addTo(map);
+                myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon: customIcon, zIndexOffset: 1000 }).addTo(map);
+            } catch (err) {
+                console.error("Error updating map elements:", err);
+            }
         }
 
         function centerToMyLocation() {
-            if(map) {
-                map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+            try {
+                if(map) {
+                    map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+                }
+            } catch (e) {
+                console.warn("Center map warning:", e);
             }
         }
 
         function toggleManualPickMode() {
             isManualPicking = !isManualPicking;
             const btn = document.getElementById('manual-pick-btn');
+            const mapEl = document.getElementById('map');
             if(isManualPicking) {
                 btn.classList.add('bg-amber-500/20', 'border', 'border-amber-400');
-                document.getElementById('map').classList.add('picking-mode');
+                mapEl.classList.add('picking-mode');
                 if(tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
             } else {
                 btn.classList.remove('bg-amber-500/20', 'border', 'border-amber-400');
-                document.getElementById('map').classList.remove('picking-mode');
+                mapEl.classList.remove('picking-mode');
             }
         }
 
@@ -243,7 +266,7 @@
                     updated_at: new Date()
                 }, { onConflict: 'id' });
             } catch (err) {
-                console.error("Error saving location:", err);
+                console.error("Error saving location to Supabase:", err);
             }
         }
 
