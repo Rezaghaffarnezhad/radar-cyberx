@@ -18,22 +18,46 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
 
-        /* نشانگر فلش‌شکل موقعیت من روی نقشه */
-        .my-arrow-marker {
-            width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
-            filter: drop-shadow(0 4px 10px rgba(37, 99, 235, 0.7));
+        /* نشانگر دایره متحرک و پالس‌دار لوکیشن من */
+        .my-pulsing-marker {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .my-arrow-inner {
-            width: 40px; height: 40px; background: #2563eb; border: 3px solid #ffffff;
-            border-radius: 50% 50% 50% 8px; transform: rotate(-45deg);
-            display: flex; align-items: center; justify-content: center; overflow: hidden;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+        .my-pulsing-dot {
+            width: 20px;
+            height: 20px;
+            background: #2563eb;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(37, 99, 235, 0.8);
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
-        .my-arrow-inner img, .my-arrow-inner span { transform: rotate(45deg); width: 100%; height: 100%; object-fit: cover; }
+        .my-pulsing-dot img { width: 100%; height: 100%; object-fit: cover; }
+        .my-pulsing-ring {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            background: rgba(37, 99, 235, 0.4);
+            border-radius: 50%;
+            animation: pulse-ring 2s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+            z-index: 1;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.6); opacity: 1; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
 
         /* پین سایر کاربران روی نقشه */
         .other-user-pin {
-            width: 40px; height: 40px; border-radius: 50%; background: #17212b;
+            width: 38px; height: 38px; border-radius: 50%; background: #17212b;
             border: 2.5px solid #22c55e; display: flex; align-items: center; justify-content: center;
             font-weight: 700; color: white; font-size: 12px; overflow: hidden;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer;
@@ -206,10 +230,16 @@
         function updateMyMarker() {
             if(!map) return;
             if(myMarker) map.removeLayer(myMarker);
-            const initial = currentUser.name.charAt(0);
-            const innerContent = currentUser.avatar ? `<img src="${currentUser.avatar}">` : `<span>${initial}</span>`;
-            const html = `<div class="my-arrow-marker"><div class="my-arrow-inner">${innerContent}</div></div>`;
-            const icon = L.divIcon({ html, iconSize: [48, 48], iconAnchor: [24, 24] });
+            
+            // استایل دایره متحرک (پالس‌دار) برای لوکیشن من
+            const innerContent = currentUser.avatar ? `<img src="${currentUser.avatar}">` : `<span>${currentUser.name.charAt(0)}</span>`;
+            const html = `
+                <div class="my-pulsing-marker">
+                    <div class="my-pulsing-ring"></div>
+                    <div class="my-pulsing-dot">${innerContent}</div>
+                </div>
+            `;
+            const icon = L.divIcon({ html, iconSize: [40, 40], iconAnchor: [20, 20] });
             myMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
 
@@ -235,7 +265,7 @@
                 const initial = (u.name || 'ک').charAt(0);
                 const inner = u.avatar_url ? `<img src="${u.avatar_url}" style="width:100%;height:100%;object-fit:cover;">` : initial;
                 const html = `<div class="other-user-pin">${inner}</div>`;
-                const icon = L.divIcon({ html, iconSize: [40, 40], iconAnchor: [20, 20] });
+                const icon = L.divIcon({ html, iconSize: [38, 38], iconAnchor: [19, 19] });
                 const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
                 userMarkers[u.telegram_id] = marker;
             });
@@ -313,6 +343,7 @@
             const input = document.getElementById('chat-input');
             const message = input.value.trim();
             if(!message) return;
+            input.value.trim();
             input.value = '';
 
             await supabaseClient.from('messages').insert([{
