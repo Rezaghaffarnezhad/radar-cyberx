@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - نمایش کاربران روی نقشه</title>
+    <title>تلسکوپ - ردیابی لحظه‌ای کاربران</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -86,7 +86,7 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">🟢 نقشه فعال</span>
+                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ آنلاینِ لحظه‌ای</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
@@ -139,7 +139,7 @@
     <div id="users-list-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeUsersListModal()">
         <div class="tg-card w-full max-w-md max-h-[85vh] rounded-t-3xl sm:rounded-2xl p-5 flex flex-col gap-3 shadow-2xl border border-slate-700 overflow-hidden" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
-                <h3 class="font-bold text-sm text-white flex items-center gap-2">🟢 لیست افراد آنلاین روی نقشه</h3>
+                <h3 class="font-bold text-sm text-white flex items-center gap-2">🟢 لیست افراد آنلاین لحظه‌ای</h3>
                 <button onclick="closeUsersListModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
             </div>
             
@@ -175,7 +175,7 @@
         if(tg) tg.expand();
 
         let map = null, myLocationMarker = null, radiusCircle = null;
-        let markersLayerGroup = L.layerGroup(); // لایه جداگانه برای مدیریت پین‌ها روی نقشه
+        let markersLayerGroup = L.layerGroup(); 
         let onlineUsersList = []; 
         let currentCoords = { lat: 35.6892, lng: 51.3890 }; 
         let activeRadiusKm = 15;
@@ -220,10 +220,8 @@
                     saveAndSyncData();
                 }
 
-                // به‌روزرسانی خودکار نقشه و لیست هر ۸ ثانیه
-                setInterval(() => {
-                    loadOnlineUsers();
-                }, 8000);
+                // راه‌اندازی اتصال لحظه‌ای (Realtime)
+                setupRealtimeSubscription();
 
             } catch (err) {
                 console.error("Initialization error:", err);
@@ -285,30 +283,16 @@
                     updated_at: new Date()
                 }, { onConflict: 'id' });
 
-                loadOnlineUsers();
+                fetchAllUsers();
             } catch (err) {
                 console.error("Error saving location:", err);
             }
         }
 
-        async function loadOnlineUsers() {
+        // دریافت اولیه کل کاربران
+        async function fetchAllUsers() {
             if (!supabaseClient) return;
             try {
-                markersLayerGroup.clearLayers();
-                onlineUsersList = [];
-
-                // افزودن خود کاربر به لیست محلی
-                onlineUsersList.push({
-                    id: currentUser.id,
-                    name: currentUser.name,
-                    username: currentUser.username,
-                    avatar_url: currentUser.avatar_url,
-                    lat: currentCoords.lat,
-                    lng: currentCoords.lng,
-                    distance: 0,
-                    isMe: true
-                });
-
                 const { data, error } = await supabaseClient
                     .from('users')
                     .select('*');
@@ -318,39 +302,76 @@
                     return;
                 }
 
-                if (data && data.length > 0) {
-                    data.forEach(user => {
-                        if (String(user.id) === String(currentUser.id)) return;
-                        if (!user.lat || !user.lng) return;
-
-                        const distanceKm = getDistanceFromLatLonInKm(currentCoords.lat, currentCoords.lng, user.lat, user.lng);
-                        
-                        onlineUsersList.push({ ...user, distance: distanceKm, isMe: false });
-
-                        // ترسیم پین روی نقشه برای تمامی کاربران دیتابیس
-                        const userInitial = user.name ? user.name.charAt(0) : 'ک';
-                        const avatarHtml = user.avatar_url 
-                            ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
-                            : userInitial;
-
-                        const pinHtml = `<div class="other-user-pin">${avatarHtml}<div class="online-dot"></div></div>`;
-                        
-                        const userIcon = L.divIcon({
-                            html: pinHtml,
-                            iconSize: [40, 40],
-                            iconAnchor: [20, 20],
-                            className: ''
-                        });
-
-                        const marker = L.marker([user.lat, user.lng], { icon: userIcon });
-                        marker.bindPopup(`<div style="direction: rtl; font-family: 'Vazirmatn'; text-align: right;"><b style="color: #10b981;">${user.name || 'کاربر'} (آنلاین)</b><br><span style="font-size: 11px; color: #64748b;">@${user.username || 'بدون نام کاربری'}</span><br><span style="font-size: 11px; color: #10b981;">فاصله: ${distanceKm.toFixed(1)} کیلومتر</span></div>`);
-                        
-                        markersLayerGroup.addLayer(marker);
-                    });
+                if (data) {
+                    processUsersData(data);
                 }
             } catch (err) {
-                console.error("Error loading online users:", err);
+                console.error("Error fetching users:", err);
             }
+        }
+
+        // گوش دادن به تغییرات لحظه‌ای دیتابیس (Realtime)
+        function setupRealtimeSubscription() {
+            if (!supabaseClient) return;
+
+            supabaseClient
+                .channel('public:users')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
+                    console.log('Realtime change received:', payload);
+                    fetchAllUsers(); // به محض تغییر، لیست و نقشه به‌روز می‌شود
+                })
+                .subscribe((status) => {
+                    console.log("Realtime status:", status);
+                });
+
+            // بارگذاری اولیه
+            fetchAllUsers();
+        }
+
+        function processUsersData(data) {
+            markersLayerGroup.clearLayers();
+            onlineUsersList = [];
+
+            // افزودن خود کاربر به لیست محلی
+            onlineUsersList.push({
+                id: currentUser.id,
+                name: currentUser.name,
+                username: currentUser.username,
+                avatar_url: currentUser.avatar_url,
+                lat: currentCoords.lat,
+                lng: currentCoords.lng,
+                distance: 0,
+                isMe: true
+            });
+
+            data.forEach(user => {
+                if (String(user.id) === String(currentUser.id)) return;
+                if (!user.lat || !user.lng) return;
+
+                const distanceKm = getDistanceFromLatLonInKm(currentCoords.lat, currentCoords.lng, user.lat, user.lng);
+                
+                onlineUsersList.push({ ...user, distance: distanceKm, isMe: false });
+
+                // ترسیم پین روی نقشه
+                const userInitial = user.name ? user.name.charAt(0) : 'ک';
+                const avatarHtml = user.avatar_url 
+                    ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
+                    : userInitial;
+
+                const pinHtml = `<div class="other-user-pin">${avatarHtml}<div class="online-dot"></div></div>`;
+                
+                const userIcon = L.divIcon({
+                    html: pinHtml,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20],
+                    className: ''
+                });
+
+                const marker = L.marker([user.lat, user.lng], { icon: userIcon });
+                marker.bindPopup(`<div style="direction: rtl; font-family: 'Vazirmatn'; text-align: right;"><b style="color: #10b981;">${user.name || 'کاربر'} (آنلاین)</b><br><span style="font-size: 11px; color: #64748b;">@${user.username || 'بدون نام کاربری'}</span><br><span style="font-size: 11px; color: #10b981;">فاصله: ${distanceKm.toFixed(1)} کیلومتر</span></div>`);
+                
+                markersLayerGroup.addLayer(marker);
+            });
         }
 
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
