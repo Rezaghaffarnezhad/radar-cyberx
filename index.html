@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - رادار زنده ورود و خروج</title>
+    <title>تلسکوپ - رادار زنده لحظه‌ای</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -85,7 +85,7 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ رادار آنلاینِ فعال</span>
+                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ رادار آنلاینِ لحظه‌ای</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
@@ -151,6 +151,7 @@
         let currentCoords = { lat: 35.6892, lng: 51.3890 }; 
         let activeRadiusKm = 15;
         let isFirstCenter = true;
+        let isRegistered = false;
 
         const tgUser = tg?.initDataUnsafe?.user;
         let currentUser = { 
@@ -190,21 +191,21 @@
                     registerUser();
                 }
 
-                // پینگ زنده هر ۱۰ ثانیه برای اعلام حضور مداوم
-                const heartbeatInterval = setInterval(registerUser, 10000);
-
-                // خروج اضطراری و حذف از دیتابیس هنگام بستن تب یا مینی‌اپ
-                window.addEventListener('beforeunload', () => {
-                    removeUser();
-                });
-
-                // پشتیبانی از پنهان شدن صفحه (برای موبایل و سوئیچ تب)
+                // هندل کردن خروج لحظه‌ای با تغییر وضعیت صفحه (بستن تب، کم‌سواد کردن مینی‌اپ، سوییچ اپلیکیشن)
                 document.addEventListener('visibilitychange', () => {
                     if (document.visibilityState === 'hidden') {
-                        removeUser();
+                        removeUserInstantly();
                     } else if (document.visibilityState === 'visible') {
                         registerUser();
                     }
+                });
+
+                window.addEventListener('pagehide', () => {
+                    removeUserInstantly();
+                });
+
+                window.addEventListener('beforeunload', () => {
+                    removeUserInstantly();
                 });
 
                 setupRealtimeSubscription();
@@ -258,6 +259,7 @@
         async function registerUser() {
             if (!supabaseClient) return;
             try {
+                isRegistered = true;
                 await supabaseClient.from('users').upsert({
                     id: currentUser.id,
                     name: currentUser.name,
@@ -274,13 +276,14 @@
             }
         }
 
-        async function removeUser() {
-            if (!supabaseClient) return;
+        async function removeUserInstantly() {
+            if (!supabaseClient || !isRegistered) return;
+            isRegistered = false;
             try {
-                // حذف آنی کاربر از دیتابیس به محض خروج
+                // پاکسازی آنی رکورد از دیتابیس به محض خروج
                 await supabaseClient.from('users').delete().eq('id', currentUser.id);
             } catch (e) {
-                console.error("Error removing user:", e);
+                console.error("Error removing user instantly:", e);
             }
         }
 
@@ -300,9 +303,9 @@
         function setupRealtimeSubscription() {
             if (!supabaseClient) return;
 
-            // گوش دادن زنده به تمام تغییرات (ورودی جدید یا حذف رکورد)
+            // دریافت تغییرات به صورت کاملاً لحظه‌ای از طریق Supabase Realtime
             supabaseClient
-                .channel('public:users')
+                .channel('public:users-realtime')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
                     fetchAllUsers(); 
                 })
@@ -416,7 +419,7 @@
 
                 container.innerHTML += `
                     <div onclick="focusOnUser(${user.lat}, ${user.lng})" class="flex items-center justify-between p-2.5 bg-slate-800/60 hover:bg-slate-800 rounded-xl cursor-pointer transition border border-slate-700/50">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3">Na
                             <div class="w-10 h-10 rounded-full bg-emerald-600/30 border border-emerald-400/30 flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow relative">
                                 ${avatarHtml}
                                 <div class="online-dot"></div>
