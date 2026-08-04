@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>رادار سوپر‌اپلیکیشن حرفه‌ای</title>
+    <title>رادار سوپر‌اپلیکیشن پیشرفته</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -99,7 +99,6 @@
             transition: transform 0.25s ease;
             z-index: 2;
         }
-        /* حلقه استوری اینستاگرام دور مارکر نقشه */
         .story-ring {
             position: absolute;
             width: 44px;
@@ -164,7 +163,7 @@
             </button>
         </div>
 
-        <!-- پنل کاربران آنلاین با فیلترها -->
+        <!-- پنل کاربران آنلاین همراه با فیلترها -->
         <div id="online-panel" class="absolute bottom-0 left-0 right-0 z-20 glass-panel rounded-t-3xl p-5 transition-transform duration-300 transform translate-y-full max-h-[60vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-3 border-b border-slate-700/60 pb-3">
                 <div class="flex items-center gap-2">
@@ -187,7 +186,7 @@
             </div>
         </div>
 
-        <!-- مودال استوری ۲۴ ساعته (مشابه اینستاگرام) -->
+        <!-- مودال استوری ۲۴ ساعته اینستاگرامی -->
         <div id="story-modal" class="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between p-4 hidden">
             <div class="flex items-center justify-between pt-2">
                 <div class="flex items-center gap-2.5">
@@ -209,7 +208,7 @@
             </div>
         </div>
 
-        <!-- مودال پروفایل دوستیابی و لایک -->
+        <!-- مودال پروفایل دوستیابی -->
         <div id="user-profile-modal" class="absolute inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
             <div class="glass-panel w-full max-w-sm rounded-3xl p-6 flex flex-col items-center text-center relative shadow-2xl border border-pink-500/30">
                 <button onclick="closeUserProfileModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
@@ -240,7 +239,7 @@
             <button onclick="closeMatchModalAndChat()" class="px-8 py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold text-xs rounded-2xl shadow-lg">شروع گفتگو</button>
         </div>
 
-        <!-- مودال تنظیمات، پروفایل و استوری‌گذاری -->
+        <!-- مودال تنظیمات و استوری‌گذاری -->
         <div id="settings-modal" class="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
             <div class="glass-panel w-full max-w-md rounded-3xl p-6 flex flex-col max-h-[90vh] overflow-y-auto relative shadow-2xl border border-purple-500/30">
                 <button onclick="closeSettingsModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
