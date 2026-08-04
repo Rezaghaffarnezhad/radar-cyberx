@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نقشه مدرن و زنده</title>
+    <title>نقشه گوگل مپ استایل</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -13,15 +13,26 @@
         body, html { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #070b12; color: #f5f5f5; font-family: 'Vazirmatn', sans-serif; }
         .map-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.65);
+        /* پنل‌های شیشه‌ای و مدرن با الگو از Google Maps */
+        .g-search-box {
+            background: rgba(23, 33, 43, 0.85);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
         }
 
-        /* نشانگر با حلقه بازشونده ظریف و بدون سایه اضافی */
+        .g-fab-btn {
+            background: rgba(23, 33, 43, 0.9) !important;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+            transition: all 0.2s ease;
+        }
+        .g-fab-btn:hover { background: rgba(35, 46, 60, 0.95) !important; transform: scale(1.05); }
+        .g-fab-btn:active { transform: scale(0.95); }
+
+        /* نشانگر من با تک حلقه بازشونده ظریف */
         .pulse-marker-container {
             position: relative;
             width: 44px;
@@ -38,45 +49,32 @@
             border-radius: 50%;
             z-index: 2;
         }
-        .pulse-ring-1 {
+        .pulse-ring {
             position: absolute;
             width: 40px;
             height: 40px;
-            border: 1.5px solid rgba(59, 130, 246, 0.75);
+            border: 1.5px solid rgba(59, 130, 246, 0.8);
             border-radius: 50%;
-            animation: delicate-radar 2s infinite cubic-bezier(0.2, 0.8, 0.4, 1);
+            animation: single-radar 2s infinite cubic-bezier(0.2, 0.8, 0.4, 1);
             z-index: 1;
         }
-        .pulse-ring-2 {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            border: 1px solid rgba(59, 130, 246, 0.45);
-            border-radius: 50%;
-            animation: delicate-radar 2s infinite cubic-bezier(0.2, 0.8, 0.4, 1);
-            animation-delay: 0.8s;
-            z-index: 1;
-        }
-
-        @keyframes delicate-radar {
+        @keyframes single-radar {
             0% { transform: scale(0.5); opacity: 1; }
-            100% { transform: scale(2.2); opacity: 0; }
+            100% { transform: scale(2.3); opacity: 0; }
         }
 
-        .action-btn {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95)) !important;
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.12) !important;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .action-btn:hover {
-            transform: translateY(-2px);
-            border-color: rgba(59, 130, 246, 0.5) !important;
-            box-shadow: 0 12px 30px rgba(59, 130, 246, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
-        }
-        .action-btn:active {
-            transform: scale(0.94);
+        /* مارکر افراد آنلاین دیگر روی نقشه */
+        .online-user-marker {
+            width: 32px;
+            height: 32px;
+            background: #10b981;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.6);
         }
 
         .leaflet-container { background-color: #070b12 !important; }
@@ -91,24 +89,67 @@
     <div id="view-map" class="view-section relative w-full h-full">
         <div id="map" class="map-container"></div>
         
-        <div class="absolute top-4 left-4 right-4 z-10 pointer-events-none">
-            <div class="glass-panel px-4 py-3 rounded-2xl flex items-center justify-between shadow-2xl pointer-events-auto">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_12px_#3b82f6] animate-pulse"></div>
-                    <span class="text-xs font-bold tracking-wide text-white">رادار موقعیت‌یاب</span>
+        <!-- نوار جستجو و ابزار بالا (الهام گرفته از گوگل مپ) -->
+        <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none flex flex-col gap-2">
+            <div class="g-search-box px-3.5 py-2.5 rounded-2xl flex items-center justify-between gap-3 pointer-events-auto">
+                <div class="flex items-center gap-2.5 flex-1">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" placeholder="جستجو در نقشه..." class="bg-transparent text-sm text-white placeholder-slate-400 outline-none w-full">
                 </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="toggleMapTheme()" class="action-btn w-9 h-9 rounded-xl flex items-center justify-center text-base text-white transition" title="تغییر حالت نقشه">
-                        <span id="theme-icon">🌙</span>
+                <div class="flex items-center gap-2 border-r border-slate-700 pr-2.5">
+                    <button onclick="toggleMapTheme()" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm text-slate-300 hover:text-white transition" title="تغییر لایه نقشه">🗺️</button>
+                    <button onclick="toggleOnlineUsersPanel()" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm text-emerald-400 hover:text-emerald-300 transition relative" title="افراد آنلاین">
+                        👥
+                        <span id="online-count-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-[10px] font-bold text-white rounded-full flex items-center justify-center">2</span>
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="absolute bottom-6 right-5 z-10 pointer-events-auto">
-            <button onclick="centerToMyLocation()" class="action-btn w-13 h-13 rounded-2xl flex items-center justify-center text-white transition" title="موقعیت من">
-                <svg class="w-6 h-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <!-- دکمه‌های شناور سمت راست (مسیریابی و لوکیت) -->
+        <div class="absolute bottom-6 right-4 z-10 pointer-events-auto flex flex-col gap-3">
+            <!-- دکمه مسیریابی -->
+            <button onclick="openRouting()" class="g-fab-btn w-12 h-12 rounded-2xl flex items-center justify-center text-white transition shadow-xl" title="مسیریابی">
+                <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
             </button>
+            <!-- دکمه موقعیت من -->
+            <button onclick="centerToMyLocation()" class="g-fab-btn w-12 h-12 rounded-2xl flex items-center justify-center text-white transition shadow-xl" title="موقعیت من">
+                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </button>
+        </div>
+
+        <!-- پنل کشویی نمایش افراد آنلاین -->
+        <div id="online-panel" class="absolute bottom-0 left-0 right-0 z-20 g-search-box rounded-t-3xl p-4 transition-transform duration-300 transform translate-y-full max-h-[50vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-3 border-b border-slate-700/60 pb-2">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-xs font-bold text-white">افراد آنلاین در نزدیکی</span>
+                </div>
+                <button onclick="toggleOnlineUsersPanel()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
+            </div>
+            <div id="online-users-list" class="flex flex-col gap-2">
+                <!-- لیست نمونه افراد آنلاین -->
+                <div class="flex items-center justify-between bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/40">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-full bg-emerald-600/30 border border-emerald-500/50 flex items-center justify-center text-emerald-400 font-bold text-xs">👤</div>
+                        <div>
+                            <div class="text-xs font-bold text-white">علی رضایی</div>
+                            <div class="text-[10px] text-slate-400">فاصله: ۱.۲ کیلومتر</div>
+                        </div>
+                    </div>
+                    <button onclick="focusOnUser(35.692, 51.395)" class="px-3 py-1 bg-blue-600/80 hover:bg-blue-600 text-white text-[11px] rounded-lg transition">مشاهده</button>
+                </div>
+                <div class="flex items-center justify-between bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/40">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-full bg-emerald-600/30 border border-emerald-500/50 flex items-center justify-center text-emerald-400 font-bold text-xs">👤</div>
+                        <div>
+                            <div class="text-xs font-bold text-white">سارا احمدی</div>
+                            <div class="text-[10px] text-slate-400">فاصله: ۳.۴ کیلومتر</div>
+                        </div>
+                    </div>
+                    <button onclick="focusOnUser(35.680, 51.375)" class="px-3 py-1 bg-blue-600/80 hover:bg-blue-600 text-white text-[11px] rounded-lg transition">مشاهده</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -118,6 +159,7 @@
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
         let tileLayer;
         let myLocationMarker = null;
+        let onlineMarkers = [];
 
         window.addEventListener('DOMContentLoaded', () => {
             map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 14);
@@ -125,6 +167,7 @@
             tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
             updateMyLocationMarkerOnMap();
+            addOnlineUsersMarkers();
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
@@ -140,18 +183,34 @@
 
         function updateMyLocationMarkerOnMap() {
             if(!map) return;
-            if(myLocationMarker) {
-                map.removeLayer(myLocationMarker);
-            }
+            if(myLocationMarker) map.removeLayer(myLocationMarker);
             
             const customIcon = L.divIcon({
                 className: '',
-                html: '<div class="pulse-marker-container"><div class="pulse-ring-1"></div><div class="pulse-ring-2"></div><div class="pulse-core"></div></div>',
+                html: '<div class="pulse-marker-container"><div class="pulse-ring"></div><div class="pulse-core"></div></div>',
                 iconSize: [44, 44],
                 iconAnchor: [22, 22]
             });
 
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon: customIcon }).addTo(map);
+        }
+
+        function addOnlineUsersMarkers() {
+            const users = [
+                { lat: 35.692, lng: 51.395, name: 'علی رضایی' },
+                { lat: 35.680, lng: 51.375, name: 'سارا احمدی' }
+            ];
+
+            users.forEach(u => {
+                const icon = L.divIcon({
+                    className: '',
+                    html: '<div class="online-user-marker">👤</div>',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+                const m = L.marker([u.lat, u.lng], { icon }).addTo(map);
+                onlineMarkers.push(m);
+            });
         }
 
         function centerToMyLocation() {
@@ -177,21 +236,34 @@
             }
         }
 
+        function focusOnUser(lat, lng) {
+            if(map) {
+                map.setView([lat, lng], 17, { animate: true });
+                toggleOnlineUsersPanel();
+            }
+        }
+
+        function toggleOnlineUsersPanel() {
+            const panel = document.getElementById('online-panel');
+            panel.classList.toggle('translate-y-full');
+        }
+
+        function openRouting() {
+            alert('قابلیت مسیریابی فعال شد. مقصد خود را روی نقشه انتخاب کنید.');
+        }
+
         function toggleMapTheme() {
             isDarkMap = !isDarkMap;
             const mapContainer = document.getElementById('map');
-            const themeIcon = document.getElementById('theme-icon');
             
             if (tileLayer) map.removeLayer(tileLayer);
 
             if (isDarkMap) {
                 mapContainer.classList.add('dark-map');
                 tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
-                themeIcon.textContent = '☀️';
             } else {
                 mapContainer.classList.remove('dark-map');
                 tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
-                themeIcon.textContent = '🌙';
             }
             
             setTimeout(() => { updateMyLocationMarkerOnMap(); }, 100);
