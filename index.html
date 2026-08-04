@@ -28,28 +28,26 @@
 
         .picking-mode { cursor: crosshair !important; }
 
-        /* استایل و انیمیشن نشانگر جدید (دایره کوچک با سایه بازشونده) */
+        /* استایل و انیمیشن نشانگر (دایره کوچک با سایه بازشونده) */
         .animated-my-pin {
-            position: relative;
             width: 20px !important;
             height: 20px !important;
-            background-color: #3b82f6; /* رنگ آبی تیره */
-            border: 3px solid #ffffff; /* حاشیه سفید */
-            border-radius: 50%;
-            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); /* حالت اولیه سایه */
-            animation: pulse-shadow 2s infinite; /* اجرای انیمیشن تکرار شونده */
-            margin-top: -10px !important; /* تنظیم دقیق لنگر */
+            background-color: #3b82f6 !important;
+            border: 3px solid #ffffff !important;
+            border-radius: 50% !important;
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            animation: pulse-shadow 2s infinite ease-out;
+            margin-top: -10px !important;
             margin-left: -10px !important;
             z-index: 1000 !important;
         }
 
-        /* تعریف انیمیشن تپش سایه */
         @keyframes pulse-shadow {
             0% {
                 box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
             }
             70% {
-                box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); /* سایه باز می‌شود و محو می‌گردد */
+                box-shadow: 0 0 0 16px rgba(59, 130, 246, 0);
             }
             100% {
                 box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
@@ -190,7 +188,119 @@
                             console.warn("Geolocation warning:", error.message);
                             document.getElementById('status-badge').textContent = "⚠️ پیش‌فرض (GPS غیرفعال)";
                             document.getElementById('status-badge').className = "text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1.5 rounded-xl";
-                            // حتی در صورت خطا، پین را در لوکیشن پیش‌فرض رندر می‌کنیم
                             updateMapElements();
                         }, 
-                        { enableHighAccuracy: true, timeout: 10000, maximumAge:
+                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    );
+                } else {
+                    updateMapElements();
+                }
+            } catch (err) {
+                console.error("Initialization error:", err);
+            }
+        });
+
+        function setupUserUI() {
+            try {
+                document.getElementById('top-my-name').textContent = currentUser.name;
+                const avatarEl = document.getElementById('top-my-avatar');
+                if(currentUser.avatar_url) {
+                    avatarEl.innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">`;
+                } else {
+                    avatarEl.textContent = currentUser.name.charAt(0) || 'ک';
+                }
+            } catch (e) {
+                console.warn("UI setup warning:", e);
+            }
+        }
+
+        function updateMapElements() {
+            try {
+                if(!map) return;
+
+                // پاکسازی لایه‌های قبلی برای جلوگیری از تداخل
+                if(radiusCircle) map.removeLayer(radiusCircle);
+                if(myLocationMarker) map.removeLayer(myLocationMarker);
+
+                // ۱. ترسیم دایره شعاع
+                radiusCircle = L.circle([currentCoords.lat, currentCoords.lng], {
+                    radius: activeRadiusKm * 1000,
+                    color: '#3b82f6',
+                    weight: 1.5,
+                    fillColor: '#3b82f6',
+                    fillOpacity: 0.08
+                }).addTo(map);
+
+                // ۲. ترسیم نشانگر متحرک جدید (دایره کوچک با سایه تپنده)
+                const customIcon = L.divIcon({ 
+                    html: '<div class="animated-my-pin"></div>', 
+                    iconSize: [20, 20], 
+                    iconAnchor: [10, 10], 
+                    className: '' 
+                });
+
+                myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon: customIcon, zIndexOffset: 1000 }).addTo(map);
+            } catch (err) {
+                console.error("Error updating map elements:", err);
+            }
+        }
+
+        function centerToMyLocation() {
+            try {
+                if(map) {
+                    map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+                }
+            } catch (e) {
+                console.warn("Center map warning:", e);
+            }
+        }
+
+        function toggleManualPickMode() {
+            isManualPicking = !isManualPicking;
+            const btn = document.getElementById('manual-pick-btn');
+            const mapEl = document.getElementById('map');
+            if(isManualPicking) {
+                btn.classList.add('bg-amber-500/20', 'border', 'border-amber-400');
+                mapEl.classList.add('picking-mode');
+                if(tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+            } else {
+                btn.classList.remove('bg-amber-500/20', 'border', 'border-amber-400');
+                mapEl.classList.remove('picking-mode');
+            }
+        }
+
+        async function saveUserLocationToSupabase() {
+            if (!supabaseClient) return;
+            try {
+                await supabaseClient.from('users').upsert({
+                    id: currentUser.id,
+                    name: currentUser.name,
+                    username: currentUser.username,
+                    avatar_url: currentUser.avatar_url,
+                    lat: currentCoords.lat,
+                    lng: currentCoords.lng,
+                    updated_at: new Date()
+                }, { onConflict: 'id' });
+            } catch (err) {
+                console.error("Error saving location to Supabase:", err);
+            }
+        }
+
+        function openRadiusModal() {
+            document.getElementById('modal-radius-slider').value = activeRadiusKm;
+            document.getElementById('modal-radius-value').textContent = `${activeRadiusKm} کیلومتر`;
+            document.getElementById('radius-modal').classList.remove('hidden');
+        }
+
+        function closeRadiusModal() {
+            document.getElementById('radius-modal').classList.add('hidden');
+        }
+
+        function onRadiusChange(val) {
+            activeRadiusKm = parseFloat(val);
+            document.getElementById('modal-radius-value').textContent = `${activeRadiusKm} کیلومتر`;
+            updateMapElements();
+        }
+    </script>
+</body>
+</html>
