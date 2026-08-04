@@ -72,15 +72,6 @@
             border-radius: 50%;
         }
 
-        /* انیمیشن اعلان ورود */
-        #toast-notification {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            transform: translateY(-120%);
-        }
-        #toast-notification.show {
-            transform: translateY(0);
-        }
-
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
     </style>
@@ -90,20 +81,6 @@
     <div class="relative w-full h-full">
         <div id="map" class="map-container dark-map"></div>
         
-        <!-- اعلان شناور ورود کاربر جدید -->
-        <div id="toast-container" class="absolute top-16 left-3 right-3 z-30 flex justify-center pointer-events-none">
-            <div id="toast-notification" class="glass-box px-4 py-3 rounded-2xl flex items-center gap-3 shadow-2xl border border-emerald-500/30 max-w-sm w-full pointer-events-auto">
-                <div id="toast-avatar" class="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center font-bold text-white text-sm overflow-hidden shrink-0 border border-emerald-400">
-                    🔔
-                </div>
-                <div class="flex flex-col flex-1">
-                    <span class="text-[10px] text-emerald-400 font-bold">🎉 کاربر جدید وارد شد!</span>
-                    <span id="toast-text" class="text-xs font-bold text-white truncate">نام کاربر</span>
-                </div>
-                <button onclick="hideToast()" class="text-slate-400 hover:text-white px-1 text-sm">✕</button>
-            </div>
-        </div>
-
         <!-- هدر بالای صفحه -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
@@ -171,8 +148,6 @@
         let map = null, myLocationMarker = null, radiusCircle = null;
         let markersLayerGroup = L.layerGroup(); 
         let onlineUsersList = []; 
-        let knownUserIds = new Set(); 
-        let isInitialLoad = true;
         let currentCoords = { lat: 35.6892, lng: 51.3890 }; 
         let activeRadiusKm = 15;
         let isFirstCenter = true;
@@ -214,6 +189,14 @@
                 } else {
                     saveAndSyncData();
                 }
+
+                // ارسال پینگ زنده هر ۱۰ ثانیه برای حفظ حضور
+                setInterval(saveAndSyncData, 10000);
+
+                // حذف یا خروج اضطراب‌زدای کاربر هنگام بستن مینی‌اپ
+                window.addEventListener('beforeunload', () => {
+                    removeUserFromDatabase();
+                });
 
                 setupRealtimeSubscription();
 
@@ -266,8 +249,7 @@
         async function saveAndSyncData() {
             if (!supabaseClient) return;
             try {
-                // ارسال اطلاعات به همراه ستون telegram_id در صورت نیاز جدول شما
-                const payloadData = {
+                await supabaseClient.from('users').upsert({
                     id: currentUser.id,
                     name: currentUser.name,
                     username: currentUser.username,
@@ -275,13 +257,21 @@
                     lat: currentCoords.lat,
                     lng: currentCoords.lng,
                     updated_at: new Date().toISOString()
-                };
-
-                await supabaseClient.from('users').upsert(payloadData, { onConflict: 'id' });
+                }, { onConflict: 'id' });
 
                 fetchAllUsers();
             } catch (err) {
                 console.error("Error saving location:", err);
+            }
+        }
+
+        async function removeUserFromDatabase() {
+            if (!supabaseClient) return;
+            try {
+                // پاک کردن کاربر از جدول به هنگام خروج
+                await supabaseClient.from('users').delete().eq('id', currentUser.id);
+            } catch (e) {
+                console.error("Error removing user:", e);
             }
         }
 
@@ -301,6 +291,7 @@
         function setupRealtimeSubscription() {
             if (!supabaseClient) return;
 
+            // گوش دادن به تغییرات Realtime برای ورود و خروج آنی کاربران
             supabaseClient
                 .channel('public:users')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
@@ -328,12 +319,6 @@
 
             data.forEach(user => {
                 const userIdStr = String(user.id);
-
-                if (!isInitialLoad && userIdStr !== String(currentUser.id) && !knownUserIds.has(userIdStr)) {
-                    showNewUserNotification(user);
-                }
-                knownUserIds.add(userIdStr);
-
                 if (userIdStr === String(currentUser.id)) return;
                 if (!user.lat || !user.lng) return;
 
@@ -360,57 +345,11 @@
                 markersLayerGroup.addLayer(marker);
             });
 
-            isInitialLoad = false;
             document.getElementById('online-count-badge').textContent = onlineUsersList.length;
 
             const modal = document.getElementById('users-list-modal');
             if (!modal.classList.contains('hidden')) {
                 renderUsersList(onlineUsersList);
-            }
-        }
-
-        let toastTimeout = null;
-        function showNewUserNotification(user) {
-            const toast = document.getElementById('toast-notification');
-            const toastText = document.getElementById('toast-text');
-            const toastAvatar = document.getElementById('toast-avatar');
-
-            toastText.textContent = `${user.name || 'یک کاربر'} وارد مینی‌اپ شد!`;
-            if (user.avatar_url) {
-                toastAvatar.innerHTML = `<img src="${user.avatar_url}" class="w-full h-full object-cover">`;
-            } else {
-                toastAvatar.innerHTML = user.name ? user.name.charAt(0) : '👤';
-            }
-
-            playNotificationSound();
-            toast.classList.add('show');
-
-            if (toastTimeout) clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                hideToast();
-            }, 5000);
-        }
-
-        function hideToast() {
-            document.getElementById('toast-notification').classList.remove('show');
-        }
-
-        function playNotificationSound() {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
-                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
-            } catch (e) {
-                // Ignore
             }
         }
 
@@ -435,6 +374,7 @@
         function openUsersListModal() {
             document.getElementById('user-search-input').value = '';
             renderUsersList(onlineUsersList);
+            document.getElementById('users-list-modal').classList.add('hidden'); // پیش‌فرض بسته
             document.getElementById('users-list-modal').classList.remove('hidden');
         }
 
