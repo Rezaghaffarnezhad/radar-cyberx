@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - نشانگر و شعاع</title>
+    <title>تلسکوپ - نسخه کامل</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- کتابخانه Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
         body, html { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #0e1621; color: #f5f5f5; font-family: 'Vazirmatn', sans-serif; }
         .map-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
         
         .glass-box {
-            background: rgba(23, 33, 43, 0.78);
+            background: rgba(23, 33, 43, 0.85);
             backdrop-filter: blur(18px);
             -webkit-backdrop-filter: blur(18px);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -23,6 +25,9 @@
         .tg-card { background: #17212b; border: 1px solid rgba(255,255,255,0.04); }
         .leaflet-container { background-color: #0e1621 !important; }
         .dark-map .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
+
+        /* حالت انتخاب دستی روی نقشه */
+        .picking-mode { cursor: crosshair !important; }
 
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
@@ -34,11 +39,11 @@
     <div class="relative w-full h-full">
         <div id="map" class="map-container dark-map"></div>
         
-        <!-- کادر بالای صفحه (اطلاعات کاربر و وضعیت) -->
+        <!-- هدر بالای صفحه -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">📍 متصل</span>
+                    <span id="status-badge" class="text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2.5 py-1.5 rounded-xl">⏳ در حال اتصال...</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
@@ -49,13 +54,13 @@
             </div>
         </div>
 
-        <!-- دکمه تنظیمات شعاع در سمت چپ -->
-        <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center pointer-events-auto">
+        <!-- دکمه‌های کنترل سمت چپ (تنظیم شعاع + انتخاب دستی لوکیشن) -->
+        <div class="absolute bottom-24 left-4 z-10 flex flex-col gap-2 pointer-events-auto">
+            <button onclick="toggleManualPickMode()" id="manual-pick-btn" class="w-12 h-12 glass-box rounded-2xl flex items-center justify-center text-amber-400 shadow-xl transition hover:scale-105 active:scale-95" title="انتخاب دستی لوکیشن روی نقشه">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+            </button>
             <button onclick="openRadiusModal()" class="w-12 h-12 glass-box rounded-2xl flex items-center justify-center text-blue-400 shadow-xl transition hover:scale-105 active:scale-95" title="تنظیم شعاع">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </button>
         </div>
 
@@ -88,10 +93,23 @@
     </div>
 
     <script>
+        // تنظیمات Supabase (اطلاعات پروژه خود را اینجا وارد کنید)
+        const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        let supabaseClient = null;
+        try {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch (e) {
+            console.warn("Supabase init error:", e);
+        }
+
         let tg = window.Telegram?.WebApp;
         if(tg) tg.expand();
 
         let map, myLocationMarker = null, radiusCircle = null;
+        let isManualPicking = false;
         let currentCoords = { lat: 35.6892, lng: 51.3890 }; // پیش‌فرض تهران
         let activeRadiusKm = 15;
 
@@ -105,6 +123,7 @@
         };
 
         let currentUser = { 
+            id: tgUser.id,
             name: `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim(),
             username: tgUser.username || '',
             avatar_url: tgUser.photo_url || ''
@@ -115,13 +134,21 @@
             map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 15);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
-            // اعمال اطلاعات کاربر در هدر
             setupUserUI();
-
-            // رندر کردن اولیه مارکر و شعاع
             updateMapElements();
 
-            // ۲. درخواست گرفتن لوکیشن واقعی دستگاه
+            // رویداد کلیک روی نقشه (برای انتخاب دستی)
+            map.on('click', (e) => {
+                if (isManualPicking) {
+                    currentCoords.lat = e.latlng.lat;
+                    currentCoords.lng = e.latlng.lng;
+                    updateMapElements();
+                    saveUserLocationToSupabase();
+                    toggleManualPickMode(); // خروج از حالت انتخاب دستی
+                }
+            });
+
+            // ۲. درخواست لوکیشن GPS
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
                     currentCoords.lat = position.coords.latitude;
@@ -132,6 +159,7 @@
                         updateMapElements();
                     }
                     document.getElementById('status-badge').textContent = "📍 لوکیشن فعال";
+                    saveUserLocationToSupabase();
                 }, (error) => {
                     console.warn("Geolocation warning:", error.message);
                     document.getElementById('status-badge').textContent = "⚠️ پیش‌فرض (GPS غیرفعال)";
@@ -143,7 +171,6 @@
         function setupUserUI() {
             document.getElementById('top-my-name').textContent = currentUser.name;
             const avatarEl = document.getElementById('top-my-avatar');
-            
             if(currentUser.avatar_url) {
                 avatarEl.innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">`;
             } else {
@@ -167,7 +194,7 @@
                 fillOpacity: 0.08
             }).addTo(map);
 
-            // ۲. ترسیم نشانگر اختصاصی کاربر در مرکز شعاع
+            // ۲. ترسیم نشانگر اختصاصی کاربر
             const avatarInner = currentUser.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : currentUser.name.charAt(0);
             const pinHtml = `
                 <div style="width: 44px; height: 44px; border-radius: 50%; background: #2563eb; border: 3px solid #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.8);">
@@ -187,6 +214,36 @@
         function centerToMyLocation() {
             if(map) {
                 map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+            }
+        }
+
+        function toggleManualPickMode() {
+            isManualPicking = !isManualPicking;
+            const btn = document.getElementById('manual-pick-btn');
+            if(isManualPicking) {
+                btn.classList.add('bg-amber-500/20', 'border', 'border-amber-400');
+                document.getElementById('map').classList.add('picking-mode');
+                if(tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+            } else {
+                btn.classList.remove('bg-amber-500/20', 'border', 'border-amber-400');
+                document.getElementById('map').classList.remove('picking-mode');
+            }
+        }
+
+        async function saveUserLocationToSupabase() {
+            if (!supabaseClient) return;
+            try {
+                await supabaseClient.from('users').upsert({
+                    id: currentUser.id,
+                    name: currentUser.name,
+                    username: currentUser.username,
+                    avatar_url: currentUser.avatar_url,
+                    lat: currentCoords.lat,
+                    lng: currentCoords.lng,
+                    updated_at: new Date()
+                }, { onConflict: 'id' });
+            } catch (err) {
+                console.error("Error saving location:", err);
             }
         }
 
