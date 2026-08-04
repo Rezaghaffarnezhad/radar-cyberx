@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - اشتراک‌گذاری عمومی لوکیشن</title>
+    <title>تلسکوپ - اشتراک‌گذاری لحظه‌ای لوکیشن</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -27,27 +27,27 @@
         .dark-map .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
 
         .animated-my-pin {
-            width: 22px !important;
-            height: 22px !important;
+            width: 26px !important;
+            height: 26px !important;
             background-color: #3b82f6 !important;
             border: 3px solid #ffffff !important;
             border-radius: 50% !important;
-            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.8);
             animation: pulse-shadow 2s infinite ease-out;
-            margin-top: -11px !important;
-            margin-left: -11px !important;
+            margin-top: -13px !important;
+            margin-left: -13px !important;
             z-index: 1000 !important;
         }
 
         @keyframes pulse-shadow {
-            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-            70% { box-shadow: 0 0 0 16px rgba(59, 130, 246, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.8); }
+            70% { box-shadow: 0 0 0 18px rgba(59, 130, 246, 0); }
             100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
         }
 
         .other-user-pin {
-            width: 40px !important;
-            height: 40px !important;
+            width: 42px !important;
+            height: 42px !important;
             border-radius: 50%;
             background: #1e293b;
             border: 2.5px solid #10b981;
@@ -86,7 +86,7 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ اشتراک‌گذاری عمومی فعال</span>
+                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ لوکیشن شما به صورت زنده برای همه فعال است</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
@@ -179,8 +179,9 @@
         let onlineUsersList = []; 
         let currentCoords = { lat: 35.6892, lng: 51.3890 }; 
         let activeRadiusKm = 15;
+        let isFirstCenter = true;
 
-        // دریافت اطلاعات کاربر از تلگرام یا تولید یک شناسه منحصر‌به‌فرد تستی
+        // استخراج مشخصات کاربر از تلگرام یا تولید شناسهتاپ برای تست
         const tgUser = tg?.initDataUnsafe?.user;
         let currentUser = { 
             id: tgUser ? String(tgUser.id) : String(Math.floor(Math.random() * 900000) + 100000),
@@ -199,30 +200,34 @@
                 setupUserUI();
                 updateMapElements();
 
-                // گرفتن لوکیشن واقعی دستگاه و ارسال عمومی
+                // فعال‌سازی ردیابی زنده GPS با watchPosition (برای آپدیت لحظه‌ای مکان شما به محض جابجایی)
                 if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
+                    navigator.geolocation.watchPosition(
                         (position) => {
                             currentCoords.lat = position.coords.latitude;
                             currentCoords.lng = position.coords.longitude;
                             
                             if(map) {
-                                map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+                                if(isFirstCenter) {
+                                    map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+                                    isFirstCenter = false;
+                                }
                                 updateMapElements();
                             }
+                            // ارسال لوکیشن جدید به دیتابیس برای مشاهده همه
                             saveAndSyncData();
                         }, 
                         (error) => {
                             console.warn("Geolocation warning:", error.message);
-                            saveAndSyncData(); // ذخیره با مختصات پیش‌فرض در صورت عدم دسترسی GPS
+                            saveAndSyncData();
                         }, 
-                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
                     );
                 } else {
                     saveAndSyncData();
                 }
 
-                // فعال‌سازی سوکت Realtime برای دریافت لحظه‌ای ورود بقیه کاربران
+                // اتصال Realtime برای دریافت لحظه‌ای موقعیت بقیه کاربران
                 setupRealtimeSubscription();
 
             } catch (err) {
@@ -261,8 +266,8 @@
 
                 const customIcon = L.divIcon({ 
                     html: '<div class="animated-my-pin"></div>', 
-                    iconSize: [22, 22], 
-                    iconAnchor: [11, 11], 
+                    iconSize: [26, 26], 
+                    iconAnchor: [13, 13], 
                     className: '' 
                 });
 
@@ -317,7 +322,7 @@
             supabaseClient
                 .channel('public:users')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
-                    console.log('Realtime change received:', payload);
+                    console.log('Realtime update received from another user:', payload);
                     fetchAllUsers(); 
                 })
                 .subscribe();
@@ -349,7 +354,7 @@
                 
                 onlineUsersList.push({ ...user, distance: distanceKm, isMe: false });
 
-                // ترسیم پین بقیه کاربران روی نقشه
+                // نمایش پین کاربران دیگر با عکس پروفایل
                 const userInitial = user.name ? user.name.charAt(0) : 'ک';
                 const avatarHtml = user.avatar_url 
                     ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
@@ -359,8 +364,8 @@
                 
                 const userIcon = L.divIcon({
                     html: pinHtml,
-                    iconSize: [40, 40],
-                    iconAnchor: [20, 20],
+                    iconSize: [42, 42],
+                    iconAnchor: [21, 21],
                     className: ''
                 });
 
