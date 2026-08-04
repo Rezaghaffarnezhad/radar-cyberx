@@ -18,21 +18,22 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
 
-        /* نشانگر فلش‌شکل موقعیت من */
+        /* نشانگر فلش‌شکل موقعیت من روی نقشه */
         .my-arrow-marker {
-            width: 46px; height: 46px; display: flex; align-items: center; justify-content: center;
+            width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
             filter: drop-shadow(0 4px 10px rgba(37, 99, 235, 0.7));
         }
         .my-arrow-inner {
-            width: 38px; height: 38px; background: #2563eb; border: 3px solid #ffffff;
+            width: 40px; height: 40px; background: #2563eb; border: 3px solid #ffffff;
             border-radius: 50% 50% 50% 8px; transform: rotate(-45deg);
             display: flex; align-items: center; justify-content: center; overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
         }
         .my-arrow-inner img, .my-arrow-inner span { transform: rotate(45deg); width: 100%; height: 100%; object-fit: cover; }
 
-        /* پین سایر کاربران */
+        /* پین سایر کاربران روی نقشه */
         .other-user-pin {
-            width: 38px; height: 38px; border-radius: 50%; background: #17212b;
+            width: 40px; height: 40px; border-radius: 50%; background: #17212b;
             border: 2.5px solid #22c55e; display: flex; align-items: center; justify-content: center;
             font-weight: 700; color: white; font-size: 12px; overflow: hidden;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer;
@@ -48,28 +49,28 @@
     <div id="view-map" class="view-section relative w-full h-full">
         <div id="map" class="map-container"></div>
         
-        <!-- هدر بالا: آنلاین‌ها و پروفایل -->
+        <!-- هدر بالا: تعداد آنلاین‌ها و پروفایل کاربر -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
-            <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
-                <div onclick="openOnlineModal()" class="flex items-center gap-1.5 cursor-pointer">
+            <div class="glass-box px-3.5 py-2.5 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
+                <div onclick="openOnlineModal()" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span id="top-online-count" class="text-xs font-bold text-emerald-400">در حال اتصال...</span>
+                    <span id="top-online-count" class="text-xs font-bold text-emerald-400">در حال بررسی آنلاین‌ها...</span>
                 </div>
-                <div onclick="openProfileModal()" class="flex items-center gap-2 cursor-pointer">
-                    <span id="top-my-name" class="font-bold text-xs text-white">کاربر</span>
-                    <div id="top-my-avatar" class="w-7 h-7 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden">ک</div>
+                <div onclick="openProfileModal()" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition">
+                    <span id="top-my-name" class="font-bold text-xs text-white truncate max-w-[90px]">کاربر</span>
+                    <div id="top-my-avatar" class="w-7 h-7 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow">ک</div>
                 </div>
             </div>
         </div>
 
-        <!-- دکمه مرکزیت لوکیشن -->
-        <div class="absolute bottom-20 right-4 z-10">
-            <button onclick="centerToMyLocation()" class="w-12 h-12 glass-box rounded-2xl flex items-center justify-center text-blue-400 shadow-xl">📍</button>
+        <!-- دکمه مرکزیت لوکیشن من -->
+        <div class="absolute bottom-24 right-4 z-10">
+            <button onclick="centerToMyLocation()" class="w-12 h-12 glass-box rounded-2xl flex items-center justify-center text-blue-400 shadow-xl hover:scale-105 active:scale-95 transition" title="موقعیت من">📍</button>
         </div>
 
         <!-- دکمه ورود به چت عمومی -->
         <div class="absolute bottom-4 left-0 right-0 z-20 flex justify-center pointer-events-none">
-            <button onclick="openPublicChat()" class="pointer-events-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-xl font-bold text-xs flex items-center gap-2">
+            <button onclick="openPublicChat()" class="pointer-events-auto px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-2xl font-bold text-xs flex items-center gap-2 transition hover:scale-105">
                 💬 ورود به چت عمومی (شعاعی)
             </button>
         </div>
@@ -77,33 +78,40 @@
 
     <!-- مودال لیست افراد آنلاین -->
     <div id="online-modal" class="hidden absolute inset-0 bg-[#0e1621] z-40 flex flex-col">
-        <div class="p-3 tg-card flex items-center justify-between border-b border-slate-800">
+        <div class="p-3.5 tg-card flex items-center justify-between border-b border-slate-800">
             <h3 class="font-bold text-xs text-white">👥 افراد آنلاین در شبکه</h3>
-            <button onclick="closeOnlineModal()" class="text-slate-400 text-sm px-2">✕</button>
+            <button onclick="closeOnlineModal()" class="text-slate-400 text-sm px-2 py-1">✕</button>
         </div>
         <div id="online-users-list" class="flex-1 p-3 overflow-y-auto flex flex-col gap-2"></div>
     </div>
 
     <!-- صفحه چت عمومی -->
     <div id="chat-window" class="hidden absolute inset-0 bg-[#0e1621] z-50 flex flex-col">
-        <div class="p-3 tg-card flex items-center gap-3 border-b border-slate-800">
-            <button onclick="closePublicChat()" class="text-slate-300 text-sm">← بازگشت</button>
+        <div class="p-3.5 tg-card flex items-center gap-3 border-b border-slate-800">
+            <button onclick="closePublicChat()" class="text-slate-300 text-xs px-2 py-1 bg-slate-800 rounded-lg">← بازگشت</button>
             <h3 class="font-bold text-xs text-white">چت عمومی شعاعی</h3>
         </div>
         <div id="chat-messages" class="flex-1 p-3 overflow-y-auto flex flex-col gap-2"></div>
         <div class="p-3 tg-card flex items-center gap-2">
-            <input id="chat-input" onkeydown="if(event.key==='Enter') sendMessage()" type="text" placeholder="پیام خود را بنویسید..." class="flex-1 tg-input px-3 py-2 rounded-xl text-xs">
-            <button onclick="sendMessage()" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold">ارسال</button>
+            <input id="chat-input" onkeydown="if(event.key==='Enter') sendMessage()" type="text" placeholder="پیام خود را بنویسید..." class="flex-1 tg-input px-3.5 py-2.5 rounded-xl text-xs">
+            <button onclick="sendMessage()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition">ارسال</button>
         </div>
     </div>
 
-    <!-- مودال پروفایل -->
+    <!-- مودال تنظیمات پروفایل -->
     <div id="profile-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-        <div class="tg-card w-full max-w-sm rounded-2xl p-4 flex flex-col gap-3">
-            <h3 class="font-bold text-xs text-white">تنظیمات پروفایل</h3>
-            <input id="input-name" type="text" placeholder="نام شما" class="w-full tg-input px-3 py-2 rounded-xl text-xs">
-            <button onclick="saveProfile()" class="w-full py-2 bg-blue-600 text-white rounded-xl text-xs font-bold">ذخیره</button>
-            <button onclick="closeProfileModal()" class="w-full py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">بستن</button>
+        <div class="tg-card w-full max-w-sm rounded-2xl p-4 flex flex-col gap-3.5 shadow-2xl">
+            <h3 class="font-bold text-xs text-white">تنظیمات پروفایل کاربری</h3>
+            <div>
+                <label class="text-[11px] text-slate-400 mb-1 block">نام نمایشی</label>
+                <input id="input-name" type="text" placeholder="نام شما" class="w-full tg-input px-3.5 py-2.5 rounded-xl text-xs">
+            </div>
+            <div>
+                <label class="text-[11px] text-slate-400 mb-1 block">بیوگرافی</label>
+                <textarea id="input-bio" rows="2" placeholder="درباره خودتان..." class="w-full tg-input px-3.5 py-2.5 rounded-xl text-xs resize-none"></textarea>
+            </div>
+            <button onclick="saveProfile()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition">ذخیره تغییرات</button>
+            <button onclick="closeProfileModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">بستن</button>
         </div>
     </div>
 
@@ -123,14 +131,14 @@
         let currentUser = {
             id: tUser?.id || Math.floor(Math.random() * 900000) + 100000,
             name: tUser?.first_name || ("کاربر " + Math.floor(Math.random() * 100)),
-            avatar: tUser?.photo_url || null
+            avatar: tUser?.photo_url || null,
+            bio: ""
         };
 
         window.addEventListener('DOMContentLoaded', async () => {
             map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 14);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
 
-            // گرفتن لوکیشن واقعی کاربر
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(pos => {
                     currentCoords.lat = pos.coords.latitude;
@@ -144,13 +152,22 @@
         });
 
         async function initApp() {
+            const { data: existingUser } = await supabaseClient.from('users').select('*').eq('telegram_id', currentUser.id).single();
+            if(existingUser) {
+                currentUser.name = existingUser.name || currentUser.name;
+                currentUser.bio = existingUser.bio || "";
+                currentUser.avatar = existingUser.avatar_url || currentUser.avatar;
+            }
+
             document.getElementById('top-my-name').textContent = currentUser.name;
             document.getElementById('input-name').value = currentUser.name;
-            
-            // ثبت یا بروزرسانی کاربر در دیتابیس
+            document.getElementById('input-bio').value = currentUser.bio;
+            updateMyAvatarUI();
+
             await supabaseClient.from('users').upsert({
                 telegram_id: currentUser.id,
                 name: currentUser.name,
+                bio: currentUser.bio,
                 avatar_url: currentUser.avatar,
                 latitude: currentCoords.lat,
                 longitude: currentCoords.lng,
@@ -161,13 +178,11 @@
             fetchUsers();
             loadPublicMessages();
 
-            // ریل‌تایم برای آپدیت کاربران و پیام‌ها
-            supabaseClient.channel('db-changes')
+            supabaseClient.channel('telescope-sync')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => fetchUsers())
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => loadPublicMessages())
                 .subscribe();
 
-            // ارسال هارت‌بییت هر ۱۰ ثانیه برای آنلاین ماندن
             setInterval(async () => {
                 await supabaseClient.from('users').update({
                     latitude: currentCoords.lat,
@@ -178,12 +193,23 @@
             }, 10000);
         }
 
+        function updateMyAvatarUI() {
+            const initial = currentUser.name.charAt(0);
+            const avatarEl = document.getElementById('top-my-avatar');
+            if(currentUser.avatar) {
+                avatarEl.innerHTML = `<img src="${currentUser.avatar}" class="w-full h-full object-cover">`;
+            } else {
+                avatarEl.textContent = initial;
+            }
+        }
+
         function updateMyMarker() {
             if(!map) return;
             if(myMarker) map.removeLayer(myMarker);
             const initial = currentUser.name.charAt(0);
-            const html = `<div class="my-arrow-marker"><div class="my-arrow-inner">${currentUser.avatar ? `<img src="${currentUser.avatar}">` : `<span>${initial}</span>`}</div></div>`;
-            const icon = L.divIcon({ html, iconSize: [46, 46], iconAnchor: [23, 23] });
+            const innerContent = currentUser.avatar ? `<img src="${currentUser.avatar}">` : `<span>${initial}</span>`;
+            const html = `<div class="my-arrow-marker"><div class="my-arrow-inner">${innerContent}</div></div>`;
+            const icon = L.divIcon({ html, iconSize: [48, 48], iconAnchor: [24, 24] });
             myMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
 
@@ -207,8 +233,9 @@
             allUsers.forEach(u => {
                 if(u.telegram_id === currentUser.id || !u.latitude || !u.longitude) return;
                 const initial = (u.name || 'ک').charAt(0);
-                const html = `<div class="other-user-pin">${u.avatar_url ? `<img src="${u.avatar_url}" style="width:100%;height:100%;object-fit:cover;">` : initial}</div>`;
-                const icon = L.divIcon({ html, iconSize: [38, 38], iconAnchor: [19, 19] });
+                const inner = u.avatar_url ? `<img src="${u.avatar_url}" style="width:100%;height:100%;object-fit:cover;">` : initial;
+                const html = `<div class="other-user-pin">${inner}</div>`;
+                const icon = L.divIcon({ html, iconSize: [40, 40], iconAnchor: [20, 20] });
                 const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
                 userMarkers[u.telegram_id] = marker;
             });
@@ -220,19 +247,25 @@
                 if(u.telegram_id === currentUser.id) return true;
                 return u.last_seen && (now - new Date(u.last_seen) < 180000);
             });
-            document.getElementById('top-online-count').textContent = `${active.length} آنلاین`;
+            document.getElementById('top-online-count').textContent = `${active.length} نفر آنلاین`;
         }
 
         function openOnlineModal() {
             const container = document.getElementById('online-users-list');
-            container.innerHTML = allUsers.map(u => `
+            const now = new Date();
+            const active = allUsers.filter(u => {
+                if(u.telegram_id === currentUser.id) return true;
+                return u.last_seen && (now - new Date(u.last_seen) < 180000);
+            });
+
+            container.innerHTML = active.map(u => `
                 <div class="tg-card p-3 rounded-xl flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-xs overflow-hidden">
+                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-xs overflow-hidden">
                         ${u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : (u.name || 'ک').charAt(0)}
                     </div>
-                    <div>
+                    <div class="flex-1">
                         <h4 class="font-bold text-xs text-white">${u.name}</h4>
-                        <p class="text-[10px] text-emerald-400">آنلاین</p>
+                        <p class="text-[10px] text-emerald-400 mt-0.5">آنلاین و فعال</p>
                     </div>
                 </div>
             `).join('');
@@ -245,10 +278,15 @@
 
         async function saveProfile() {
             const name = document.getElementById('input-name').value.trim();
+            const bio = document.getElementById('input-bio').value.trim();
             if(!name) return;
+
             currentUser.name = name;
+            currentUser.bio = bio;
             document.getElementById('top-my-name').textContent = name;
-            await supabaseClient.from('users').update({ name }).eq('telegram_id', currentUser.id);
+            updateMyAvatarUI();
+
+            await supabaseClient.from('users').update({ name, bio }).eq('telegram_id', currentUser.id);
             closeProfileModal();
             updateMyMarker();
         }
@@ -259,12 +297,15 @@
         async function loadPublicMessages() {
             const { data } = await supabaseClient.from('messages').select('*').eq('room_name', 'public_radius').order('created_at', { ascending: true });
             const container = document.getElementById('chat-messages');
-            container.innerHTML = (data || []).map(m => `
-                <div class="max-w-[80%] p-2.5 rounded-xl text-xs flex flex-col ${m.sender_id === currentUser.id ? 'bg-blue-600 text-white self-end' : 'tg-card text-slate-200 self-start'}">
-                    <span class="text-[9px] font-bold text-slate-300 mb-1">${m.sender_name}</span>
-                    <span>${m.message}</span>
-                </div>
-            `).join('');
+            container.innerHTML = (data || []).map(m => {
+                const isMe = m.sender_id === currentUser.id;
+                return `
+                    <div class="max-w-[80%] p-2.5 rounded-xl text-xs flex flex-col ${isMe ? 'bg-blue-600 text-white self-end' : 'tg-card text-slate-200 self-start'}">
+                        <span class="text-[9px] font-bold text-slate-300 mb-1">${m.sender_name}</span>
+                        <span>${m.message}</span>
+                    </div>
+                `;
+            }).join('');
             container.scrollTop = container.scrollHeight;
         }
 
