@@ -32,13 +32,11 @@
         .g-fab-btn:hover { background: rgba(35, 46, 60, 0.95) !important; transform: scale(1.05); }
         .g-fab-btn:active { transform: scale(0.95); }
 
-        /* حذف کامل کادر مربع Leaflet و طراحی مارکر دایره‌ای خالص */
         .leaflet-div-icon {
             background: transparent !important;
             border: none !important;
         }
 
-        /* نشانگر من با تک حلقه بازشونده */
         .my-pulse-container {
             position: relative;
             width: 52px;
@@ -77,7 +75,6 @@
             100% { transform: scale(2.2); opacity: 0; }
         }
 
-        /* مارکر سایر کاربران با قابلیت هاور اسم و کلیک */
         .user-marker-wrapper {
             position: relative;
             width: 40px;
@@ -107,7 +104,6 @@
             transform: scale(1.12);
             border-color: #34d399;
         }
-        /* باکس نمایش نام هنگام رفتن موس روی مارکر */
         .user-name-tooltip {
             position: absolute;
             bottom: 45px;
@@ -180,6 +176,29 @@
                 <div class="text-xs text-slate-400 text-center py-4">در حال بارگذاری کاربران...</div>
             </div>
         </div>
+
+        <!-- مودال کارت پروفایل و درخواست چت کاربر -->
+        <div id="user-profile-modal" class="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+            <div class="g-search-box w-full max-w-sm rounded-3xl p-5 flex flex-col items-center text-center relative shadow-2xl border border-slate-700">
+                <button onclick="closeUserProfileModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
+                
+                <div id="modal-avatar-container" class="w-24 h-24 rounded-full border-4 border-emerald-500 overflow-hidden bg-slate-800 flex items-center justify-center text-2xl font-bold text-white mb-3 shadow-lg">
+                    <!-- عکس یا حرف اول -->
+                </div>
+
+                <h3 id="modal-user-name" class="text-base font-bold text-white mb-1">نام کاربر</h3>
+                <p id="modal-user-status" class="text-xs text-emerald-400 mb-4">● آنلاین در نزدیکی شما</p>
+
+                <div class="w-full flex flex-col gap-2.5">
+                    <button id="modal-chat-btn" onclick="openDirectChat()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-2xl transition shadow-lg flex items-center justify-center gap-2">
+                        <span>💬 درخواست چت و ارسال پیام</span>
+                    </button>
+                    <button id="modal-tg-profile-btn" onclick="openTelegramProfile()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs rounded-2xl transition border border-slate-700">
+                        مشاهده پروفایل کامل تلگرام
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -205,6 +224,7 @@
         let myLocationMarker = null;
         let userMarkersMap = {};
         let allOnlineUsers = [];
+        let selectedTargetUser = null;
 
         window.addEventListener('DOMContentLoaded', async () => {
             map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 14);
@@ -284,11 +304,41 @@
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
 
-        function openUserProfile(username) {
-            if (username) {
-                window.open(`https://t.me/${username}`, '_blank');
+        function openUserProfileModal(userJsonStr) {
+            const user = JSON.parse(decodeURIComponent(userJsonStr));
+            selectedTargetUser = user;
+
+            const modal = document.getElementById('user-profile-modal');
+            const avatarContainer = document.getElementById('modal-avatar-container');
+            const nameEl = document.getElementById('modal-user-name');
+
+            nameEl.textContent = user.name || "کاربر تلگرام";
+            const initial = (user.name || 'ک').charAt(0);
+            avatarContainer.innerHTML = user.avatar_url 
+                ? `<img src="${user.avatar_url}" style="width:100%; height:100%; object-fit:cover;">` 
+                : initial;
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeUserProfileModal() {
+            document.getElementById('user-profile-modal').classList.add('hidden');
+            selectedTargetUser = null;
+        }
+
+        function openDirectChat() {
+            if (selectedTargetUser && selectedTargetUser.username) {
+                window.open(`https://t.me/${selectedTargetUser.username}`, '_blank');
             } else {
                 alert('این کاربر نام کاربری تلگرام ندارد.');
+            }
+        }
+
+        function openTelegramProfile() {
+            if (selectedTargetUser && selectedTargetUser.username) {
+                window.open(`https://t.me/${selectedTargetUser.username}`, '_blank');
+            } else {
+                alert('پروفایل تلگرام این کاربر در دسترس نیست.');
             }
         }
 
@@ -305,12 +355,13 @@
 
                 const initial = (u.name || 'ک').charAt(0);
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" style="width:100%; height:100%; object-fit:cover;">` : initial;
+                const userString = encodeURIComponent(JSON.stringify(u));
 
                 if(userMarkersMap[u.telegram_id]) {
                     userMarkersMap[u.telegram_id].setLatLng([u.latitude, u.longitude]);
                 } else {
                     const html = `
-                        <div class="user-marker-wrapper" onclick="openUserProfile('${u.username}')">
+                        <div class="user-marker-wrapper" onclick="openUserProfileModal('${userString}')">
                             <div class="user-name-tooltip">${u.name}</div>
                             <div class="user-avatar-circle">${avatarInner}</div>
                         </div>
@@ -326,16 +377,16 @@
 
                 htmlContent += `
                     <div class="flex items-center justify-between bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/40">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3 cursor-pointer" onclick="openUserProfileModal('${userString}')">
                             <div class="w-9 h-9 rounded-full bg-slate-700 overflow-hidden flex items-center justify-center font-bold text-white text-xs">${avatarInner}</div>
                             <div>
-                                <div class="text-xs font-bold text-white">${u.name}</div>
-                                <div class="text-[10px] text-emerald-400">● آنلاین</div>
+                                <div class="text-xs font-bold text-white text-right">${u.name}</div>
+                                <div class="text-[10px] text-emerald-400 text-right">● آنلاین</div>
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5">
-                            <button onclick="openUserProfile('${u.username}')" class="px-2.5 py-1 bg-emerald-600/80 hover:bg-emerald-600 text-white text-[11px] rounded-lg transition">پروفایل</button>
-                            <button onclick="focusOnUser(${u.latitude}, ${u.longitude})" class="px-2.5 py-1 bg-blue-600/80 hover:bg-blue-600 text-white text-[11px] rounded-lg transition">مشاهده</button>
+                            <button onclick="openUserProfileModal('${userString}')" class="px-2.5 py-1 bg-blue-600/80 hover:bg-blue-600 text-white text-[11px] rounded-lg transition">چت و پروفایل</button>
+                            <button onclick="focusOnUser(${u.latitude}, ${u.longitude})" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-white text-[11px] rounded-lg transition">نقشه</button>
                         </div>
                     </div>
                 `;
