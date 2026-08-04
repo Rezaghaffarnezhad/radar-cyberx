@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - کاربران آنلاین</title>
+    <title>تلسکوپ - نمایش کاربران روی نقشه</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -27,15 +27,15 @@
         .dark-map .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
 
         .animated-my-pin {
-            width: 20px !important;
-            height: 20px !important;
+            width: 22px !important;
+            height: 22px !important;
             background-color: #3b82f6 !important;
             border: 3px solid #ffffff !important;
             border-radius: 50% !important;
             box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
             animation: pulse-shadow 2s infinite ease-out;
-            margin-top: -10px !important;
-            margin-left: -10px !important;
+            margin-top: -11px !important;
+            margin-left: -11px !important;
             z-index: 1000 !important;
         }
 
@@ -46,26 +46,26 @@
         }
 
         .other-user-pin {
-            width: 36px !important;
-            height: 36px !important;
+            width: 40px !important;
+            height: 40px !important;
             border-radius: 50%;
             background: #1e293b;
-            border: 2px solid #10b981;
+            border: 2.5px solid #10b981;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
             color: white;
-            font-size: 12px;
+            font-size: 13px;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
             position: relative;
         }
 
         .online-dot {
             position: absolute;
-            bottom: 0;
-            right: 0;
+            bottom: 1px;
+            right: 1px;
             width: 10px;
             height: 10px;
             background-color: #10b981;
@@ -86,7 +86,7 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">🟢 آنلاین</span>
+                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">🟢 نقشه فعال</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
@@ -139,7 +139,7 @@
     <div id="users-list-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeUsersListModal()">
         <div class="tg-card w-full max-w-md max-h-[85vh] rounded-t-3xl sm:rounded-2xl p-5 flex flex-col gap-3 shadow-2xl border border-slate-700 overflow-hidden" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
-                <h3 class="font-bold text-sm text-white flex items-center gap-2">🟢 لیست افراد آنلاین</h3>
+                <h3 class="font-bold text-sm text-white flex items-center gap-2">🟢 لیست افراد آنلاین روی نقشه</h3>
                 <button onclick="closeUsersListModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
             </div>
             
@@ -151,7 +151,7 @@
 
             <!-- لیست کاربران آنلاین -->
             <div id="users-scroll-container" class="flex flex-col gap-2 overflow-y-auto max-h-[45vh] pr-1">
-                <div class="text-center text-xs text-slate-400 py-6">در حال دریافت کاربران آنلاین...</div>
+                <div class="text-center text-xs text-slate-400 py-6">در حال دریافت کاربران...</div>
             </div>
 
             <button onclick="closeUsersListModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl font-medium text-xs text-white transition mt-1">بستن</button>
@@ -175,7 +175,7 @@
         if(tg) tg.expand();
 
         let map = null, myLocationMarker = null, radiusCircle = null;
-        let otherUserMarkers = []; 
+        let markersLayerGroup = L.layerGroup(); // لایه جداگانه برای مدیریت پین‌ها روی نقشه
         let onlineUsersList = []; 
         let currentCoords = { lat: 35.6892, lng: 51.3890 }; 
         let activeRadiusKm = 15;
@@ -192,6 +192,8 @@
             try {
                 map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 15);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
+                
+                markersLayerGroup.addTo(map);
 
                 setupUserUI();
                 updateMapElements();
@@ -218,10 +220,10 @@
                     saveAndSyncData();
                 }
 
-                // رفرش خودکار اطلاعات کاربران آنلاین هر ۱۰ ثانیه
+                // به‌روزرسانی خودکار نقشه و لیست هر ۸ ثانیه
                 setInterval(() => {
                     loadOnlineUsers();
-                }, 10000);
+                }, 8000);
 
             } catch (err) {
                 console.error("Initialization error:", err);
@@ -259,8 +261,8 @@
 
                 const customIcon = L.divIcon({ 
                     html: '<div class="animated-my-pin"></div>', 
-                    iconSize: [20, 20], 
-                    iconAnchor: [10, 10], 
+                    iconSize: [22, 22], 
+                    iconAnchor: [11, 11], 
                     className: '' 
                 });
 
@@ -292,11 +294,10 @@
         async function loadOnlineUsers() {
             if (!supabaseClient) return;
             try {
-                otherUserMarkers.forEach(marker => map.removeLayer(marker));
-                otherUserMarkers = [];
+                markersLayerGroup.clearLayers();
                 onlineUsersList = [];
 
-                // اضافه کردن خود کاربر به لیست آنلاین‌ها
+                // افزودن خود کاربر به لیست محلی
                 onlineUsersList.push({
                     id: currentUser.id,
                     name: currentUser.name,
@@ -326,27 +327,25 @@
                         
                         onlineUsersList.push({ ...user, distance: distanceKm, isMe: false });
 
-                        // پین کردن روی نقشه اگر داخل شعاع باشد
-                        if (distanceKm <= activeRadiusKm) {
-                            const userInitial = user.name ? user.name.charAt(0) : 'ک';
-                            const avatarHtml = user.avatar_url 
-                                ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
-                                : userInitial;
+                        // ترسیم پین روی نقشه برای تمامی کاربران دیتابیس
+                        const userInitial = user.name ? user.name.charAt(0) : 'ک';
+                        const avatarHtml = user.avatar_url 
+                            ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
+                            : userInitial;
 
-                            const pinHtml = `<div class="other-user-pin">${avatarHtml}<div class="online-dot"></div></div>`;
-                            
-                            const userIcon = L.divIcon({
-                                html: pinHtml,
-                                iconSize: [36, 36],
-                                iconAnchor: [18, 18],
-                                className: ''
-                            });
+                        const pinHtml = `<div class="other-user-pin">${avatarHtml}<div class="online-dot"></div></div>`;
+                        
+                        const userIcon = L.divIcon({
+                            html: pinHtml,
+                            iconSize: [40, 40],
+                            iconAnchor: [20, 20],
+                            className: ''
+                        });
 
-                            const marker = L.marker([user.lat, user.lng], { icon: userIcon }).addTo(map);
-                            marker.bindPopup(`<div style="direction: rtl; font-family: 'Vazirmatn'; text-align: right;"><b style="color: #10b981;">${user.name || 'کاربر'} (آنلاین)</b><br><span style="font-size: 11px; color: #64748b;">@${user.username || 'بدون نام کاربری'}</span><br><span style="font-size: 11px; color: #10b981;">فاصله: ${distanceKm.toFixed(1)} کیلومتر</span></div>`);
-                            
-                            otherUserMarkers.push(marker);
-                        }
+                        const marker = L.marker([user.lat, user.lng], { icon: userIcon });
+                        marker.bindPopup(`<div style="direction: rtl; font-family: 'Vazirmatn'; text-align: right;"><b style="color: #10b981;">${user.name || 'کاربر'} (آنلاین)</b><br><span style="font-size: 11px; color: #64748b;">@${user.username || 'بدون نام کاربری'}</span><br><span style="font-size: 11px; color: #10b981;">فاصله: ${distanceKm.toFixed(1)} کیلومتر</span></div>`);
+                        
+                        markersLayerGroup.addLayer(marker);
                     });
                 }
             } catch (err) {
@@ -394,7 +393,6 @@
             activeRadiusKm = parseFloat(val);
             document.getElementById('modal-radius-value').textContent = `${activeRadiusKm} کیلومتر`;
             updateMapElements();
-            loadOnlineUsers(); 
         }
 
         function openUsersListModal() {
@@ -426,7 +424,7 @@
             container.innerHTML = '';
 
             if (usersArray.length === 0) {
-                container.innerHTML = `<div class="text-center text-xs text-slate-400 py-6">کاربر آنلاین دیگری یافت نشد.</div>`;
+                container.innerHTML = `<div class="text-center text-xs text-slate-400 py-6">کاربر دیگری یافت نشد.</div>`;
                 return;
             }
 
