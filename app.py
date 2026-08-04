@@ -13,9 +13,10 @@ def index():
 @app.route('/api/update-presence', methods=['POST'])
 def update_presence():
     data = request.get_json()
-    username = data.get('username')
-    if username:
-        online_users[username] = True
+    if data:
+        username = data.get('username')
+        if username:
+            online_users[username] = True
     return jsonify({"status": "success"})
 
 @app.route('/api/online-users', methods=['GET'])
@@ -24,4 +25,4 @@ def get_online_users():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)
