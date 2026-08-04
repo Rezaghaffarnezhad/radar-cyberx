@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نقشه لایت و دارک</title>
+    <title>نقشه با لوکیشن پالس‌دار</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -20,35 +20,29 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
+        /* نشانگر دایره آبی با حلقه بازشونده (پالس) */
         .my-animated-marker {
-            width: 72px;
-            height: 72px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            background: rgba(66, 133, 244, 0.22);
+            background: rgba(26, 115, 232, 0.18);
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: google-radar-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+            animation: expanding-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
         }
         .my-marker-inner {
-            width: 42px;
-            height: 42px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             border: 3px solid #ffffff;
-            overflow: hidden;
             background: #1a73e8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            color: white;
-            font-size: 14px;
-            box-shadow: 0 4px 18px rgba(26, 115, 232, 0.65);
+            box-shadow: 0 4px 16px rgba(26, 115, 232, 0.7);
         }
-        @keyframes google-radar-pulse {
-            0% { transform: scale(0.8); opacity: 0.9; box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7); }
-            70% { transform: scale(1.18); opacity: 0.3; box-shadow: 0 0 0 25px rgba(66, 133, 244, 0, 0); }
-            100% { transform: scale(0.8); opacity: 0.9; box-shadow: 0 0 0 0 rgba(66, 133, 244, 0); }
+        @keyframes expanding-pulse {
+            0% { transform: scale(0.6); opacity: 1; box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.7); }
+            70% { transform: scale(1.3); opacity: 0.2; box-shadow: 0 0 0 30px rgba(26, 115, 232, 0); }
+            100% { transform: scale(0.6); opacity: 1; box-shadow: 0 0 0 0 rgba(26, 115, 232, 0); }
         }
 
         .transparent-location-btn {
@@ -117,8 +111,8 @@
             if(!map) return;
             if(myLocationMarker) map.removeLayer(myLocationMarker);
             
-            const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner">📍</div></div>`;
-            const myIcon = L.divIcon({ html: myHtml, iconSize: [72, 72], iconAnchor: [36, 36] });
+            const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner"></div></div>`;
+            const myIcon = L.divIcon({ html: myHtml, iconSize: [80, 80], iconAnchor: [40, 40] });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
 
