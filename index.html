@@ -27,6 +27,7 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
+        /* نشانگر پین زنده گوگل مپی کامل */
         .my-animated-marker {
             width: 72px;
             height: 72px;
@@ -79,25 +80,6 @@
 
         .leaflet-container { background-color: #0e1621 !important; }
         .dark-map .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
-
-        .vertical-slider-container {
-            -webkit-appearance: slider-vertical;
-            appearance: slider-vertical;
-            width: 6px;
-            height: 110px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 3px;
-            outline: none;
-        }
-        .vertical-slider-container::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: #1a73e8;
-            cursor: pointer;
-        }
 
         .chat-bubble-out { background: #2b5278; color: #fff; border-radius: 14px 14px 4px 14px; }
         .chat-bubble-in { background: #18222d; color: #f5f5f5; border-radius: 14px 14px 14px 4px; border: 1px solid rgba(255,255,255,0.03); }
@@ -247,9 +229,10 @@
             </div>
         </div>
 
-        <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center gap-2">
-            <input id="radius-slider" type="range" min="0.5" max="50" step="0.5" value="15" oninput="onRadiusSliderChange(this.value)" class="vertical-slider-container accent-blue-600 cursor-pointer" title="تنظیم شعاع">
-            <button onclick="openRadiusSettingsModal()" class="w-9 h-9 flex items-center justify-center text-white text-lg drop-shadow-xl hover:scale-110 active:scale-95 transition" title="تنظیمات شعاع">⚙️</button>
+        <!-- ابزارک نمایش و کنترل شعاع با غلطک موس (Scroll Wheel) -->
+        <div class="absolute bottom-24 left-4 z-10 glass-box px-3 py-2 rounded-2xl flex flex-col items-center gap-1 shadow-2xl" title="برای تغییر شعاع، غلطک موس را روی این قسمت بچرخانید">
+            <span class="text-[10px] text-slate-400 font-bold">شعاع</span>
+            <span id="current-radius-display" class="text-xs font-bold text-[#5288c1]">15 km</span>
         </div>
 
         <div class="absolute bottom-24 right-4 z-10 pointer-events-auto">
@@ -300,34 +283,10 @@
         </div>
     </div>
 
-    <div id="radius-settings-modal" class="hidden absolute inset-0 bg-black/70 z-40 flex items-center justify-center p-4" onclick="closeRadiusSettingsModal()">
-        <div class="tg-card w-full max-w-sm rounded-2xl p-4 flex flex-col gap-4 shadow-2xl border border-slate-700" onclick="event.stopPropagation()">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                <h3 class="font-bold text-xs text-white flex items-center gap-1.5">⚙️ تنظیمات شعاع و موقعیت</h3>
-                <button onclick="closeRadiusSettingsModal()" class="text-slate-400 text-xs px-2 py-1 rounded hover:bg-white/5">✕</button>
-            </div>
-            <div class="flex flex-col gap-3">
-                <div>
-                    <div class="flex justify-between text-[11px] text-slate-300 mb-1">
-                        <span>محدوده شعاع جستجو:</span>
-                        <span id="modal-radius-val" class="font-bold text-[#5288c1]">15 کیلومتر</span>
-                    </div>
-                    <input id="modal-radius-range" type="range" min="0.5" max="50" step="0.5" value="15" oninput="onModalRadiusChange(this.value)" class="w-full accent-blue-600 cursor-pointer">
-                </div>
-                
-                <div class="bg-[#18222d] p-3 rounded-xl flex flex-col gap-2">
-                    <span class="text-[11px] text-slate-300 font-bold">انتخاب لوکیشن دستی روی نقشه</span>
-                    <p class="text-[10px] text-slate-400 leading-relaxed">با زدن دکمه زیر، نقشه برای شما باز می‌شود. روی هر نقطه از نقشه کلیک کنید تا به عنوان لوکیشن شما ثبت شود.</p>
-                    <button onclick="startPickingLocationOnMap()" class="py-2 bg-[#2b5278] hover:bg-[#336394] rounded-lg text-[11px] text-white transition flex items-center justify-center gap-1.5 font-medium">📍 انتخاب نقطه روی نقشه</button>
-                </div>
-            </div>
-            <button onclick="closeRadiusSettingsModal()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition">ذخیره تنظیمات</button>
-        </div>
-    </div>
-
+    <!-- لیست افراد حاضر روی نقشه یا آنلاین -->
     <div id="online-users-modal" class="hidden absolute inset-0 tg-bg z-40 flex flex-col">
         <div class="tg-header px-4 py-3 flex items-center justify-between">
-            <h3 class="font-bold text-xs text-white">افراد آنلاین داخل اپ</h3>
+            <h3 class="font-bold text-xs text-white">افراد حاضر و آنلاین</h3>
             <button onclick="closeOnlineUsersModal()" class="text-slate-400 text-sm px-2 py-1 rounded-lg hover:bg-white/5 transition">✕</button>
         </div>
         <div id="online-users-list-container" class="flex-1 p-3 overflow-y-auto flex flex-col gap-1.5"></div>
@@ -488,6 +447,7 @@
         let isPickingLocation = false;
         let searchDebounceTimer = null;
 
+        // تکمیل خودکار کامل از اطلاعات واقعی اکانت تلگرام شخص
         const tgUser = tg?.initDataUnsafe?.user;
         const user = { 
             id: tgUser?.id || Math.floor(Math.random() * 900000) + 100000, 
@@ -524,11 +484,7 @@
                 return;
             }
 
-            if(!document.getElementById('radius-settings-modal').classList.contains('hidden')) {
-                closeRadiusSettingsModal();
-                return;
-            }
-            if(!document.getElementById('chat-window').classList.add('hidden') && !document.getElementById('chat-window').classList.contains('hidden')) {
+            if(!document.getElementById('chat-window').classList.contains('hidden')) {
                 backToChatHub();
                 return;
             }
@@ -621,31 +577,23 @@
             showToast("موقعیت پیدا و ثبت شد");
         }
 
-        function onRadiusSliderChange(val) {
-            activeRadiusKm = parseFloat(val);
-            document.getElementById('modal-radius-range').value = val;
-            document.getElementById('modal-radius-val').textContent = `${val} کیلومتر`;
-            updateRadiusCircleOnMap();
-            renderUsersOnMap();
-        }
-
-        function onModalRadiusChange(val) {
-            activeRadiusKm = parseFloat(val);
-            document.getElementById('radius-slider').value = val;
-            document.getElementById('modal-radius-val').textContent = `${val} کیلومتر`;
-            updateRadiusCircleOnMap();
-            renderUsersOnMap();
-        }
-
-        function openRadiusSettingsModal() { document.getElementById('radius-settings-modal').classList.remove('hidden'); }
-        function closeRadiusSettingsModal() { document.getElementById('radius-settings-modal').classList.add('hidden'); }
-
-        function startPickingLocationOnMap() {
-            closeRadiusSettingsModal();
-            isPickingLocation = true;
-            document.getElementById('map').style.cursor = 'crosshair';
-            showToast("لطفا روی نقطه دلخواه روی نقشه کلیک کنید");
-        }
+        // تغییر تنظیم شعاع به وسیله‌ی غلطک موس (Scroll Wheel) روی ابزارک صفحه
+        window.addEventListener('DOMContentLoaded', () => {
+            const radiusWidget = document.getElementById('current-radius-display').parentElement;
+            if(radiusWidget) {
+                radiusWidget.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    if(e.deltaY < 0) {
+                        activeRadiusKm = Math.min(50, activeRadiusKm + 0.5);
+                    } else {
+                        activeRadiusKm = Math.max(0.5, activeRadiusKm - 0.5);
+                    }
+                    document.getElementById('current-radius-display').textContent = `${activeRadiusKm} km`;
+                    updateRadiusCircleOnMap();
+                    renderUsersOnMap();
+                }, { passive: false });
+            }
+        });
 
         function centerToMyLocation() {
             if (navigator.geolocation) {
@@ -705,19 +653,6 @@
         window.addEventListener('DOMContentLoaded', async () => {
             map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 13);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
-
-            map.on('click', async (e) => {
-                if(isPickingLocation) {
-                    isPickingLocation = false;
-                    document.getElementById('map').style.cursor = '';
-                    const { lat, lng } = e.latlng;
-                    currentCoords = { lat, lng };
-                    map.setView([lat, lng], 15, { animate: true });
-                    updateRadiusCircleOnMap();
-                    await updateMyLocation(lat, lng);
-                    showToast("لوکیشن جدید با موفقیت ثبت شد");
-                }
-            });
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
@@ -864,20 +799,23 @@
             document.getElementById('top-online-count').textContent = `${onlineCount} آنلاین`;
         }
 
+        // نمایش دادن لیست دقیق افراد حاضر در شعاع و آنلاین
         function openOnlineUsersModal() {
             const container = document.getElementById('online-users-list-container');
             const now = new Date();
             
-            const onlineUsers = activeUsersGlobalList.filter(u => {
+            const activeUsersInRadius = activeUsersGlobalList.filter(u => {
                 if(u.telegram_id === currentUser?.telegram_id) return true;
                 const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
                 const isRecent = lastSeenDate && (now - lastSeenDate < 180000);
-                return onlineUsersMap[u.telegram_id] || isRecent;
+                const distance = calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
+                return (onlineUsersMap[u.telegram_id] || isRecent) && (distance <= activeRadiusKm);
             });
             
-            container.innerHTML = onlineUsers.length ? onlineUsers.map(u => {
+            container.innerHTML = activeUsersInRadius.length ? activeUsersInRadius.map(u => {
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : (u.name || 'ک').charAt(0);
                 const isMeLabel = u.telegram_id === currentUser?.telegram_id ? ' (شما)' : '';
+                const distanceVal = u.telegram_id === currentUser?.telegram_id ? 'موقعیت شما' : `فاصله: ${calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude).toFixed(1)} کیلومتر`;
                 return `
                     <div onclick="closeOnlineUsersModal(); openUserProfile(${u.telegram_id})" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
                         <div class="relative w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden">
@@ -886,11 +824,11 @@
                         </div>
                         <div class="flex-1">
                             <h4 class="font-bold text-xs text-white">${u.name}${isMeLabel}</h4>
-                            <p class="text-[10px] text-emerald-400 mt-0.5">آنلاین و حاضر در اپ</p>
+                            <p class="text-[10px] text-emerald-400 mt-0.5">${distanceVal} • حاضر در اپ</p>
                         </div>
                     </div>
                 `;
-            }).join('') : '<div class="text-center text-xs text-slate-400 py-6">هیچ کاربر آنلاین دیگری در اپ یافت نشد.</div>';
+            }).join('') : '<div class="text-center text-xs text-slate-400 py-6">هیچ کاربر دیگری در این شعاع حاضر نیست.</div>';
 
             document.getElementById('online-users-modal').classList.remove('hidden');
         }
@@ -1116,7 +1054,7 @@
             const savedAvatar = localStorage.getItem('saved_user_avatar_' + currentUser.telegram_id) || currentUser?.avatar_url;
             if(savedAvatar) {
                 document.getElementById('avatar-fullscreen-img').src = savedAvatar;
-                document.getElementById('avatar-modal').classList.remove('hidden');
+                document.getElementById('avatar-modal').classList.add('hidden');
             }
         }
 
