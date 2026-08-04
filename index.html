@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - نسخه جامع و پیشرفته</title>
+    <title>تلسکوپ - نسخه جامع و کامل</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -125,7 +125,7 @@
         </div>
     </div>
 
-    <!-- مودال لیست افراد نزدیک + باکس جستجوی اکانت/یوزرنیم -->
+    <!-- مودال لیست افراد نزدیک + باکس جستجو -->
     <div id="users-list-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeUsersListModal()">
         <div class="tg-card w-full max-w-md max-h-[85vh] rounded-t-3xl sm:rounded-2xl p-5 flex flex-col gap-3 shadow-2xl border border-slate-700 overflow-hidden" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
@@ -133,7 +133,7 @@
                 <button onclick="closeUsersListModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
             </div>
             
-            <!-- باکس جستجو بر اساس نام یا یوزرنیم تلگرام -->
+            <!-- باکس جستجو -->
             <div class="relative w-full">
                 <input type="text" id="user-search-input" oninput="filterUsersList(this.value)" placeholder="جستجو بر اساس نام یا یوزرنیم (@)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl py-2.5 px-3 pr-9 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-500">
                 <svg class="w-4 h-4 text-slate-400 absolute right-3 top-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -296,6 +296,18 @@
                 otherUserMarkers = [];
                 cachedNearbyUsers = [];
 
+                // اضافه کردن خود کاربر به لیست کش با فاصله صفر
+                cachedNearbyUsers.push({
+                    id: currentUser.id,
+                    name: currentUser.name,
+                    username: currentUser.username,
+                    avatar_url: currentUser.avatar_url,
+                    lat: currentCoords.lat,
+                    lng: currentCoords.lng,
+                    distance: 0,
+                    isMe: true
+                });
+
                 const { data, error } = await supabaseClient
                     .from('users')
                     .select('*')
@@ -313,7 +325,7 @@
                         const distanceKm = getDistanceFromLatLonInKm(currentCoords.lat, currentCoords.lng, user.lat, user.lng);
                         if (distanceKm <= activeRadiusKm) {
                             
-                            cachedNearbyUsers.push({ ...user, distance: distanceKm });
+                            cachedNearbyUsers.push({ ...user, distance: distanceKm, isMe: false });
 
                             const userInitial = user.name ? user.name.charAt(0) : 'ک';
                             const avatarHtml = user.avatar_url 
@@ -419,6 +431,7 @@
                 return;
             }
 
+            // مرتب‌سازی بر اساس فاصله (نزدیک‌ترین‌ها اول)
             usersArray.sort((a, b) => a.distance - b.distance);
 
             usersArray.forEach(user => {
@@ -427,6 +440,14 @@
                     ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
                     : userInitial;
 
+                const badgeHtml = user.isMe 
+                    ? `<span class="text-[9px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded mr-1.5">شما</span>` 
+                    : '';
+
+                const distanceBadge = user.isMe 
+                    ? `<span class="text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2 py-1 rounded-lg">موقعیت من</span>`
+                    : `<span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg">${user.distance.toFixed(1)} کیلومتر</span>`;
+
                 const itemHtml = `
                     <div onclick="focusOnUser(${user.lat}, ${user.lng})" class="flex items-center justify-between p-2.5 bg-slate-800/60 hover:bg-slate-800 rounded-xl cursor-pointer transition border border-slate-700/50">
                         <div class="flex items-center gap-3">
@@ -434,12 +455,15 @@
                                 ${avatarHtml}
                             </div>
                             <div class="flex flex-col">
-                                <span class="font-bold text-xs text-white">${user.name || 'کاربر'}</span>
+                                <div class="flex items-center">
+                                    <span class="font-bold text-xs text-white">${user.name || 'کاربر'}</span>
+                                    ${badgeHtml}
+                                </div>
                                 <span class="text-[10px] text-slate-400">@${user.username || 'بدون نام کاربری'}</span>
                             </div>
                         </div>
                         <div class="text-left">
-                            <span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg">${user.distance.toFixed(1)} کیلومتر</span>
+                            ${distanceBadge}
                         </div>
                     </div>
                 `;
