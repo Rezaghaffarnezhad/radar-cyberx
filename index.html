@@ -27,7 +27,7 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.1s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
-        /* نشانگر فلش‌شکل موقعیت من */
+        /* نشانگر فلش‌شکل موقعیت من روی نقشه */
         .my-arrow-marker {
             width: 50px;
             height: 50px;
@@ -139,7 +139,7 @@
     <div id="view-map" class="view-section relative w-full h-full">
         <div id="map" class="map-container"></div>
         
-        <!-- هدر بالای نقشه -->
+        <!-- هدر بالای نقشه (نمایش آنلاین‌ها و پروفایل) -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
@@ -163,7 +163,7 @@
         <!-- اسلایدر کنترل شعاع عمودی -->
         <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center gap-2">
             <input id="radius-slider" type="range" min="0.5" max="50" step="0.5" value="15" oninput="onRadiusSliderChange(this.value)" class="vertical-slider-container accent-blue-600 cursor-pointer" title="تنظیم شعاع">
-            <button onclick="openRadiusSettingsModal()" class="w-9 h-9 flex items-center justify-center text-white text-lg drop-shadow-xl hover:scale-110 active:scale-95 transition" title="تنظیمات">⚙️</button>
+            <button onclick="openRadiusSettingsModal()" class="w-9 h-9 flex items-center justify-center text-white text-lg drop-shadow-xl hover:scale-110 active:scale-95 transition" title="تنظیمات شعاع">⚙️</button>
         </div>
 
         <!-- دکمه مرکزیت به لوکیشن من -->
@@ -181,7 +181,7 @@
         </div>
     </div>
 
-    <!-- بخش تنظیمات پروفایل و تغییر مشخصات/عکس -->
+    <!-- بخش تنظیمات پروفایل و تغییر مشخصات -->
     <div id="view-profile" class="view-section hidden absolute inset-0 pb-16 pt-3 px-3 overflow-y-auto z-30 tg-bg flex flex-col gap-3">
         <div class="tg-header px-3 py-2.5 flex items-center gap-3 rounded-2xl">
             <button onclick="navigateTo('map')" class="telegram-back-btn">
@@ -235,7 +235,7 @@
                 
                 <div class="bg-[#18222d] p-3 rounded-xl flex flex-col gap-2">
                     <span class="text-[11px] text-slate-300 font-bold">انتخاب موقعیت دستی روی نقشه</span>
-                    <p class="text-[10px] text-slate-400 leading-relaxed">با انتخاب این گزینه، با کلیک روی هر جای نقشه موقعیت خود را تغییر دهید.</p>
+                    <p class="text-[10px] text-slate-400 leading-relaxed">با انتخاب این گزینه، با کلیک روی هر جای نقشه می‌توانید موقعیت خود را تغییر دهید.</p>
                     <button onclick="startPickingLocationOnMap()" class="py-2 bg-[#2b5278] hover:bg-[#336394] rounded-lg text-[11px] text-white transition font-medium">📍 انتخاب نقطه جدید روی نقشه</button>
                 </div>
             </div>
@@ -252,7 +252,7 @@
         <div id="online-users-list-container" class="flex-1 p-3 overflow-y-auto flex flex-col gap-1.5"></div>
     </div>
 
-    <!-- مودال پیام‌رسان (چت خصوصی و گروه شعاعی) -->
+    <!-- مودال پیام‌رسان (چت خصوصی و گروه شعاعی عمومی) -->
     <div id="chat-hub-modal" class="hidden absolute inset-0 tg-bg z-40 flex flex-col">
         <div class="tg-header px-4 py-3 flex items-center justify-between">
             <h3 class="font-bold text-xs text-white">پیام‌رسان</h3>
@@ -262,7 +262,7 @@
         <div class="flex border-b border-slate-800 px-3 bg-[#17212b]">
             <button onclick="switchHubTab('contacts')" id="hub-tab-contacts" class="flex-1 py-2.5 text-center text-xs font-bold text-[#5288c1] border-b-2 border-[#5288c1] transition">مخاطبین چت</button>
             <button onclick="switchHubTab('requests')" id="hub-tab-requests" class="flex-1 py-2.5 text-center text-xs font-medium text-slate-400 transition">درخواست‌ها</button>
-            <button onclick="switchHubTab('groups')" id="hub-tab-groups" class="flex-1 py-2.5 text-center text-xs font-medium text-slate-400 transition">گروه شعاعی</button>
+            <button onclick="switchHubTab('groups')" id="hub-tab-groups" class="flex-1 py-2.5 text-center text-xs font-medium text-slate-400 transition">چت عمومی (شعاعی)</button>
         </div>
 
         <div id="hub-content-contacts" class="flex-1 p-3 overflow-y-auto flex flex-col gap-1.5">
@@ -274,11 +274,11 @@
         </div>
 
         <div id="hub-content-groups" class="hidden flex-1 p-3 overflow-y-auto flex flex-col gap-1.5">
-            <div onclick="openGroupChat('radius_group_main', 'گروه عمومی شعاعی')" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
+            <div onclick="openGroupChat('radius_group_main', 'چت عمومی شعاعی')" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
                 <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-sm">🌐</div>
                 <div class="flex-1">
-                    <h4 class="font-bold text-xs text-white">گروه عمومی شعاعی</h4>
-                    <p class="text-[10px] text-slate-400 mt-0.5">گفتگو با افراد حاضر در محدوده شعاعی • پاکسازی خودکار پیام‌ها</p>
+                    <h4 class="font-bold text-xs text-white">چت عمومی شعاعی (فعال)</h4>
+                    <p class="text-[10px] text-slate-400 mt-0.5">ارسال و دریافت پیام زنده با افراد حاضر در محدوده</p>
                 </div>
             </div>
         </div>
@@ -297,7 +297,7 @@
             <div class="text-center">
                 <h2 id="modal-user-name" class="font-bold text-base text-white">نام کاربر</h2>
                 <p id="modal-user-username" class="text-xs text-[#5288c1] mt-0.5">@username</p>
-                <p id="modal-user-lastseen" class="text-xs text-slate-400 mt-1">آخرین بازدید...</p>
+                <p id="modal-user-lastseen" class="text-xs text-slate-400 mt-1">آنلاین / فعال</p>
             </div>
             <div class="w-full tg-card p-3.5 rounded-2xl flex flex-col gap-2">
                 <span class="text-[10px] text-slate-400 font-bold">بیوگرافی</span>
@@ -307,7 +307,7 @@
         </div>
     </div>
 
-    <!-- صفحه چت اختصاصی -->
+    <!-- صفحه چت اختصاصی (عمومی یا خصوصی) -->
     <div id="chat-window" class="hidden absolute inset-0 tg-bg z-50 flex flex-col">
         <div class="tg-header px-3 py-2.5 flex items-center gap-3">
             <button onclick="backToChatHub()" class="telegram-back-btn">
@@ -323,17 +323,6 @@
         </div>
         <div id="chat-messages" class="flex-1 p-3 overflow-y-auto flex flex-col gap-2"></div>
         
-        <div id="reply-preview-bar" class="hidden px-3 py-1.5 bg-[#17212b] border-t border-slate-800 flex items-center justify-between">
-            <div class="flex items-center gap-2 overflow-hidden">
-                <div class="w-1 h-7 bg-[#5288c1] rounded-full"></div>
-                <div class="text-[11px] truncate">
-                    <span id="reply-preview-sender" class="text-[#5288c1] font-bold block">فرستنده</span>
-                    <span id="reply-preview-text" class="text-slate-300">متن...</span>
-                </div>
-            </div>
-            <button onclick="cancelReply()" class="text-slate-400 text-xs px-1">✕</button>
-        </div>
-
         <div id="edit-preview-bar" class="hidden px-3 py-1.5 bg-[#17212b] border-t border-slate-800 flex items-center justify-between">
             <div class="flex items-center gap-2 overflow-hidden">
                 <div class="w-1 h-7 bg-amber-500 rounded-full"></div>
@@ -346,10 +335,9 @@
         </div>
 
         <div class="p-2.5 tg-card flex items-center gap-2">
-            <input id="chat-input" oninput="toggleInputButtonState()" onkeydown="if(event.key==='Enter') handleSendAction()" type="text" placeholder="نوشتن پیام..." class="flex-1 tg-input px-3.5 py-2.5 rounded-xl text-xs">
-            
-            <button id="dynamic-send-btn" onclick="handleSendAction()" class="w-10 h-10 rounded-xl bg-[#2b5278] hover:bg-[#336394] flex items-center justify-center text-white transition">
-                <svg id="btn-icon-send" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            <input id="chat-input" onkeydown="if(event.key==='Enter') handleSendAction()" type="text" placeholder="نوشتن پیام..." class="flex-1 tg-input px-3.5 py-2.5 rounded-xl text-xs">
+            <button onclick="handleSendAction()" class="w-10 h-10 rounded-xl bg-[#2b5278] hover:bg-[#336394] flex items-center justify-center text-white transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
             </button>
         </div>
     </div>
@@ -389,7 +377,6 @@
         let onlineUsersMap = {};
         let activeUsersGlobalList = [];
         let isDarkMap = false;
-        let replyingToMessage = null;
         let editingMessage = null;
         let selectedMessageForAction = null;
         let isPickingLocation = false;
@@ -480,7 +467,7 @@
             const initial = (currentUser?.name || 'ک').charAt(0);
             const myAvatarInner = currentUser?.avatar_url ? `<img src="${currentUser.avatar_url}">` : `<span>${initial}</span>`;
             
-            // فلش جهت‌دار اختصاصی موقعیت من
+            // نشانگر فلش‌شکل موقعیت من روی نقشه
             const myHtml = `<div class="my-arrow-marker"><div class="my-arrow-inner">${myAvatarInner}</div></div>`;
             const myIcon = L.divIcon({ html: myHtml, iconSize: [50, 50], iconAnchor: [25, 25] });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
@@ -950,8 +937,6 @@
             document.getElementById('edit-preview-bar').classList.add('hidden');
             document.getElementById('chat-input').value = '';
         }
-
-        function toggleInputButtonState() {}
 
         async function handleSendAction() {
             const input = document.getElementById('chat-input');
