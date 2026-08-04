@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - پنل مدیریت کاربران آنلاین</title>
+    <title>تلسکوپ - اشتراک‌گذاری لحظه‌ای لوکیشن و کاربران</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -85,7 +85,7 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ آنلاینِ لحظه‌ای</span>
+                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ همگام‌سازی لحظه‌ای فعال</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
@@ -100,7 +100,6 @@
         <div class="absolute bottom-6 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
             <button onclick="openUsersListModal()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10 relative" title="لیست افراد آنلاین">
                 <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                <!-- نشانگر تعداد افراد آنلاین روی دکمه -->
                 <span id="online-count-badge" class="absolute -top-1 -right-1 bg-emerald-500 text-slate-950 font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-900">0</span>
             </button>
             <button onclick="centerToMyLocation()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10" title="موقعیت من">
@@ -109,8 +108,8 @@
         </div>
     </div>
 
-    <!-- مودال لیست افراد آنلاین (به صورت پیش‌فرض هنگام ورود یا با کلیک روی دکمه باز می‌شود) -->
-    <div id="users-list-modal" class="absolute inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <!-- مودال لیست افراد آنلاین -->
+    <div id="users-list-modal" class="hidden absolute inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeUsersListModal()">
         <div class="tg-card w-full max-w-md max-h-[85vh] rounded-t-3xl sm:rounded-2xl p-5 flex flex-col gap-3 shadow-2xl border border-slate-700 overflow-hidden" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
                 <h3 class="font-bold text-sm text-white flex items-center gap-2">🟢 اسامی افراد آنلاین در سیستم</h3>
@@ -155,6 +154,7 @@
         let activeRadiusKm = 15;
         let isFirstCenter = true;
 
+        // استخراج دینامیک اطلاعات اکانت فعلی تلگرام (فرقی نمی‌کند اکانت اول باشد یا دوم)
         const tgUser = tg?.initDataUnsafe?.user;
         let currentUser = { 
             id: tgUser ? String(tgUser.id) : String(Math.floor(Math.random() * 900000) + 100000),
@@ -173,6 +173,7 @@
                 setupUserUI();
                 updateMapElements();
 
+                // ردیابی و ارسال موقعیت زنده دستگاه هر زمان که اکانت وارد شود
                 if (navigator.geolocation) {
                     navigator.geolocation.watchPosition(
                         (position) => {
@@ -250,6 +251,7 @@
         async function saveAndSyncData() {
             if (!supabaseClient) return;
             try {
+                // ثبت یا آپدیت دقیق اطلاعات اکانت فعلی در جدول users ساب‌پیس
                 await supabaseClient.from('users').upsert({
                     id: currentUser.id,
                     name: currentUser.name,
@@ -304,7 +306,7 @@
             markersLayerGroup.clearLayers();
             onlineUsersList = [];
 
-            // افزودن خود کاربر به لیست
+            // افزودن اکانت جاری به لیست
             onlineUsersList.push({
                 id: currentUser.id,
                 name: currentUser.name,
@@ -324,7 +326,7 @@
                 
                 onlineUsersList.push({ ...user, distance: distanceKm, isMe: false });
 
-                // نمایش پین روی نقشه
+                // نمایش پین اکانت‌های دیگر روی نقشه
                 const userInitial = user.name ? user.name.charAt(0) : 'ک';
                 const avatarHtml = user.avatar_url 
                     ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
@@ -345,10 +347,8 @@
                 markersLayerGroup.addLayer(marker);
             });
 
-            // به‌روزرسانی تعداد افراد آنلاین روی دکمه گوشه صفحه
             document.getElementById('online-count-badge').textContent = onlineUsersList.length;
 
-            // به‌روزرسانی خودکار لیست داخل مودال اگر باز باشد
             const modal = document.getElementById('users-list-modal');
             if (!modal.classList.contains('hidden')) {
                 renderUsersList(onlineUsersList);
@@ -423,7 +423,7 @@
                     : userInitial;
 
                 const badgeHtml = user.isMe 
-                    ? `<span class="text-[9px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded mr-1.5">شما</span>` 
+                    ? `<span class="text-[9px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded mr-1.5">شما (این اکانت)</span>` 
                     : `<span class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded mr-1.5">آنلاین</span>`;
 
                 const distanceBadge = user.isMe 
