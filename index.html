@@ -123,9 +123,9 @@
     </div>
 
     <script>
-        // اطلاعات اتصال به Supabase (اطلاعات خود را جایگزین کنید)
-        const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        // تنظیمات Supabase با کلید جدید Publishable
+        const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co'; // آدرس پروژه خود را اینجا وارد کنید
+        const SUPABASE_ANON_KEY = 'sb_publishable_3-rNuWmg9jAyPPQ89hE4ZQ_avo0wsPd';
         let supabaseClient = null;
         
         try {
@@ -140,7 +140,7 @@
         if(tg) tg.expand();
 
         let map = null, myLocationMarker = null, radiusCircle = null;
-        let otherUserMarkers = []; // آرایه نگهداری پین سایر کاربران
+        let otherUserMarkers = []; 
         let currentCoords = { lat: 35.6892, lng: 51.3890 }; // پیش‌فرض تهران
         let activeRadiusKm = 15;
 
@@ -219,11 +219,9 @@
             try {
                 if(!map) return;
 
-                // پاکسازی دایره شعاع و نشانگر خودمان
                 if(radiusCircle) map.removeLayer(radiusCircle);
                 if(myLocationMarker) map.removeLayer(myLocationMarker);
 
-                // ۱. ترسیم دایره شعاع
                 radiusCircle = L.circle([currentCoords.lat, currentCoords.lng], {
                     radius: activeRadiusKm * 1000,
                     color: '#3b82f6',
@@ -232,7 +230,6 @@
                     fillOpacity: 0.08
                 }).addTo(map);
 
-                // ۲. ترسیم نشانگر متحرک خود کاربر (دایره کوچک با سایه تپنده)
                 const customIcon = L.divIcon({ 
                     html: '<div class="animated-my-pin"></div>', 
                     iconSize: [20, 20], 
@@ -246,7 +243,6 @@
             }
         }
 
-        // ذخیره لوکیشن خودمان در دیتابیس و سپس خواندن موقعیت بقیه کاربران
         async function saveAndSyncData() {
             if (!supabaseClient) return;
             try {
@@ -266,15 +262,12 @@
             }
         }
 
-        // تابع خواندن و نمایش سایر کاربران از دیتابیس
         async function loadOtherUsers() {
             if (!supabaseClient) return;
             try {
-                // پاک کردن پین‌های قبلی سایر کاربران از روی نقشه
                 otherUserMarkers.forEach(marker => map.removeLayer(marker));
                 otherUserMarkers = [];
 
-                // دریافت کاربران از جدول users (به جز خود کاربر جاری)
                 const { data, error } = await supabaseClient
                     .from('users')
                     .select('*')
@@ -289,11 +282,8 @@
                     data.forEach(user => {
                         if (!user.lat || !user.lng) return;
 
-                        // بررسی قرار داشتن کاربر در محدوده شعاع مجاز (محاسبه فاصله تقریبی)
                         const distanceKm = getDistanceFromLatLonInKm(currentCoords.lat, currentCoords.lng, user.lat, user.lng);
                         if (distanceKm <= activeRadiusKm) {
-                            
-                            // ساخت ظاهر پین کاربر دیگر
                             const userInitial = user.name ? user.name.charAt(0) : 'ک';
                             const avatarHtml = user.avatar_url 
                                 ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
@@ -320,9 +310,8 @@
             }
         }
 
-        // تابع کمکی برای محاسبه فاصله جغرافیایی دو نقطه (برحسب کیلومتر)
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-            const R = 6371; // شعاع زمین به کیلومتر
+            const R = 6371; 
             const dLat = deg2rad(lat2 - lat1);
             const dLon = deg2rad(lon2 - lon1);
             const a = 
@@ -361,7 +350,7 @@
             activeRadiusKm = parseFloat(val);
             document.getElementById('modal-radius-value').textContent = `${activeRadiusKm} کیلومتر`;
             updateMapElements();
-            loadOtherUsers(); // با تغییر شعاع، لیست کاربران دیگر داخل شعاع جدید فیلتر می‌شود
+            loadOtherUsers(); 
         }
     </script>
 </body>
