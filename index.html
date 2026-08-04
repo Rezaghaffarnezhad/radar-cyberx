@@ -164,19 +164,19 @@
                 <div class="text-center text-xs text-slate-500 py-4">بارگذاری پیام‌ها...</div>
             </div>
 
-            <!-- باکس ریپلی -->
-            <div id="reply-preview-box" class="hidden px-4 py-2 bg-[#17212b] border-t border-slate-700/50 flex items-center justify-between">
+            <!-- باکس ریپلی یا ویرایش -->
+            <div id="action-preview-box" class="hidden px-4 py-2 bg-[#17212b] border-t border-slate-700/50 flex items-center justify-between">
                 <div class="flex flex-col border-r-2 border-blue-400 pr-2">
-                    <span id="reply-sender-name" class="text-[10px] text-blue-400 font-bold">پاسخ به ...</span>
-                    <span id="reply-message-text" class="text-[11px] text-slate-300 truncate max-w-[280px]">متن پیام...</span>
+                    <span id="action-preview-title" class="text-[10px] text-blue-400 font-bold">پاسخ به ...</span>
+                    <span id="action-preview-text" class="text-[11px] text-slate-300 truncate max-w-[280px]">متن پیام...</span>
                 </div>
-                <button onclick="cancelReply()" class="text-slate-400 hover:text-white text-xs px-2">✕</button>
+                <button onclick="cancelActionState()" class="text-slate-400 hover:text-white text-xs px-2">✕</button>
             </div>
 
             <!-- فرم ارسال پیام تلگرامی -->
             <div class="p-3 bg-[#17212b] border-t border-slate-700/60 flex items-center gap-2">
-                <input type="text" id="chat-input" placeholder="پیام..." onkeydown="if(event.key==='Enter') sendMessage()" class="flex-1 bg-[#212f3d] border border-transparent focus:border-blue-500 rounded-xl py-2.5 px-4 text-xs text-white placeholder-slate-400 focus:outline-none">
-                <button onclick="sendMessage()" class="w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl flex items-center justify-center transition shadow shrink-0">
+                <input type="text" id="chat-input" placeholder="پیام..." oninput="handleTypingEvent()" onkeydown="if(event.key==='Enter') handleSendOrEditMessage()" class="flex-1 bg-[#212f3d] border border-transparent focus:border-blue-500 rounded-xl py-2.5 px-4 text-xs text-white placeholder-slate-400 focus:outline-none">
+                <button onclick="handleSendOrEditMessage()" class="w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl flex items-center justify-center transition shadow shrink-0">
                     <svg class="w-4 h-4 transform rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                 </button>
             </div>
@@ -192,26 +192,28 @@
             if (window.supabase) {
                 supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             }
-        } catch (e) {
-            console.error("Supabase init error:", e);
-        }
+        } catch (e) { console.error("Supabase init error:", e); }
 
         let tg = window.Telegram?.WebApp;
         if(tg) tg.expand();
 
         let map = null, myLocationMarker = null, radiusCircle = null;
         let markersLayerGroup = L.layerGroup(); 
-        let onlineUsersMap = new Map(); // نگهداری سریع کاربران آنلاین برای دسترسی آنی
+        let onlineUsersMap = new Map(); 
         let onlineUsersList = []; 
         let currentCoords = { lat: 35.6892, lng: 51.3890 }; 
         let activeRadiusKm = 15;
         let isFirstCenter = true;
         let radarChannel = null;
+        let chatRealtimeChannel = null;
 
         let currentChatType = 'public';
         let currentReceiverId = null;
         let replyingToMessage = null;
-        let messagesCache = new Map(); // کش حافظه موقت برای سرعت بالای بارگذاری PV
+        let editingMessageId = null;
+        let messagesCache = new Map();
+        let typingTimeout = null;
+        let isTypingSent = false;
 
         const tgUser = tg?.initDataUnsafe?.user;
         let currentUser = { 
@@ -249,10 +251,8 @@
                     initPresenceChannel();
                 }
 
-                initMessagesRealtime();
-            } catch (err) {
-                console.error("Initialization error:", err);
-            }
+                initGlobalMessagesRealtime();
+            } catch (err) { console.error("Initialization error:", err); }
         });
 
         function setupUserUI() {
@@ -278,38 +278,21 @@
                 fillOpacity: 0.08
             }).addTo(map);
 
-            const customIcon = L.divIcon({ 
-                html: '<div class="animated-my-pin"></div>', 
-                iconSize: [26, 26], 
-                iconAnchor: [13, 13], 
-                className: '' 
-            });
-
+            const customIcon = L.divIcon({ html: '<div class="animated-my-pin"></div>', iconSize: [26, 26], iconAnchor: [13, 13], className: '' });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon: customIcon, zIndexOffset: 1000 }).addTo(map);
         }
 
         function initPresenceChannel() {
             if (!supabaseClient) return;
-
-            radarChannel = supabaseClient.channel('radar-online-users', {
-                config: { presence: { key: currentUser.id } },
-            });
+            radarChannel = supabaseClient.channel('radar-online-users', { config: { presence: { key: currentUser.id } } });
 
             radarChannel
-                .on('presence', { event: 'sync' }, () => {
-                    const state = radarChannel.presenceState();
-                    processPresenceState(state);
-                })
+                .on('presence', { event: 'sync' }, () => { processPresenceState(radarChannel.presenceState()); })
                 .subscribe(async (status) => {
                     if (status === 'SUBSCRIBED') {
                         await radarChannel.track({
-                            id: currentUser.id,
-                            name: currentUser.name,
-                            username: currentUser.username,
-                            avatar_url: currentUser.avatar_url,
-                            lat: currentCoords.lat,
-                            lng: currentCoords.lng,
-                            online_at: new Date().toISOString()
+                            id: currentUser.id, name: currentUser.name, username: currentUser.username,
+                            avatar_url: currentUser.avatar_url, lat: currentCoords.lat, lng: currentCoords.lng, online_at: new Date().toISOString()
                         });
                     }
                 });
@@ -323,9 +306,7 @@
             let allActiveUsers = [];
             Object.keys(state).forEach(presenceId => {
                 let userDatas = state[presenceId];
-                if (userDatas && userDatas.length > 0) {
-                    allActiveUsers.push(userDatas[0]);
-                }
+                if (userDatas && userDatas.length > 0) allActiveUsers.push(userDatas[0]);
             });
 
             onlineUsersMap.set(currentUser.id, { ...currentUser, online_at: new Date().toISOString(), isOnline: true });
@@ -333,16 +314,12 @@
             allActiveUsers.forEach(user => {
                 const userIdStr = String(user.id);
                 onlineUsersMap.set(userIdStr, { ...user, isOnline: true });
-
-                if (userIdStr === String(currentUser.id)) return;
-                if (!user.lat || !user.lng) return;
+                if (userIdStr === String(currentUser.id) || !user.lat || !user.lng) return;
 
                 const distanceKm = getDistanceFromLatLonInKm(currentCoords.lat, currentCoords.lng, user.lat, user.lng);
                 onlineUsersList.push({ ...user, distance: distanceKm, isMe: false });
 
-                const userInitial = user.name ? user.name.charAt(0) : 'ک';
-                const avatarHtml = user.avatar_url ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` : userInitial;
-
+                const avatarHtml = user.avatar_url ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` : (user.name ? user.name.charAt(0) : 'ک');
                 const pinHtml = `<div class="other-user-pin">${avatarHtml}<div class="online-dot"></div></div>`;
                 const userIcon = L.divIcon({ html: pinHtml, iconSize: [42, 42], iconAnchor: [21, 21], className: '' });
 
@@ -359,82 +336,106 @@
             });
 
             document.getElementById('online-count-badge').textContent = onlineUsersList.length + 1;
-
-            // اگر مودال چت باز است، وضعیت هدر آنی آپدیت شود
-            if (currentChatType === 'private' && currentReceiverId) {
-                updateChatHeaderStatus(currentReceiverId);
-            }
-
-            const modal = document.getElementById('users-list-modal');
-            if (!modal.classList.contains('hidden')) {
-                renderUsersList(onlineUsersList);
-            }
+            if (currentChatType === 'private' && currentReceiverId) updateChatHeaderStatus(currentReceiverId);
+            if (!document.getElementById('users-list-modal').classList.contains('hidden')) renderUsersList(onlineUsersList);
         }
 
-        // --- مدیریت چت پیشرفته و آپدیت وضعیت فعالیت (آنلاین / آخرین بازدید) ---
+        // --- مدیریت چت و کانال تایپینگ زنده ---
         function openChatModal(type, receiverId, receiverName, receiverAvatar = '') {
             currentChatType = type;
             currentReceiverId = receiverId;
-            cancelReply();
+            cancelActionState();
 
             document.getElementById('chat-title').textContent = type === 'public' ? 'چت عمومی' : receiverName;
-            
             const headerAvatar = document.getElementById('chat-header-avatar');
+            
             if (type === 'public') {
                 headerAvatar.innerHTML = '💬';
                 document.getElementById('chat-subtitle').textContent = 'گفتگوی همگانی';
             } else {
                 headerAvatar.innerHTML = receiverAvatar ? `<img src="${receiverAvatar}" class="w-full h-full object-cover">` : (receiverName ? receiverName.charAt(0) : '👤');
                 updateChatHeaderStatus(receiverId);
+                initChatBroadcastChannel(receiverId);
             }
 
             document.getElementById('users-list-modal').classList.add('hidden');
             document.getElementById('chat-modal').classList.remove('hidden');
 
-            // بارگذاری آنی از کش برای سرعت بالا
             const cacheKey = type === 'public' ? 'public' : receiverId;
-            if (messagesCache.has(cacheKey)) {
-                renderMessages(messagesCache.get(cacheKey));
+            if (messagesCache.has(cacheKey)) renderMessages(messagesCache.get(cacheKey));
+            fetchMessages();
+        }
+
+        function initChatBroadcastChannel(receiverId) {
+            if (!supabaseClient) return;
+            if (chatRealtimeChannel) supabaseClient.removeChannel(chatRealtimeChannel);
+
+            const roomName = `chat_${[currentUser.id, receiverId].sort().join('_')}`;
+            chatRealtimeChannel = supabaseClient.channel(roomName, { config: { broadcast: { self: false } } });
+
+            chatRealtimeChannel
+                .on('broadcast', { event: 'typing' }, payload => {
+                    if (String(payload.payload.sender_id) === String(currentReceiverId)) {
+                        const subtitleEl = document.getElementById('chat-subtitle');
+                        subtitleEl.textContent = 'در حال تایپ...';
+                        subtitleEl.className = 'text-[10px] text-blue-400 font-bold animate-pulse';
+                        
+                        setTimeout(() => {
+                            if (currentChatType === 'private') updateChatHeaderStatus(currentReceiverId);
+                        }, 3000);
+                    }
+                })
+                .subscribe();
+        }
+
+        function handleTypingEvent() {
+            if (currentChatType === 'private' && chatRealtimeChannel) {
+                if (!isTypingSent) {
+                    isTypingSent = true;
+                    chatRealtimeChannel.send({ type: 'broadcast', event: 'typing', payload: { sender_id: currentUser.id } });
+                    setTimeout(() => { isTypingSent = false; }, 2000);
+                }
             }
-            
-            fetchMessages(); // دریافت نسخه جدید از سرور در پس‌زمینه
         }
 
         function updateChatHeaderStatus(receiverId) {
             const subtitleEl = document.getElementById('chat-subtitle');
             const targetUser = onlineUsersMap.get(String(receiverId));
-
             if (targetUser && targetUser.isOnline) {
                 subtitleEl.textContent = 'آنلاین';
                 subtitleEl.className = 'text-[10px] text-emerald-400 font-medium';
             } else {
-                // اگر آفلاین بود، آخرین زمان حضور یا حالت عمومی
                 subtitleEl.textContent = targetUser && targetUser.online_at ? `آخرین بازدید: ${formatLastSeen(targetUser.online_at)}` : 'آفلاین';
                 subtitleEl.className = 'text-[10px] text-slate-400';
             }
         }
 
         function formatLastSeen(isoString) {
-            try {
-                const date = new Date(isoString);
-                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            } catch (e) {
-                return 'مدت‌ها پیش';
-            }
+            try { return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch (e) { return 'اخیراً'; }
         }
 
         function closeChatModalUI() {
             document.getElementById('chat-modal').classList.add('hidden');
+            if (chatRealtimeChannel) { supabaseClient.removeChannel(chatRealtimeChannel); chatRealtimeChannel = null; }
         }
 
-        async function sendMessage() {
+        // --- عملیات ارسال، ویرایش و ریپلی ---
+        async function handleSendOrEditMessage() {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
             if (!text || !supabaseClient) return;
-
             input.value = '';
+
+            if (editingMessageId) {
+                const msgId = editingMessageId;
+                cancelActionState();
+                await supabaseClient.from('messages').update({ message: text }).eq('id', msgId);
+                fetchMessages();
+                return;
+            }
+
             const replyData = replyingToMessage;
-            cancelReply();
+            cancelActionState();
 
             try {
                 await supabaseClient.from('messages').insert({
@@ -446,29 +447,45 @@
                     reply_to_name: replyData ? replyData.sender_name : null,
                     reply_to_text: replyData ? replyData.message : null
                 });
-            } catch (err) {
-                console.error("Error sending message:", err);
-            }
+            } catch (err) { console.error("Error sending message:", err); }
         }
 
         function setReplyTo(id, name, messageText) {
+            editingMessageId = null;
             replyingToMessage = { id, sender_name: name, message: messageText };
-            document.getElementById('reply-sender-name').textContent = name;
-            document.getElementById('reply-message-text').textContent = messageText;
-            document.getElementById('reply-preview-box').classList.remove('hidden');
+            document.getElementById('action-preview-title').textContent = `پاسخ به ${name}`;
+            document.getElementById('action-preview-text').textContent = messageText;
+            document.getElementById('action-preview-box').classList.remove('hidden');
             document.getElementById('chat-input').focus();
         }
 
-        function cancelReply() {
+        function setEditMessage(id, currentText) {
             replyingToMessage = null;
-            document.getElementById('reply-preview-box').classList.add('hidden');
+            editingMessageId = id;
+            document.getElementById('action-preview-title').textContent = 'ویرایش پیام';
+            document.getElementById('action-preview-text').textContent = currentText;
+            document.getElementById('action-preview-box').classList.remove('hidden');
+            const input = document.getElementById('chat-input');
+            input.value = currentText;
+            input.focus();
+        }
+
+        function cancelActionState() {
+            replyingToMessage = null;
+            editingMessageId = null;
+            document.getElementById('action-preview-box').classList.add('hidden');
+        }
+
+        async function deleteMessage(id) {
+            if (!confirm('آیا این پیام حذف شود؟')) return;
+            await supabaseClient.from('messages').delete().eq('id', id);
+            fetchMessages();
         }
 
         async function fetchMessages() {
             if (!supabaseClient) return;
             try {
                 let query = supabaseClient.from('messages').select('*').order('created_at', { ascending: true });
-
                 if (currentChatType === 'public') {
                     query = query.is('receiver_id', null);
                 } else {
@@ -476,34 +493,28 @@
                 }
 
                 const { data, error } = await query;
-                if (error) return;
-                if (data) {
+                if (!error && data) {
                     const cacheKey = currentChatType === 'public' ? 'public' : currentReceiverId;
                     messagesCache.set(cacheKey, data);
                     renderMessages(data);
                 }
-            } catch (err) {
-                console.error("Error fetching messages:", err);
-            }
+            } catch (err) { console.error("Error fetching messages:", err); }
         }
 
-        function initMessagesRealtime() {
+        function initGlobalMessagesRealtime() {
             if (!supabaseClient) return;
-
             supabaseClient
                 .channel('public:messages')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                    const newMsg = payload.new;
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
+                    const msg = payload.new || payload.old;
+                    if (!msg) return;
                     const chatModal = document.getElementById('chat-modal');
                     if (!chatModal.classList.contains('hidden')) {
-                        if (currentChatType === 'public' && !newMsg.receiver_id) {
-                            fetchMessages();
-                        } else if (currentChatType === 'private' && (
-                            (String(newMsg.sender_id) === String(currentUser.id) && String(newMsg.receiver_id) === String(currentReceiverId)) ||
-                            (String(newMsg.sender_id) === String(currentReceiverId) && String(newMsg.receiver_id) === String(currentUser.id))
-                        )) {
-                            fetchMessages();
-                        }
+                        if (currentChatType === 'public' && !msg.receiver_id) fetchMessages();
+                        else if (currentChatType === 'private' && (
+                            (String(msg.sender_id) === String(currentUser.id) && String(msg.receiver_id) === String(currentReceiverId)) ||
+                            (String(msg.sender_id) === String(currentReceiverId) && String(msg.receiver_id) === String(currentUser.id))
+                        )) fetchMessages();
                     }
                 })
                 .subscribe();
@@ -533,6 +544,15 @@
                 ` : '';
 
                 const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const editActions = isMe ? `
+                    <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition mt-0.5 text-[9px] px-1">
+                        <button onclick="setEditMessage('${msg.id}', '${escapeHtml(msg.message).replace(/'/g, "\\'")}')" class="text-sky-400 hover:underline">ویرایش</button>
+                        <button onclick="deleteMessage('${msg.id}')" class="text-red-400 hover:underline">حذف</button>
+                        <button onclick="setReplyTo('${msg.id}', '${msg.sender_name || 'کاربر'}', '${escapeHtml(msg.message).replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-white">پاسخ</button>
+                    </div>
+                ` : `
+                    <button onclick="setReplyTo('${msg.id}', '${msg.sender_name || 'کاربر'}', '${escapeHtml(msg.message).replace(/'/g, "\\'")}')" class="text-[9px] text-slate-400 hover:text-white opacity-0 group-hover:opacity-100 transition mt-0.5 px-1">پاسخ (Reply)</button>
+                `;
 
                 htmlContent += `
                     <div class="flex flex-col ${alignClass} max-w-[85%] mx-auto w-full group">
@@ -545,7 +565,7 @@
                                 ${isMe ? '<span class="text-[9px] text-sky-400">✓✓</span>' : ''}
                             </div>
                         </div>
-                        <button onclick="setReplyTo('${msg.id}', '${msg.sender_name || 'کاربر'}', '${escapeHtml(msg.message)}')" class="text-[9px] text-slate-400 hover:text-white opacity-0 group-hover:opacity-100 transition mt-0.5 px-1">پاسخ (Reply)</button>
+                        ${editActions}
                     </div>
                 `;
             });
@@ -561,13 +581,12 @@
 
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
             const R = 6371; 
-            const dLat = deg2rad(lat2 - lat1);
-            const dLon = deg2rad(lon2 - lon1);
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+            const dLat = (lat2 - lat1) * (Math.PI/180);
+            const dLon = (lon2 - lon1) * (Math.PI/180);
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
             return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
         }
 
-        function deg2rad(deg) { return deg * (Math.PI/180); }
         function centerToMyLocation() { if(map) map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true }); }
         function openUsersListModal() { renderUsersList(onlineUsersList); document.getElementById('users-list-modal').classList.remove('hidden'); }
         function closeUsersListModal() { document.getElementById('users-list-modal').classList.add('hidden'); }
@@ -575,30 +594,26 @@
         function filterUsersList(query) {
             const q = query.trim().toLowerCase();
             if (!q) { renderUsersList(onlineUsersList); return; }
-            const filtered = onlineUsersList.filter(u => (u.name && u.name.toLowerCase().includes(q)) || (u.username && u.username.toLowerCase().includes(q)));
-            renderUsersList(filtered);
+            renderUsersList(onlineUsersList.filter(u => (u.name && u.name.toLowerCase().includes(q)) || (u.username && u.username.toLowerCase().includes(q))));
         }
 
         function renderUsersList(usersArray) {
             const container = document.getElementById('users-scroll-container');
             container.innerHTML = '';
-
             if (usersArray.length === 0) {
                 container.innerHTML = `<div class="text-center text-xs text-slate-400 py-6">کاربر دیگری یافت نشد.</div>`;
                 return;
             }
 
             usersArray.sort((a, b) => a.distance - b.distance);
-
             usersArray.forEach(user => {
-                const userInitial = user.name ? user.name.charAt(0) : 'ک';
-                const avatarHtml = user.avatar_url ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` : userInitial;
+                const avatarHtml = user.avatar_url ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` : (user.name ? user.name.charAt(0) : 'ک');
                 const badgeHtml = user.isMe ? `<span class="text-[9px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded mr-1.5">شما</span>` : `<span class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded mr-1.5">آنلاین</span>`;
                 const actionBtn = user.isMe ? '' : `<button onclick="openChatModal('private', '${user.id}', '${user.name}', '${user.avatar_url || ''}')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-xl text-[11px] font-medium transition shadow">پیام</button>`;
 
                 container.innerHTML += `
                     <div class="flex items-center justify-between p-2.5 bg-slate-800/60 hover:bg-slate-800 rounded-xl transition border border-slate-700/50">
-                        <div class="flex items-center gap-3 cursor-pointer" onclick="if(!${user.isMe}) { focusOnUser(${user.lat}, ${user.lng}); }">
+                        <div class="flex items-center gap-3 cursor-pointer" onclick="if(!${user.isMe}) { closeUsersListModal(); map.setView([${user.lat}, ${user.lng}], 17, { animate: true }); }">
                             <div class="w-10 h-10 rounded-full bg-emerald-600/30 border border-emerald-400/30 flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow relative">
                                 ${avatarHtml}
                                 <div class="online-dot"></div>
@@ -615,11 +630,6 @@
                     </div>
                 `;
             });
-        }
-
-        function focusOnUser(lat, lng) {
-            closeUsersListModal();
-            if (map) map.setView([lat, lng], 17, { animate: true });
         }
     </script>
 </body>
