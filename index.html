@@ -27,7 +27,6 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
-        /* مارکر اختصاصی شما با دایره آبی پالس‌دار */
         .my-animated-marker {
             width: 72px;
             height: 72px;
@@ -116,7 +115,6 @@
         }
         .chat-3d-btn:active { transform: translateX(-50%) scale(0.94); }
 
-        /* ویجت غلطک مکانیکی دقیقاً الگوبرداری شده از غلطک وسط ماوس */
         .mouse-wheel-roller {
             background: #111822 !important;
             border: 2px solid #233142 !important;
@@ -269,7 +267,6 @@
             </div>
         </div>
 
-        <!-- ابزارک غلطک ماوس تزیینی با صدای مکانیکی -->
         <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center gap-1">
             <div id="mouse-roller-widget" class="mouse-wheel-roller flex items-center justify-center" title="غلطک ماوس">
                 <div id="roller-inner-element" class="roller-wheel-inner"></div>
@@ -327,7 +324,7 @@
 
     <div id="online-users-modal" class="hidden absolute inset-0 tg-bg z-40 flex flex-col">
         <div class="tg-header px-4 py-3 flex items-center justify-between">
-            <h3 class="font-bold text-xs text-white">افراد حاضر و آنلاین</h3>
+            <h3 class="font-bold text-xs text-white">افراد حاضر و آنلاین (سراسری بدون محدودیت)</h3>
             <button onclick="closeOnlineUsersModal()" class="text-slate-400 text-sm px-2 py-1 rounded-lg hover:bg-white/5 transition">✕</button>
         </div>
         <div id="online-users-list-container" class="flex-1 p-3 overflow-y-auto flex flex-col gap-1.5"></div>
@@ -473,7 +470,6 @@
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
         let activePrivateChannel = null;
         let globalChannel = null;
-        let onlineUsersMap = {};
         let activeUsersGlobalList = [];
         let isDarkMap = false;
         let navigationHistory = ['map'];
@@ -485,7 +481,6 @@
         let cachedMessages = {};
         let searchDebounceTimer = null;
 
-        // صدای کلیک مکانیکی آچار جغجغه برای غلطک
         let audioCtx = null;
         function playRatchetClickSound() {
             try {
@@ -708,14 +703,7 @@
         }
 
         function formatTelegramLastSeen(dateString) {
-            if (!dateString) return 'آنلاین';
-            const date = new Date(dateString);
-            const now = new Date();
-            const diffSec = Math.floor((now - date) / 1000);
-
-            if (diffSec < 60) return 'آنلاین';
-            if (diffSec < 3600) return `آخرین بازدید ${Math.floor(diffSec / 60)} دقیقه پیش`;
-            return `آنلاین`;
+            return 'آنلاین';
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
@@ -746,14 +734,12 @@
 
             if (data) {
                 currentUser = data;
-                let updates = {};
+                let updates = { last_seen: new Date().toISOString() };
                 if(user.photo_url && !currentUser.avatar_url) {
                     updates.avatar_url = user.photo_url;
                     currentUser.avatar_url = user.photo_url;
                 }
-                if(Object.keys(updates).length > 0) {
-                    await supabaseClient.from('users').update(updates).eq('telegram_id', user.id);
-                }
+                await supabaseClient.from('users').update(updates).eq('telegram_id', user.id);
             } else {
                 const newUserData = { 
                     telegram_id: user.id, 
@@ -782,7 +768,7 @@
             await fetchUsersData();
             initRealtimeGlobal();
             
-            setInterval(updateMyHeartbeat, 15000);
+            setInterval(updateMyHeartbeat, 10000);
         }
 
         async function updateMyHeartbeat() {
@@ -970,7 +956,7 @@
                             </div>
                             <div class="flex-1">
                                 <h4 class="font-bold text-xs text-white">${u.name}</h4>
-                                <p class="text-[10px] text-slate-400 mt-0.5">${formatTelegramLastSeen(u.last_seen)}</p>
+                                <p class="text-[10px] text-slate-400 mt-0.5">آنلاین</p>
                             </div>
                         </div>
                     `;
@@ -1021,7 +1007,7 @@
             document.getElementById('modal-user-name').textContent = data.name;
             document.getElementById('modal-user-username').textContent = data.username ? `@${data.username}` : '';
             document.getElementById('modal-user-bio').textContent = data.bio || 'بدون بیوگرافی';
-            document.getElementById('modal-user-lastseen').textContent = formatTelegramLastSeen(data.last_seen);
+            document.getElementById('modal-user-lastseen').textContent = 'آنلاین';
 
             const avatarEl = document.getElementById('modal-user-avatar');
             if(data.avatar_url) {
@@ -1125,7 +1111,7 @@
             selectedTargetUser = data || { telegram_id: targetId, name: targetName };
             
             document.getElementById('chat-title').textContent = selectedTargetUser.name;
-            document.getElementById('chat-lastseen').textContent = formatTelegramLastSeen(selectedTargetUser.last_seen);
+            document.getElementById('chat-lastseen').textContent = 'آنلاین';
             
             const headerAvatar = document.getElementById('chat-header-avatar');
             if(selectedTargetUser.avatar_url) {
@@ -1390,9 +1376,7 @@
         function initRealtimeGlobal() {
             if(globalChannel) supabaseClient.removeChannel(globalChannel);
 
-            globalChannel = supabaseClient.channel('global-app-sync', {
-                config: { presence: { key: String(currentUser.telegram_id) } },
-            })
+            globalChannel = supabaseClient.channel('global-app-sync')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
                 fetchUsersData();
             })
@@ -1404,17 +1388,7 @@
                     showToast(`پیام جدید از ${m.sender_name}`);
                 }
             })
-            .on('presence', { event: 'sync' }, () => {
-                const state = globalChannel.presenceState();
-                onlineUsersMap = {};
-                Object.keys(state).forEach(key => { onlineUsersMap[Number(key)] = true; });
-                fetchUsersData();
-            })
-            .subscribe(async (status) => {
-                if (status === 'SUBSCRIBED') {
-                    await globalChannel.track({ online_at: new Date().toISOString() });
-                }
-            });
+            .subscribe();
         }
     </script>
 </body>
