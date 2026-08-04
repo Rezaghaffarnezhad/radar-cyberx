@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - رادار حضور لحظه‌ای (Presence)</title>
+    <title>تلسکوپ - رادار و چت زنده</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -85,7 +85,7 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ رادار زنده (حضور آنی)</span>
+                    <span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ رادار و چت آنلاین</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
@@ -96,12 +96,18 @@
             </div>
         </div>
 
-        <!-- دکمه‌های سمت راست -->
+        <!-- دکمه‌های کنترل سمت راست -->
         <div class="absolute bottom-6 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
+            <!-- دکمه چت عمومی -->
+            <button onclick="openChatModal('public', null, 'چت عمومی')" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10 relative" title="چت عمومی">
+                <svg class="w-6 h-6 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            </button>
+            <!-- دکمه لیست افراد آنلاین -->
             <button onclick="openUsersListModal()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10 relative" title="لیست افراد آنلاین">
                 <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 <span id="online-count-badge" class="absolute -top-1 -right-1 bg-emerald-500 text-slate-950 font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-900">0</span>
             </button>
+            <!-- دکمه موقعیت من -->
             <button onclick="centerToMyLocation()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10" title="موقعیت من">
                 <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </button>
@@ -129,6 +135,34 @@
         </div>
     </div>
 
+    <!-- مودال چت (عمومی و خصوصی) -->
+    <div id="chat-modal" class="hidden absolute inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeChatModalUI()">
+        <div class="tg-card w-full max-w-md h-[85vh] sm:h-[75vh] rounded-t-3xl sm:rounded-2xl flex flex-col shadow-2xl border border-slate-700 overflow-hidden" onclick="event.stopPropagation()">
+            <!-- هدر چت -->
+            <div class="px-4 py-3 bg-slate-900/90 border-b border-slate-700/60 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div id="chat-header-avatar" class="w-9 h-9 rounded-full bg-sky-600/30 border border-sky-400/30 flex items-center justify-center font-bold text-white text-xs overflow-hidden">💬</div>
+                    <div class="flex flex-col">
+                        <span id="chat-title" class="font-bold text-xs text-white">چت عمومی</span>
+                        <span class="text-[10px] text-emerald-400">آنلاین و زنده</span>
+                    </div>
+                </div>
+                <button onclick="closeChatModalUI()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
+            </div>
+
+            <!-- بدنه پیام‌ها -->
+            <div id="chat-messages-container" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-[#0e1621]">
+                <div class="text-center text-xs text-slate-500 py-4">در حال بارگذاری پیام‌ها...</div>
+            </div>
+
+            <!-- فرم ارسال پیام -->
+            <div class="p-3 bg-slate-900/90 border-t border-slate-700/60 flex items-center gap-2">
+                <input type="text" id="chat-input" placeholder="پیام خود را بنویسید..." onkeydown="if(event.key==='Enter') sendMessage()" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl py-2.5 px-3 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-500">
+                <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition shadow">ارسال</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://dxdskvkcmovotzxixxhd.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_3-rNuWmg9jAyPPQ89hE4ZQ_avo0wsPd';
@@ -152,6 +186,11 @@
         let activeRadiusKm = 15;
         let isFirstCenter = true;
         let radarChannel = null;
+        let messagesChannel = null;
+
+        // متغیرهای وضعیت چت فعال
+        let currentChatType = 'public'; // 'public' یا 'private'
+        let currentReceiverId = null;   // شناسه مخاطب در چت خصوصی
 
         const tgUser = tg?.initDataUnsafe?.user;
         let currentUser = { 
@@ -190,6 +229,8 @@
                 } else {
                     initPresenceChannel();
                 }
+
+                initMessagesRealtime();
 
             } catch (err) {
                 console.error("Initialization error:", err);
@@ -240,13 +281,8 @@
         function initPresenceChannel() {
             if (!supabaseClient) return;
 
-            // ایجاد کانال حضور لحظه‌ای (Presence)
             radarChannel = supabaseClient.channel('radar-online-users', {
-                config: {
-                    presence: {
-                        key: currentUser.id,
-                    },
-                },
+                config: { presence: { key: currentUser.id } },
             });
 
             radarChannel
@@ -256,7 +292,6 @@
                 })
                 .subscribe(async (status) => {
                     if (status === 'SUBSCRIBED') {
-                        // ارسال اطلاعات اولیه کاربر به کانال حضور
                         await radarChannel.track({
                             id: currentUser.id,
                             name: currentUser.name,
@@ -274,12 +309,11 @@
             markersLayerGroup.clearLayers();
             onlineUsersList = [];
 
-            // استخراج تمام کاربران متصل از state کانال
             let allActiveUsers = [];
             Object.keys(state).forEach(presenceId => {
                 let userDatas = state[presenceId];
                 if (userDatas && userDatas.length > 0) {
-                    allActiveUsers.push(userDatas[0]); // آخرین وضعیت کاربر
+                    allActiveUsers.push(userDatas[0]);
                 }
             });
 
@@ -303,9 +337,7 @@
                 onlineUsersList.push({ ...user, distance: distanceKm, isMe: false });
 
                 const userInitial = user.name ? user.name.charAt(0) : 'ک';
-                const avatarHtml = user.avatar_url 
-                    ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
-                    : userInitial;
+                const avatarHtml = user.avatar_url ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` : userInitial;
 
                 const pinHtml = `<div class="other-user-pin">${avatarHtml}<div class="online-dot"></div></div>`;
                 
@@ -317,7 +349,14 @@
                 });
 
                 const marker = L.marker([user.lat, user.lng], { icon: userIcon });
-                marker.bindPopup(`<div style="direction: rtl; font-family: 'Vazirmatn'; text-align: right;"><b style="color: #10b981;">${user.name || 'کاربر'} (آنلاین)</b><br><span style="font-size: 11px; color: #64748b;">@${user.username || 'بدون نام'}</span><br><span style="font-size: 11px; color: #10b981;">فاصله: ${distanceKm.toFixed(1)} کیلومتر</span></div>`);
+                marker.bindPopup(`
+                    <div style="direction: rtl; font-family: 'Vazirmatn'; text-align: right;">
+                        <b style="color: #10b981;">${user.name || 'کاربر'} (آنلاین)</b><br>
+                        <span style="font-size: 11px; color: #64748b;">@${user.username || 'بدون نام'}</span><br>
+                        <span style="font-size: 11px; color: #10b981;">فاصله: ${distanceKm.toFixed(1)} کیلومتر</span><br>
+                        <button onclick="openChatModal('private', '${user.id}', '${user.name}', '${user.avatar_url || ''}')" style="margin-top:6px; background:#2563eb; color:#fff; border:none; padding:4px 8px; border-radius:6px; font-size:10px; cursor:pointer;">💬 ارسال پیام خصوصی</button>
+                    </div>
+                `);
                 
                 markersLayerGroup.addLayer(marker);
             });
@@ -330,33 +369,143 @@
             }
         }
 
+        // --- مدیریت چت‌ها ---
+        function openChatModal(type, receiverId, receiverName, receiverAvatar = '') {
+            currentChatType = type;
+            currentReceiverId = receiverId;
+
+            document.getElementById('chat-title').textContent = type === 'public' ? 'چت عمومی' : `گفتگو با ${receiverName}`;
+            const headerAvatar = document.getElementById('chat-header-avatar');
+            if (type === 'public') {
+                headerAvatar.innerHTML = '💬';
+            } else if (receiverAvatar) {
+                headerAvatar.innerHTML = `<img src="${receiverAvatar}" class="w-full h-full object-cover">`;
+            } else {
+                headerAvatar.textContent = receiverName ? receiverName.charAt(0) : '👤';
+            }
+
+            document.getElementById('users-list-modal').classList.add('hidden');
+            document.getElementById('chat-modal').classList.remove('hidden');
+            fetchMessages();
+        }
+
+        function closeChatModalUI() {
+            document.getElementById('chat-modal').classList.add('hidden');
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text || !supabaseClient) return;
+
+            input.value = '';
+
+            try {
+                await supabaseClient.from('messages').insert({
+                    sender_id: currentUser.id,
+                    sender_name: currentUser.name,
+                    sender_avatar: currentUser.avatar_url,
+                    receiver_id: currentChatType === 'public' ? null : currentReceiverId,
+                    message: text
+                });
+            } catch (err) {
+                console.error("Error sending message:", err);
+            }
+        }
+
+        async function fetchMessages() {
+            if (!supabaseClient) return;
+            try {
+                let query = supabaseClient.from('messages').select('*').order('created_at', { ascending: true });
+
+                if (currentChatType === 'public') {
+                    query = query.is('receiver_id', null);
+                } else {
+                    query = query.or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${currentReceiverId}),and(sender_id.eq.${currentReceiverId},receiver_id.eq.${currentUser.id})`);
+                }
+
+                const { data, error } = await query;
+                if (error) return;
+                if (data) {
+                    renderMessages(data);
+                }
+            } catch (err) {
+                console.error("Error fetching messages:", err);
+            }
+        }
+
+        function initMessagesRealtime() {
+            if (!supabaseClient) return;
+
+            supabaseClient
+                .channel('public:messages')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+                    const newMsg = payload.new;
+                    // اگر مودال چت باز است، پیام جدید را بارگذاری مجدد کن
+                    const chatModal = document.getElementById('chat-modal');
+                    if (!chatModal.classList.contains('hidden')) {
+                        if (currentChatType === 'public' && !newMsg.receiver_id) {
+                            fetchMessages();
+                        } else if (currentChatType === 'private' && (
+                            (newMsg.sender_id === currentUser.id && newMsg.receiver_id === currentReceiverId) ||
+                            (newMsg.sender_id === currentReceiverId && newMsg.receiver_id === currentUser.id)
+                        )) {
+                            fetchMessages();
+                        }
+                    }
+                })
+                .subscribe();
+        }
+
+        function renderMessages(messages) {
+            const container = document.getElementById('chat-messages-container');
+            container.innerHTML = '';
+
+            if (messages.length === 0) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-6">هنوز پیامی ارسال نشده است. اولین پیام را شما بفرستید!</div>`;
+                return;
+            }
+
+            messages.forEach(msg => {
+                const isMe = String(msg.sender_id) === String(currentUser.id);
+                const alignClass = isMe ? 'items-end' : 'items-start';
+                const bubbleBg = isMe ? 'bg-blue-600 text-white rounded-l-2xl rounded-tr-2xl' : 'bg-slate-800 text-slate-100 rounded-r-2xl rounded-tl-2xl';
+                const senderNameLabel = !isMe && currentChatType === 'public' ? `<span class="text-[10px] text-emerald-400 font-bold mb-0.5">${msg.sender_name || 'کاربر'}</span>` : '';
+
+                const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                container.innerHTML += `
+                    <div class="flex flex-col ${alignClass} max-w-[85%] mx-auto w-full">
+                        ${senderNameLabel}
+                        <div class="${bubbleBg} px-3.5 py-2 text-xs shadow leading-relaxed break-words">
+                            ${escapeHtml(msg.message)}
+                            <div class="text-[9px] opacity-70 text-left mt-1">${timeStr}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
             const R = 6371; 
             const dLat = deg2rad(lat2 - lat1);
             const dLon = deg2rad(lon2 - lon1);
-            const a = 
-                Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-                Math.sin(dLon/2) * Math.sin(dLon/2); 
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
             return R * c;
         }
 
         function deg2rad(deg) { return deg * (Math.PI/180); }
-
-        function centerToMyLocation() {
-            if(map) map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
-        }
-
-        function openUsersListModal() {
-            document.getElementById('user-search-input').value = '';
-            renderUsersList(onlineUsersList);
-            document.getElementById('users-list-modal').classList.remove('hidden');
-        }
-
-        function closeUsersListModal() {
-            document.getElementById('users-list-modal').classList.add('hidden');
-        }
+        function centerToMyLocation() { if(map) map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true }); }
+        function openUsersListModal() { renderUsersList(onlineUsersList); document.getElementById('users-list-modal').classList.remove('hidden'); }
+        function closeUsersListModal() { document.getElementById('users-list-modal').classList.add('hidden'); }
 
         function filterUsersList(query) {
             const q = query.trim().toLowerCase();
@@ -379,12 +528,12 @@
             usersArray.forEach(user => {
                 const userInitial = user.name ? user.name.charAt(0) : 'ک';
                 const avatarHtml = user.avatar_url ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` : userInitial;
-                const badgeHtml = user.isMe ? `<span class="text-[9px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded mr-1.5">شما (این اکانت)</span>` : `<span class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded mr-1.5">آنلاین</span>`;
-                const distanceBadge = user.isMe ? `<span class="text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2 py-1 rounded-lg">موقعیت من</span>` : `<span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg">${user.distance.toFixed(1)} کیلومتر</span>`;
+                const badgeHtml = user.isMe ? `<span class="text-[9px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded mr-1.5">شما</span>` : `<span class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded mr-1.5">آنلاین</span>`;
+                const actionBtn = user.isMe ? '' : `<button onclick="openChatModal('private', '${user.id}', '${user.name}', '${user.avatar_url || ''}')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1.5 rounded-lg text-[10px] font-medium transition">چت</button>`;
 
                 container.innerHTML += `
-                    <div onclick="focusOnUser(${user.lat}, ${user.lng})" class="flex items-center justify-between p-2.5 bg-slate-800/60 hover:bg-slate-800 rounded-xl cursor-pointer transition border border-slate-700/50">
-                        <div class="flex items-center gap-3">
+                    <div class="flex items-center justify-between p-2.5 bg-slate-800/60 hover:bg-slate-800 rounded-xl transition border border-slate-700/50">
+                        <div class="flex items-center gap-3 cursor-pointer" onclick="if(!${user.isMe}) { focusOnUser(${user.lat}, ${user.lng}); }">
                             <div class="w-10 h-10 rounded-full bg-emerald-600/30 border border-emerald-400/30 flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow relative">
                                 ${avatarHtml}
                                 <div class="online-dot"></div>
@@ -394,10 +543,10 @@
                                     <span class="font-bold text-xs text-white">${user.name || 'کاربر'}</span>
                                     ${badgeHtml}
                                 </div>
-                                <span class="text-[10px] text-slate-400">@${user.username || 'بدون نام کاربری'}</span>
+                                <span class="text-[10px] text-slate-400">@${user.username || 'بدون نام'}</span>
                             </div>
                         </div>
-                        <div class="text-left">${distanceBadge}</div>
+                        <div>${actionBtn}</div>
                     </div>
                 `;
             });
