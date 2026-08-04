@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلگرام - نقشه و چت زنده</title>
+    <title>تلگرام - نقشه و رادار زنده</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -59,6 +59,7 @@
             100% { transform: scale(0.8); opacity: 0.9; box-shadow: 0 0 0 0 rgba(66, 133, 244, 0); }
         }
 
+        /* شکل لوکیشن دایره‌ای افراد آنلاین روی مپ */
         .other-user-pin {
             width: 46px;
             height: 46px;
@@ -115,6 +116,25 @@
             transform: translateX(-50%);
         }
         .chat-3d-btn:active { transform: translateX(-50%) scale(0.94); }
+
+        /* غلطک موس سه بعدی برای تنظیم شعاع */
+        .mouse-wheel-roller {
+            background: linear-gradient(145deg, #1c2733, #141c24);
+            border: 2px solid #2a3a4d;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.6), 0 8px 20px rgba(0,0,0,0.4);
+            cursor: ns-resize;
+            user-select: none;
+            touch-action: none;
+        }
+        .roller-wheel-inner {
+            width: 14px;
+            height: 26px;
+            background: linear-gradient(90deg, #18222d, #32445c, #18222d);
+            border-radius: 7px;
+            border: 1px solid #5288c1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            transition: transform 0.05s ease;
+        }
 
         .google-search-bar-container {
             display: flex;
@@ -204,6 +224,7 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
+                    <!-- نمایش افراد آنلاین -->
                     <div class="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition" onclick="openOnlineUsersModal()">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                         <span id="top-online-count" class="text-[11px] font-bold text-emerald-400">0 آنلاین</span>
@@ -213,7 +234,7 @@
                         <button class="google-search-icon-btn" onclick="toggleGoogleSearchExpansion()">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </button>
-                        <input id="google-map-search-input" oninput="handleGoogleMapSearchInput(this.value)" type="text" placeholder="جستجوی مکان یا آدرس..." class="google-search-text-input">
+                        <input id="google-map-search-input" oninput="handleGoogleMapSearchInput(this.value)" type="text" placeholder="جستجوی مکان..." class="google-search-text-input">
                         <div id="google-suggestions-list" class="google-suggestions-dropdown"></div>
                     </div>
                 </div>
@@ -229,10 +250,13 @@
             </div>
         </div>
 
-        <!-- ابزارک نمایش و کنترل شعاع با غلطک موس (Scroll Wheel) -->
-        <div class="absolute bottom-24 left-4 z-10 glass-box px-3 py-2 rounded-2xl flex flex-col items-center gap-1 shadow-2xl" title="برای تغییر شعاع، غلطک موس را روی این قسمت بچرخانید">
+        <!-- ابزارک غلطک موس سه بعدی برای تغییر شعاع -->
+        <div class="absolute bottom-24 left-4 z-10 glass-box px-3 py-2 rounded-2xl flex flex-col items-center gap-1.5 shadow-2xl">
             <span class="text-[10px] text-slate-400 font-bold">شعاع</span>
-            <span id="current-radius-display" class="text-xs font-bold text-[#5288c1]">15 km</span>
+            <div id="radius-roller-widget" class="mouse-wheel-roller w-9 h-12 rounded-xl flex items-center justify-center" title="با غلطک موس یا کشیدن بالا/پایین شعاع را تنظیم کنید">
+                <div id="roller-inner-bar" class="roller-wheel-inner"></div>
+            </div>
+            <span id="current-radius-display" class="text-[11px] font-bold text-[#5288c1]">15 km</span>
         </div>
 
         <div class="absolute bottom-24 right-4 z-10 pointer-events-auto">
@@ -283,7 +307,7 @@
         </div>
     </div>
 
-    <!-- لیست افراد حاضر روی نقشه یا آنلاین -->
+    <!-- لیست افراد حاضر و آنلاین -->
     <div id="online-users-modal" class="hidden absolute inset-0 tg-bg z-40 flex flex-col">
         <div class="tg-header px-4 py-3 flex items-center justify-between">
             <h3 class="font-bold text-xs text-white">افراد حاضر و آنلاین</h3>
@@ -444,10 +468,9 @@
         let isVoiceRecordingActive = false;
         let voiceTimer = null;
         let cachedMessages = {};
-        let isPickingLocation = false;
         let searchDebounceTimer = null;
 
-        // تکمیل خودکار کامل از اطلاعات واقعی اکانت تلگرام شخص
+        // تکمیل خودکار کامل از اطلاعات پروفایل تلگرام خود شخص
         const tgUser = tg?.initDataUnsafe?.user;
         const user = { 
             id: tgUser?.id || Math.floor(Math.random() * 900000) + 100000, 
@@ -477,13 +500,6 @@
         window.addEventListener('popstate', () => { handleMobileBackButton(); });
 
         function handleMobileBackButton() {
-            if(isPickingLocation) {
-                isPickingLocation = false;
-                document.getElementById('map').style.cursor = '';
-                showToast("انتخاب لوکیشن لغو شد");
-                return;
-            }
-
             if(!document.getElementById('chat-window').classList.contains('hidden')) {
                 backToChatHub();
                 return;
@@ -577,23 +593,53 @@
             showToast("موقعیت پیدا و ثبت شد");
         }
 
-        // تغییر تنظیم شعاع به وسیله‌ی غلطک موس (Scroll Wheel) روی ابزارک صفحه
+        // پیاده‌سازی غلطک موس (Scroll Wheel) و تعاملی برای تنظیم شعاع
         window.addEventListener('DOMContentLoaded', () => {
-            const radiusWidget = document.getElementById('current-radius-display').parentElement;
-            if(radiusWidget) {
-                radiusWidget.addEventListener('wheel', (e) => {
+            const rollerWidget = document.getElementById('radius-roller-widget');
+            let isDraggingRoller = false;
+            let startY = 0;
+
+            if(rollerWidget) {
+                rollerWidget.addEventListener('wheel', (e) => {
                     e.preventDefault();
                     if(e.deltaY < 0) {
                         activeRadiusKm = Math.min(50, activeRadiusKm + 0.5);
                     } else {
                         activeRadiusKm = Math.max(0.5, activeRadiusKm - 0.5);
                     }
-                    document.getElementById('current-radius-display').textContent = `${activeRadiusKm} km`;
-                    updateRadiusCircleOnMap();
-                    renderUsersOnMap();
+                    updateRadiusRollerUI();
                 }, { passive: false });
+
+                rollerWidget.addEventListener('mousedown', (e) => {
+                    isDraggingRoller = true;
+                    startY = e.clientY;
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if(!isDraggingRoller) return;
+                    const deltaY = startY - e.clientY;
+                    if(Math.abs(deltaY) > 8) {
+                        if(deltaY > 0) activeRadiusKm = Math.min(50, activeRadiusKm + 0.5);
+                        else activeRadiusKm = Math.max(0.5, activeRadiusKm - 0.5);
+                        startY = e.clientY;
+                        updateRadiusRollerUI();
+                    }
+                });
+
+                window.addEventListener('mouseup', () => { isDraggingRoller = false; });
             }
         });
+
+        function updateRadiusRollerUI() {
+            document.getElementById('current-radius-display').textContent = `${activeRadiusKm} km`;
+            const rollerInner = document.getElementById('roller-inner-bar');
+            if(rollerInner) {
+                const percentage = (activeRadiusKm / 50) * 16;
+                rollerInner.style.transform = `translateY(${percentage - 8}px)`;
+            }
+            updateRadiusCircleOnMap();
+            renderUsersOnMap();
+        }
 
         function centerToMyLocation() {
             if (navigator.geolocation) {
@@ -613,6 +659,8 @@
         function updateRadiusCircleOnMap() {
             if(!map) return;
             if(radiusCircle) map.removeLayer(radiusCircle);
+            
+            // شکل لوکیشن دایره
             radiusCircle = L.circle([currentCoords.lat, currentCoords.lng], {
                 radius: activeRadiusKm * 1000,
                 color: '#1a73e8',
@@ -758,6 +806,7 @@
             }
         }
 
+        // نمایش افراد آنلاین روی مپ با لوکیشن فرد
         function renderUsersOnMap() {
             if(!map || !currentUser) return;
 
@@ -799,7 +848,7 @@
             document.getElementById('top-online-count').textContent = `${onlineCount} آنلاین`;
         }
 
-        // نمایش دادن لیست دقیق افراد حاضر در شعاع و آنلاین
+        // نمایش افراد آنلاین در لیست مودال
         function openOnlineUsersModal() {
             const container = document.getElementById('online-users-list-container');
             const now = new Date();
@@ -824,11 +873,11 @@
                         </div>
                         <div class="flex-1">
                             <h4 class="font-bold text-xs text-white">${u.name}${isMeLabel}</h4>
-                            <p class="text-[10px] text-emerald-400 mt-0.5">${distanceVal} • حاضر در اپ</p>
+                            <p class="text-[10px] text-emerald-400 mt-0.5">${distanceVal} • آنلاین</p>
                         </div>
                     </div>
                 `;
-            }).join('') : '<div class="text-center text-xs text-slate-400 py-6">هیچ کاربر دیگری در این شعاع حاضر نیست.</div>';
+            }).join('') : '<div class="text-center text-xs text-slate-400 py-6">هیچ کاربر آنلاین دیگری در این شعاع حاضر نیست.</div>';
 
             document.getElementById('online-users-modal').classList.remove('hidden');
         }
@@ -1054,7 +1103,7 @@
             const savedAvatar = localStorage.getItem('saved_user_avatar_' + currentUser.telegram_id) || currentUser?.avatar_url;
             if(savedAvatar) {
                 document.getElementById('avatar-fullscreen-img').src = savedAvatar;
-                document.getElementById('avatar-modal').classList.add('hidden');
+                document.getElementById('avatar-modal').classList.remove('hidden');
             }
         }
 
