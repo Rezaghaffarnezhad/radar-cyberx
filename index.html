@@ -27,53 +27,53 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
-        /* نشانگر موقعیت مکانی من با سایه متحرک بازشونده (Pulse) */
+        /* نشانگر موقعیت مکانی من دقیقاً مشابه الگوی گوگل مپ با پالس حرکتی دوگانه */
         .my-animated-marker {
-            width: 64px;
-            height: 64px;
+            width: 72px;
+            height: 72px;
             border-radius: 50%;
-            background: rgba(66, 133, 244, 0.15);
+            background: rgba(66, 133, 244, 0.18);
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: google-radar-pulse 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+            animation: google-radar-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
         }
         .my-marker-inner {
-            width: 38px;
-            height: 38px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             border: 3px solid #ffffff;
             overflow: hidden;
-            background: #4285f4;
+            background: #1a73e8;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
             color: white;
-            font-size: 13px;
-            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.6);
+            font-size: 14px;
+            box-shadow: 0 4px 18px rgba(26, 115, 232, 0.65);
         }
         @keyframes google-radar-pulse {
-            0% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.6), 0 0 0 0 rgba(66, 133, 244, 0.4); }
-            50% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(66, 133, 244, 0), 0 0 0 35px rgba(66, 133, 244, 0.15); }
-            100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0), 0 0 0 0 rgba(66, 133, 244, 0); }
+            0% { transform: scale(0.8); opacity: 0.9; box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7); }
+            70% { transform: scale(1.18); opacity: 0.3; box-shadow: 0 0 0 25px rgba(66, 133, 244, 0); }
+            100% { transform: scale(0.8); opacity: 0.9; box-shadow: 0 0 0 0 rgba(66, 133, 244, 0); }
         }
 
-        /* نشانگر کاربران دیگر روی نقشه با عکس پروفایل */
+        /* نشانگر کاربران دیگر روی نقشه الهام گرفته از استایل پین‌های گوگل */
         .other-user-pin {
-            width: 44px;
-            height: 44px;
+            width: 46px;
+            height: 46px;
             border-radius: 50%;
-            background: #17212b;
-            border: 2.5px solid #22c55e;
+            background: #ffffff;
+            border: 3px solid #1a73e8;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            color: white;
+            color: #1a73e8;
             font-size: 13px;
             overflow: hidden;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
             cursor: pointer;
             transition: transform 0.2s ease;
         }
@@ -97,7 +97,7 @@
             width: 14px;
             height: 14px;
             border-radius: 50%;
-            background: #2563eb;
+            background: #1a73e8;
             cursor: pointer;
         }
 
@@ -510,7 +510,6 @@
         let isPickingLocation = false;
         let searchDebounceTimer = null;
 
-        // دریافت اطلاعات کاربر مستقیم از تلگرام (در صورت اجرا خارج از تلگرام از مقدار تستی استفاده می‌شود)
         const tgUser = tg?.initDataUnsafe?.user;
         const user = { 
             id: tgUser?.id || Math.floor(Math.random() * 900000) + 100000, 
@@ -704,10 +703,10 @@
             if(radiusCircle) map.removeLayer(radiusCircle);
             radiusCircle = L.circle([currentCoords.lat, currentCoords.lng], {
                 radius: activeRadiusKm * 1000,
-                color: '#4285f4',
-                weight: 1.5,
-                fillColor: '#4285f4',
-                fillOpacity: 0.12
+                color: '#1a73e8',
+                weight: 1.8,
+                fillColor: '#1a73e8',
+                fillOpacity: 0.1
             }).addTo(map);
 
             if(myLocationMarker) map.removeLayer(myLocationMarker);
@@ -715,7 +714,7 @@
             const myAvatarInner = currentUser?.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : initial;
             
             const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner">${myAvatarInner}</div></div>`;
-            const myIcon = L.divIcon({ html: myHtml, iconSize: [64, 64], iconAnchor: [32, 32] });
+            const myIcon = L.divIcon({ html: myHtml, iconSize: [72, 72], iconAnchor: [36, 36] });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
 
@@ -780,7 +779,6 @@
 
             if (data) {
                 currentUser = data;
-                // اگر کاربر در تلگرام عکس یا نام جدیدی داشت و در دیتابیس ثبت نشده بود، اتوماتیک آپدیت کن
                 let updates = {};
                 if(user.photo_url && !currentUser.avatar_url) {
                     updates.avatar_url = user.photo_url;
@@ -879,7 +877,7 @@
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : initial;
                 const html = `<div class="other-user-pin">${avatarInner}</div>`;
                 
-                const icon = L.divIcon({ html, iconSize: [44, 44], iconAnchor: [22, 22] });
+                const icon = L.divIcon({ html, iconSize: [46, 46], iconAnchor: [23, 23] });
                 const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
                 
                 marker.on('click', () => {
