@@ -115,7 +115,7 @@
         }
         .chat-3d-btn:active { transform: translateX(-50%) scale(0.94); }
 
-        /* غلطک مکانیکی با بدنه ثابت و استوانه چرخان شبیه غلطک موس */
+        /* غلطک مکانیکی حرفه‌ای شبیه غلطک موس */
         .mouse-wheel-roller {
             background: #111822 !important;
             border: 2px solid #233142 !important;
@@ -267,7 +267,7 @@
             </div>
         </div>
 
-        <!-- ابزارک غلطک با استوانه چرخان و صدای آچار جغجغه -->
+        <!-- ابزارک غلطک با صدای آچار جغجغه -->
         <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center gap-1">
             <div id="radius-roller-widget" onclick="openRadiusSettingsModal(event)" class="mouse-wheel-roller w-11 h-20 flex items-center justify-center" title="برای تنظیم شعاع کلیک کنید">
                 <div id="roller-inner-bar" class="roller-wheel-inner"></div>
@@ -522,17 +522,17 @@
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(1100, now);
-                osc.frequency.exponentialRampToValueAtTime(180, now + 0.025);
+                osc.frequency.setValueAtTime(1200, now);
+                osc.frequency.exponentialRampToValueAtTime(150, now + 0.03);
                 
-                gain.gain.setValueAtTime(0.2, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+                gain.gain.setValueAtTime(0.22, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
                 
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 
                 osc.start(now);
-                osc.stop(now + 0.025);
+                osc.stop(now + 0.03);
             } catch (e) {}
         }
 
@@ -973,7 +973,7 @@
             
             usersList.forEach(u => {
                 const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
-                const isRecent = lastSeenDate && (now - lastSeenDate < 600000);
+                const isRecent = lastSeenDate && (now - lastSeenDate < 900000);
                 const distanceM = calculateDistanceMeters(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
                 
                 if((onlineUsersMap[u.telegram_id] || isRecent) && (distanceM <= activeRadiusMeters || u.telegram_id === currentUser?.telegram_id)) {
@@ -991,7 +991,7 @@
             
             const activeUsersInRadius = activeUsersGlobalList.filter(u => {
                 const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
-                const isRecent = lastSeenDate && (now - lastSeenDate < 600000);
+                const isRecent = lastSeenDate && (now - lastSeenDate < 900000);
                 const distanceM = calculateDistanceMeters(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
                 return (onlineUsersMap[u.telegram_id] || isRecent || u.telegram_id === currentUser?.telegram_id) && (distanceM <= activeRadiusMeters || u.telegram_id === currentUser?.telegram_id);
             });
@@ -1239,7 +1239,7 @@
             const savedAvatar = localStorage.getItem('saved_user_avatar_' + currentUser.telegram_id) || currentUser?.avatar_url;
             if(savedAvatar) {
                 document.getElementById('avatar-fullscreen-img').src = savedAvatar;
-                document.getElementById('avatar-modal').classList.add('hidden') ? null : document.getElementById('avatar-modal').classList.remove('hidden');
+                document.getElementById('avatar-modal').classList.remove('hidden');
             }
         }
 
