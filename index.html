@@ -72,7 +72,6 @@
             border-radius: 50%;
         }
 
-        /* استایل حباب‌های پیام سبک تلگرام */
         .msg-bubble-out {
             background-color: #2b5278;
             color: #ffffff;
@@ -165,7 +164,7 @@
                 <div class="text-center text-xs text-slate-500 py-4">بارگذاری پیام‌ها...</div>
             </div>
 
-            <!-- باکس ریپلی (در صورت پاسخ به پیام) -->
+            <!-- باکس ریپلی -->
             <div id="reply-preview-box" class="hidden px-4 py-2 bg-[#17212b] border-t border-slate-700/50 flex items-center justify-between">
                 <div class="flex flex-col border-r-2 border-blue-400 pr-2">
                     <span id="reply-sender-name" class="text-[10px] text-blue-400 font-bold">پاسخ به ...</span>
@@ -176,7 +175,7 @@
 
             <!-- فرم ارسال پیام تلگرامی -->
             <div class="p-3 bg-[#17212b] border-t border-slate-700/60 flex items-center gap-2">
-                <input type="text" id="chat-input" placeholder="پیام..." oninput="handleTypingInput()" onkeydown="if(event.key==='Enter') sendMessage()" class="flex-1 bg-[#212f3d] border border-transparent focus:border-blue-500 rounded-xl py-2.5 px-4 text-xs text-white placeholder-slate-400 focus:outline-none">
+                <input type="text" id="chat-input" placeholder="پیام..." onkeydown="if(event.key==='Enter') sendMessage()" class="flex-1 bg-[#212f3d] border border-transparent focus:border-blue-500 rounded-xl py-2.5 px-4 text-xs text-white placeholder-slate-400 focus:outline-none">
                 <button onclick="sendMessage()" class="w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl flex items-center justify-center transition shadow shrink-0">
                     <svg class="w-4 h-4 transform rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                 </button>
@@ -202,6 +201,7 @@
 
         let map = null, myLocationMarker = null, radiusCircle = null;
         let markersLayerGroup = L.layerGroup(); 
+        let onlineUsersMap = new Map(); // نگهداری سریع کاربران آنلاین برای دسترسی آنی
         let onlineUsersList = []; 
         let currentCoords = { lat: 35.6892, lng: 51.3890 }; 
         let activeRadiusKm = 15;
@@ -211,7 +211,7 @@
         let currentChatType = 'public';
         let currentReceiverId = null;
         let replyingToMessage = null;
-        let typingTimeout = null;
+        let messagesCache = new Map(); // کش حافظه موقت برای سرعت بالای بارگذاری PV
 
         const tgUser = tg?.initDataUnsafe?.user;
         let currentUser = { 
@@ -242,9 +242,7 @@
                             updateMapElements();
                             initPresenceChannel();
                         },
-                        (error) => {
-                            initPresenceChannel();
-                        },
+                        () => { initPresenceChannel(); },
                         { enableHighAccuracy: true, timeout: 10000 }
                     );
                 } else {
@@ -252,51 +250,42 @@
                 }
 
                 initMessagesRealtime();
-
             } catch (err) {
                 console.error("Initialization error:", err);
             }
         });
 
         function setupUserUI() {
-            try {
-                document.getElementById('top-my-name').textContent = currentUser.name;
-                const avatarEl = document.getElementById('top-my-avatar');
-                if(currentUser.avatar_url) {
-                    avatarEl.innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">`;
-                } else {
-                    avatarEl.textContent = currentUser.name.charAt(0) || 'ک';
-                }
-            } catch (e) {
-                console.warn("UI setup warning:", e);
+            document.getElementById('top-my-name').textContent = currentUser.name;
+            const avatarEl = document.getElementById('top-my-avatar');
+            if(currentUser.avatar_url) {
+                avatarEl.innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">`;
+            } else {
+                avatarEl.textContent = currentUser.name.charAt(0) || 'ک';
             }
         }
 
         function updateMapElements() {
-            try {
-                if(!map) return;
-                if(radiusCircle) map.removeLayer(radiusCircle);
-                if(myLocationMarker) map.removeLayer(myLocationMarker);
+            if(!map) return;
+            if(radiusCircle) map.removeLayer(radiusCircle);
+            if(myLocationMarker) map.removeLayer(myLocationMarker);
 
-                radiusCircle = L.circle([currentCoords.lat, currentCoords.lng], {
-                    radius: activeRadiusKm * 1000,
-                    color: '#3b82f6',
-                    weight: 1.5,
-                    fillColor: '#3b82f6',
-                    fillOpacity: 0.08
-                }).addTo(map);
+            radiusCircle = L.circle([currentCoords.lat, currentCoords.lng], {
+                radius: activeRadiusKm * 1000,
+                color: '#3b82f6',
+                weight: 1.5,
+                fillColor: '#3b82f6',
+                fillOpacity: 0.08
+            }).addTo(map);
 
-                const customIcon = L.divIcon({ 
-                    html: '<div class="animated-my-pin"></div>', 
-                    iconSize: [26, 26], 
-                    iconAnchor: [13, 13], 
-                    className: '' 
-                });
+            const customIcon = L.divIcon({ 
+                html: '<div class="animated-my-pin"></div>', 
+                iconSize: [26, 26], 
+                iconAnchor: [13, 13], 
+                className: '' 
+            });
 
-                myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon: customIcon, zIndexOffset: 1000 }).addTo(map);
-            } catch (err) {
-                console.error("Error updating map elements:", err);
-            }
+            myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon: customIcon, zIndexOffset: 1000 }).addTo(map);
         }
 
         function initPresenceChannel() {
@@ -329,6 +318,7 @@
         function processPresenceState(state) {
             markersLayerGroup.clearLayers();
             onlineUsersList = [];
+            onlineUsersMap.clear();
 
             let allActiveUsers = [];
             Object.keys(state).forEach(presenceId => {
@@ -338,19 +328,12 @@
                 }
             });
 
-            onlineUsersList.push({
-                id: currentUser.id,
-                name: currentUser.name,
-                username: currentUser.username,
-                avatar_url: currentUser.avatar_url,
-                lat: currentCoords.lat,
-                lng: currentCoords.lng,
-                distance: 0,
-                isMe: true
-            });
+            onlineUsersMap.set(currentUser.id, { ...currentUser, online_at: new Date().toISOString(), isOnline: true });
 
             allActiveUsers.forEach(user => {
                 const userIdStr = String(user.id);
+                onlineUsersMap.set(userIdStr, { ...user, isOnline: true });
+
                 if (userIdStr === String(currentUser.id)) return;
                 if (!user.lat || !user.lng) return;
 
@@ -361,13 +344,7 @@
                 const avatarHtml = user.avatar_url ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` : userInitial;
 
                 const pinHtml = `<div class="other-user-pin">${avatarHtml}<div class="online-dot"></div></div>`;
-                
-                const userIcon = L.divIcon({
-                    html: pinHtml,
-                    iconSize: [42, 42],
-                    iconAnchor: [21, 21],
-                    className: ''
-                });
+                const userIcon = L.divIcon({ html: pinHtml, iconSize: [42, 42], iconAnchor: [21, 21], className: '' });
 
                 const marker = L.marker([user.lat, user.lng], { icon: userIcon });
                 marker.bindPopup(`
@@ -378,11 +355,15 @@
                         <button onclick="openChatModal('private', '${user.id}', '${user.name}', '${user.avatar_url || ''}')" style="margin-top:6px; background:#2b5278; color:#fff; border:none; padding:4px 10px; border-radius:6px; font-size:11px; cursor:pointer;">💬 ارسال پیام</button>
                     </div>
                 `);
-                
                 markersLayerGroup.addLayer(marker);
             });
 
-            document.getElementById('online-count-badge').textContent = onlineUsersList.length;
+            document.getElementById('online-count-badge').textContent = onlineUsersList.length + 1;
+
+            // اگر مودال چت باز است، وضعیت هدر آنی آپدیت شود
+            if (currentChatType === 'private' && currentReceiverId) {
+                updateChatHeaderStatus(currentReceiverId);
+            }
 
             const modal = document.getElementById('users-list-modal');
             if (!modal.classList.contains('hidden')) {
@@ -390,27 +371,56 @@
             }
         }
 
-        // --- مدیریت چت پیشرفته تلگرامی ---
+        // --- مدیریت چت پیشرفته و آپدیت وضعیت فعالیت (آنلاین / آخرین بازدید) ---
         function openChatModal(type, receiverId, receiverName, receiverAvatar = '') {
             currentChatType = type;
             currentReceiverId = receiverId;
             cancelReply();
 
             document.getElementById('chat-title').textContent = type === 'public' ? 'چت عمومی' : receiverName;
-            document.getElementById('chat-subtitle').textContent = type === 'public' ? 'گفتگوی همگانی' : 'آنلاین';
             
             const headerAvatar = document.getElementById('chat-header-avatar');
             if (type === 'public') {
                 headerAvatar.innerHTML = '💬';
-            } else if (receiverAvatar) {
-                headerAvatar.innerHTML = `<img src="${receiverAvatar}" class="w-full h-full object-cover">`;
+                document.getElementById('chat-subtitle').textContent = 'گفتگوی همگانی';
             } else {
-                headerAvatar.textContent = receiverName ? receiverName.charAt(0) : '👤';
+                headerAvatar.innerHTML = receiverAvatar ? `<img src="${receiverAvatar}" class="w-full h-full object-cover">` : (receiverName ? receiverName.charAt(0) : '👤');
+                updateChatHeaderStatus(receiverId);
             }
 
             document.getElementById('users-list-modal').classList.add('hidden');
             document.getElementById('chat-modal').classList.remove('hidden');
-            fetchMessages();
+
+            // بارگذاری آنی از کش برای سرعت بالا
+            const cacheKey = type === 'public' ? 'public' : receiverId;
+            if (messagesCache.has(cacheKey)) {
+                renderMessages(messagesCache.get(cacheKey));
+            }
+            
+            fetchMessages(); // دریافت نسخه جدید از سرور در پس‌زمینه
+        }
+
+        function updateChatHeaderStatus(receiverId) {
+            const subtitleEl = document.getElementById('chat-subtitle');
+            const targetUser = onlineUsersMap.get(String(receiverId));
+
+            if (targetUser && targetUser.isOnline) {
+                subtitleEl.textContent = 'آنلاین';
+                subtitleEl.className = 'text-[10px] text-emerald-400 font-medium';
+            } else {
+                // اگر آفلاین بود، آخرین زمان حضور یا حالت عمومی
+                subtitleEl.textContent = targetUser && targetUser.online_at ? `آخرین بازدید: ${formatLastSeen(targetUser.online_at)}` : 'آفلاین';
+                subtitleEl.className = 'text-[10px] text-slate-400';
+            }
+        }
+
+        function formatLastSeen(isoString) {
+            try {
+                const date = new Date(isoString);
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                return 'مدت‌ها پیش';
+            }
         }
 
         function closeChatModalUI() {
@@ -454,11 +464,6 @@
             document.getElementById('reply-preview-box').classList.add('hidden');
         }
 
-        function handleTypingInput() {
-            if (!supabaseClient) return;
-            // سیستم ارسال وضعیت تایپینگ (اختیاری برای تعامل زنده)
-        }
-
         async function fetchMessages() {
             if (!supabaseClient) return;
             try {
@@ -473,6 +478,8 @@
                 const { data, error } = await query;
                 if (error) return;
                 if (data) {
+                    const cacheKey = currentChatType === 'public' ? 'public' : currentReceiverId;
+                    messagesCache.set(cacheKey, data);
                     renderMessages(data);
                 }
             } catch (err) {
@@ -492,8 +499,8 @@
                         if (currentChatType === 'public' && !newMsg.receiver_id) {
                             fetchMessages();
                         } else if (currentChatType === 'private' && (
-                            (newMsg.sender_id === currentUser.id && newMsg.receiver_id === currentReceiverId) ||
-                            (newMsg.sender_id === currentReceiverId && newMsg.receiver_id === currentUser.id)
+                            (String(newMsg.sender_id) === String(currentUser.id) && String(newMsg.receiver_id) === String(currentReceiverId)) ||
+                            (String(newMsg.sender_id) === String(currentReceiverId) && String(newMsg.receiver_id) === String(currentUser.id))
                         )) {
                             fetchMessages();
                         }
@@ -511,6 +518,7 @@
                 return;
             }
 
+            let htmlContent = '';
             messages.forEach(msg => {
                 const isMe = String(msg.sender_id) === String(currentUser.id);
                 const alignClass = isMe ? 'items-end' : 'items-start';
@@ -526,7 +534,7 @@
 
                 const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                container.innerHTML += `
+                htmlContent += `
                     <div class="flex flex-col ${alignClass} max-w-[85%] mx-auto w-full group">
                         ${senderNameLabel}
                         <div class="${bubbleClass} px-3.5 py-2 text-xs shadow relative">
@@ -542,6 +550,7 @@
                 `;
             });
 
+            container.innerHTML = htmlContent;
             container.scrollTop = container.scrollHeight;
         }
 
@@ -555,8 +564,7 @@
             const dLat = deg2rad(lat2 - lat1);
             const dLon = deg2rad(lon2 - lon1);
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-            return R * c;
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
         }
 
         function deg2rad(deg) { return deg * (Math.PI/180); }
