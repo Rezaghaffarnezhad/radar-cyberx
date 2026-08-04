@@ -253,7 +253,7 @@
                     updateRadiusCircleOnMap();
                     updateMyHeartbeat();
                 }, (error) => {
-                    console.warn("Geolocation error or permission denied:", error.message);
+                    console.warn("Geolocation error:", error.message);
                     updateRadiusCircleOnMap();
                 }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
             } else {
