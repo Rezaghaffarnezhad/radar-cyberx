@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>رادار دوستیابی و شبکه اجتماعی پیشرفته</title>
+    <title>رادار سوپر‌اپلیکیشن حرفه‌ای</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -99,19 +99,20 @@
             transition: transform 0.25s ease;
             z-index: 2;
         }
+        /* حلقه استوری اینستاگرام دور مارکر نقشه */
         .story-ring {
             position: absolute;
             width: 44px;
             height: 44px;
             border-radius: 50%;
-            border: 2px solid var(--theme-primary);
+            border: 2.5px solid var(--theme-primary);
             animation: pulse-ring 2s infinite;
             z-index: 1;
         }
         @keyframes pulse-ring {
-            0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.1); opacity: 0.3; }
-            100% { transform: scale(0.95); opacity: 0.8; }
+            0% { transform: scale(0.95); opacity: 0.9; }
+            50% { transform: scale(1.12); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.9; }
         }
 
         .pin-tooltip {
@@ -142,7 +143,7 @@
                 </div>
                 <div class="flex items-center gap-1.5 border-r border-slate-700/80 pr-2">
                     <button onclick="toggleMapTheme()" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm action-fab text-slate-200" title="لایه نقشه">🗺️</button>
-                    <button onclick="openGlobalChat()" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm action-fab text-pink-400" title="چت عمومی">🌐</button>
+                    <button onclick="openGlobalChat()" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm action-fab text-pink-400" title="چت عمومی تلگرامی">🌐</button>
                     <button onclick="toggleOnlineUsersPanel()" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm action-fab text-emerald-400 relative" title="افراد آنلاین">
                         👥
                         <span id="online-count-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-pink-600 text-[10px] font-bold text-white rounded-full flex items-center justify-center">0</span>
@@ -154,8 +155,8 @@
 
         <!-- دکمه‌های شناور سمت راست -->
         <div class="absolute bottom-6 right-4 z-10 pointer-events-auto flex flex-col gap-3">
-            <button onclick="toggleTurboMode()" id="turbo-btn" class="action-fab w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl text-lg" title="حالت توربو (آپدیت آنی)">⚡</button>
-            <button onclick="openNavigationMenu()" class="action-fab w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl" title="مسیریابی پیشرفته">
+            <button onclick="toggleTurboMode()" id="turbo-btn" class="action-fab w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl text-lg" title="حالت توربو (آپدیت آنی لوکیشن)">⚡</button>
+            <button onclick="openNavigationMenu()" class="action-fab w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl" title="مسیریابی گوگل مپ">
                 <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
             </button>
             <button onclick="centerToMyLocation()" class="action-fab w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl" title="موقعیت من">
@@ -163,7 +164,7 @@
             </button>
         </div>
 
-        <!-- پنل افراد آنلاین همراه با فیلترها -->
+        <!-- پنل کاربران آنلاین با فیلترها -->
         <div id="online-panel" class="absolute bottom-0 left-0 right-0 z-20 glass-panel rounded-t-3xl p-5 transition-transform duration-300 transform translate-y-full max-h-[60vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-3 border-b border-slate-700/60 pb-3">
                 <div class="flex items-center gap-2">
@@ -186,7 +187,7 @@
             </div>
         </div>
 
-        <!-- مودال استوری -->
+        <!-- مودال استوری ۲۴ ساعته (مشابه اینستاگرام) -->
         <div id="story-modal" class="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between p-4 hidden">
             <div class="flex items-center justify-between pt-2">
                 <div class="flex items-center gap-2.5">
@@ -200,7 +201,7 @@
             </div>
             <div class="flex-1 flex items-center justify-center my-4">
                 <div id="story-content-box" class="w-full max-w-sm h-[60vh] bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden flex items-center justify-center relative shadow-2xl">
-                    <p id="story-text" class="text-sm text-center text-white p-6">متن استوری کاربر اینجا نمایش داده می‌شود.</p>
+                    <p id="story-text" class="text-sm text-center text-white p-6">استوری و حال‌وهوای ۲۴ ساعته کاربر...</p>
                 </div>
             </div>
             <div class="flex gap-2">
@@ -208,7 +209,7 @@
             </div>
         </div>
 
-        <!-- مودال پروفایل کاربر -->
+        <!-- مودال پروفایل دوستیابی و لایک -->
         <div id="user-profile-modal" class="absolute inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
             <div class="glass-panel w-full max-w-sm rounded-3xl p-6 flex flex-col items-center text-center relative shadow-2xl border border-pink-500/30">
                 <button onclick="closeUserProfileModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
@@ -221,7 +222,7 @@
                 <p id="modal-user-distance" class="text-xs text-pink-400 font-medium mb-4">آنلاین در محدوده شعاع</p>
                 <div class="w-full flex flex-col gap-2.5">
                     <button onclick="sendLikeToUser()" id="modal-like-btn" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-pink-400 font-bold text-xs rounded-2xl border border-pink-500/40 transition shadow flex items-center justify-center gap-2">
-                        <span>❤️ پسندیدن (Like)</span>
+                        <span>❤️ پسندیدن (Match Like)</span>
                     </button>
                     <button onclick="openPrivateChatFromModal()" class="w-full py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold text-xs rounded-2xl shadow-lg flex items-center justify-center gap-2">
                         <span>💬 شروع چت خصوصی</span>
@@ -231,19 +232,19 @@
             </div>
         </div>
 
-        <!-- مودال مچ شدن موفق -->
+        <!-- مودال مچ موفق دوستیابی -->
         <div id="match-modal" class="absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center hidden">
             <div class="text-4xl mb-2 animate-bounce">💖✨</div>
             <h2 class="text-2xl font-extrabold text-white mb-2">تبریک! شما با هم مچ شدید!</h2>
-            <p class="text-xs text-slate-300 mb-6">کاربر مقابل هم شما را پسندید. حالا می‌توانید بدون محدودیت چت کنید.</p>
+            <p class="text-xs text-slate-300 mb-6">کاربر مقابل هم شما را پسندید. حالا ارتباط دوطرفه برقرار است.</p>
             <button onclick="closeMatchModalAndChat()" class="px-8 py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold text-xs rounded-2xl shadow-lg">شروع گفتگو</button>
         </div>
 
-        <!-- مودال تنظیمات و پروفایل -->
+        <!-- مودال تنظیمات، پروفایل و استوری‌گذاری -->
         <div id="settings-modal" class="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
             <div class="glass-panel w-full max-w-md rounded-3xl p-6 flex flex-col max-h-[90vh] overflow-y-auto relative shadow-2xl border border-purple-500/30">
                 <button onclick="closeSettingsModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
-                <h3 class="text-base font-bold text-white mb-4 text-center">تنظیمات و پروفایل کاربری</h3>
+                <h3 class="text-base font-bold text-white mb-4 text-center">تنظیمات و پروفایل سوپر‌اپلیکیشن</h3>
                 
                 <div class="flex flex-col gap-4">
                     <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
@@ -265,7 +266,7 @@
                     </div>
 
                     <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
-                        <h4 class="text-xs font-bold text-blue-400 mb-3">🎨 انتخاب رنگ اصلی اپ</h4>
+                        <h4 class="text-xs font-bold text-blue-400 mb-3">🎨 رنگ اصلی اپلیکیشن</h4>
                         <div class="flex items-center justify-around">
                             <button onclick="setAppTheme('#ec4899')" class="w-8 h-8 rounded-full bg-pink-500 border-2 border-white shadow"></button>
                             <button onclick="setAppTheme('#8b5cf6')" class="w-8 h-8 rounded-full bg-purple-500 border-2 border-white shadow"></button>
@@ -277,7 +278,7 @@
                     <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
                         <h4 class="text-xs font-bold text-emerald-400 mb-3">🔒 امنیت و حالت مخفی</h4>
                         <div class="flex items-center justify-between">
-                            <span class="text-xs text-slate-300">مخفی کردن لوکیشن من (Stealth)</span>
+                            <span class="text-xs text-slate-300">مخفی کردن لوکیشن (Stealth)</span>
                             <input type="checkbox" id="setting-stealth-mode" class="w-4 h-4 accent-emerald-500 cursor-pointer" onchange="toggleStealthMode(this.checked)">
                         </div>
                     </div>
@@ -285,19 +286,19 @@
             </div>
         </div>
 
-        <!-- مودال مسیریابی -->
+        <!-- مودال مسیریابی با گوگل مپ -->
         <div id="navigation-modal" class="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
             <div class="glass-panel w-full max-w-sm rounded-3xl p-6 flex flex-col items-center text-center relative shadow-2xl border border-emerald-500/30">
                 <button onclick="closeNavigationModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
-                <h3 class="text-base font-bold text-white mb-2">مسیریابی پیشرفته</h3>
-                <p class="text-xs text-slate-400 mb-5">انتخاب نقشه برای مسیریابی</p>
+                <h3 class="text-base font-bold text-white mb-2">مسیریابی گوگل مپ</h3>
+                <p class="text-xs text-slate-400 mb-5">انتقال مستقیم به مسیریاب</p>
                 <div class="w-full flex flex-col gap-2.5">
-                    <button onclick="openExternalNav()" class="w-full py-3 bg-blue-600 text-white font-bold text-xs rounded-2xl shadow">مسیریابی با گوگل مپ</button>
+                    <button onclick="openExternalNav()" class="w-full py-3 bg-blue-600 text-white font-bold text-xs rounded-2xl shadow">مسیریابی در گوگل مپ</button>
                 </div>
             </div>
         </div>
 
-        <!-- مودال چت عمومی و خصوصی -->
+        <!-- مودال چت تلگرامی (عمومی و خصوصی) -->
         <div id="chat-modal" class="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between hidden">
             <div class="glass-panel px-4 py-3.5 flex items-center justify-between border-b border-slate-700/80">
                 <div class="flex items-center gap-3">
@@ -333,7 +334,7 @@
             first_name: [tgUser?.first_name, tgUser?.last_name].filter(Boolean).join(' ') || "کاربر مهمان",
             username: tgUser?.username || "",
             photo_url: tgUser?.photo_url || null,
-            bio: "سلام! من از رادار استفاده می‌کنم.",
+            bio: "سلام! من از سوپر‌اپلیکیشن رادار استفاده می‌کنم.",
             story: "",
             gender: "male",
             is_stealth: false
@@ -539,7 +540,7 @@
                 btn.style.borderColor = '#10b981';
                 btn.style.boxShadow = '0 0 15px #10b981';
                 turboInterval = setInterval(() => { centerToMyLocation(); }, 2000);
-                alert('حالت توربو فعال شد: رادار شما با سرعت بالا بروزرسانی می‌شود.');
+                alert('حالت توربو فعال شد: رادار با پینگ آنی بروزرسانی می‌شود.');
             } else {
                 btn.style.borderColor = '';
                 btn.style.boxShadow = '';
@@ -562,7 +563,7 @@
 
         function sendLikeToUser() {
             if(!selectedTargetUser) return;
-            alert('درخواست پسندیدن (Like) برای ' + selectedTargetUser.name + ' ارسال شد!');
+            alert('درخواست پسندیدن برای ' + selectedTargetUser.name + ' ارسال شد!');
             setTimeout(() => {
                 closeUserProfileModal();
                 document.getElementById('match-modal').classList.remove('hidden');
@@ -672,7 +673,7 @@
             currentUserData.story = document.getElementById('setting-story').value || "";
             await registerAndSyncUser();
             closeSettingsModal();
-            alert('تغییرات و استوری شما با موفقیت ثبت شد.');
+            alert('پروفایل و استوری شما با موفقیت بروزرسانی شد.');
         }
 
         function updateSettingsRadius(val) {
