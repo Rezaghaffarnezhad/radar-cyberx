@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - نسخه جامع و کامل</title>
+    <title>تلسکوپ - لیست کامل کاربران</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -96,7 +96,7 @@
 
         <!-- دکمه‌های سمت راست (لیست افراد + موقعیت من) -->
         <div class="absolute bottom-6 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
-            <button onclick="openUsersListModal()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10" title="لیست افراد نزدیک">
+            <button onclick="openUsersListModal()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10" title="لیست کل افراد">
                 <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
             </button>
             <button onclick="centerToMyLocation()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10" title="موقعیت من">
@@ -115,7 +115,7 @@
             
             <div class="flex flex-col gap-2">
                 <div class="flex justify-between items-center text-xs text-slate-300">
-                    <span>مقدار شعاع:</span>
+                    <span>مقدار شعاع نقشه:</span>
                     <span id="modal-radius-value" class="text-blue-400 font-bold">15 کیلومتر</span>
                 </div>
                 <input id="modal-radius-slider" type="range" min="1" max="50" step="1" value="15" oninput="onRadiusChange(this.value)" class="w-full accent-blue-500 cursor-pointer">
@@ -125,11 +125,11 @@
         </div>
     </div>
 
-    <!-- مودال لیست افراد نزدیک + باکس جستجو -->
+    <!-- مودال لیست کل افراد + جستجو -->
     <div id="users-list-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeUsersListModal()">
         <div class="tg-card w-full max-w-md max-h-[85vh] rounded-t-3xl sm:rounded-2xl p-5 flex flex-col gap-3 shadow-2xl border border-slate-700 overflow-hidden" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
-                <h3 class="font-bold text-sm text-white flex items-center gap-2">👥 افراد در شعاع <span id="list-radius-label" class="text-blue-400">15</span> کیلومتری</h3>
+                <h3 class="font-bold text-sm text-white flex items-center gap-2">👥 لیست کل کاربران سیستم</h3>
                 <button onclick="closeUsersListModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
             </div>
             
@@ -141,7 +141,7 @@
 
             <!-- لیست کاربران -->
             <div id="users-scroll-container" class="flex flex-col gap-2 overflow-y-auto max-h-[45vh] pr-1">
-                <div class="text-center text-xs text-slate-400 py-6">در حال بارگذاری...</div>
+                <div class="text-center text-xs text-slate-400 py-6">در حال بارگذاری لیست کل افراد...</div>
             </div>
 
             <button onclick="closeUsersListModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl font-medium text-xs text-white transition mt-1">بستن</button>
@@ -167,7 +167,7 @@
 
         let map = null, myLocationMarker = null, radiusCircle = null;
         let otherUserMarkers = []; 
-        let cachedNearbyUsers = []; 
+        let allRegisteredUsers = []; // ذخیره کل کاربران دیتابیس
         let currentCoords = { lat: 35.6892, lng: 51.3890 }; // پیش‌فرض تهران
         let activeRadiusKm = 15;
 
@@ -215,13 +215,13 @@
                             document.getElementById('status-badge').textContent = "⚠️ پیش‌فرض (GPS غیرفعال)";
                             document.getElementById('status-badge').className = "text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1.5 rounded-xl";
                             updateMapElements();
-                            loadOtherUsers();
+                            loadAllUsers();
                         }, 
                         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                     );
                 } else {
                     updateMapElements();
-                    loadOtherUsers();
+                    loadAllUsers();
                 }
             } catch (err) {
                 console.error("Initialization error:", err);
@@ -283,21 +283,21 @@
                     updated_at: new Date()
                 }, { onConflict: 'id' });
 
-                loadOtherUsers();
+                loadAllUsers();
             } catch (err) {
                 console.error("Error saving location to Supabase:", err);
             }
         }
 
-        async function loadOtherUsers() {
+        async function loadAllUsers() {
             if (!supabaseClient) return;
             try {
                 otherUserMarkers.forEach(marker => map.removeLayer(marker));
                 otherUserMarkers = [];
-                cachedNearbyUsers = [];
+                allRegisteredUsers = [];
 
-                // اضافه کردن خود کاربر به لیست کش با فاصله صفر
-                cachedNearbyUsers.push({
+                // ۱. اضافه کردن خود کاربر به لیست کل
+                allRegisteredUsers.push({
                     id: currentUser.id,
                     name: currentUser.name,
                     username: currentUser.username,
@@ -308,25 +308,28 @@
                     isMe: true
                 });
 
+                // ۲. دریافت تمام کاربران دیگر از دیتابیس
                 const { data, error } = await supabaseClient
                     .from('users')
-                    .select('*')
-                    .neq('id', currentUser.id);
+                    .select('*');
 
                 if (error) {
-                    console.error("Error fetching other users:", error);
+                    console.error("Error fetching all users:", error);
                     return;
                 }
 
                 if (data && data.length > 0) {
                     data.forEach(user => {
+                        if (user.id === currentUser.id) return; // خودش رو جدا اضافه کردیم
                         if (!user.lat || !user.lng) return;
 
                         const distanceKm = getDistanceFromLatLonInKm(currentCoords.lat, currentCoords.lng, user.lat, user.lng);
-                        if (distanceKm <= activeRadiusKm) {
-                            
-                            cachedNearbyUsers.push({ ...user, distance: distanceKm, isMe: false });
+                        
+                        // اضافه کردن به لیست کل کاربران
+                        allRegisteredUsers.push({ ...user, distance: distanceKm, isMe: false });
 
+                        // اگر در شعاع انتخابی نقشه بود، پین آن را روی نقشه هم بگذاریم
+                        if (distanceKm <= activeRadiusKm) {
                             const userInitial = user.name ? user.name.charAt(0) : 'ک';
                             const avatarHtml = user.avatar_url 
                                 ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
@@ -349,7 +352,7 @@
                     });
                 }
             } catch (err) {
-                console.error("Error loading other users:", err);
+                console.error("Error loading all users:", err);
             }
         }
 
@@ -393,14 +396,13 @@
             activeRadiusKm = parseFloat(val);
             document.getElementById('modal-radius-value').textContent = `${activeRadiusKm} کیلومتر`;
             updateMapElements();
-            loadOtherUsers(); 
+            loadAllUsers(); 
         }
 
-        // مودال و جستجوی پیشرفته افراد
+        // مودال و جستجوی کل افراد
         function openUsersListModal() {
-            document.getElementById('list-radius-label').textContent = activeRadiusKm;
             document.getElementById('user-search-input').value = '';
-            renderUsersList(cachedNearbyUsers);
+            renderUsersList(allRegisteredUsers);
             document.getElementById('users-list-modal').classList.remove('hidden');
         }
 
@@ -411,10 +413,10 @@
         function filterUsersList(query) {
             const q = query.trim().toLowerCase();
             if (!q) {
-                renderUsersList(cachedNearbyUsers);
+                renderUsersList(allRegisteredUsers);
                 return;
             }
-            const filtered = cachedNearbyUsers.filter(u => {
+            const filtered = allRegisteredUsers.filter(u => {
                 const nameMatch = u.name && u.name.toLowerCase().includes(q);
                 const usernameMatch = u.username && u.username.toLowerCase().includes(q);
                 return nameMatch || usernameMatch;
