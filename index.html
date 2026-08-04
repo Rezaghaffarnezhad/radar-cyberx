@@ -99,7 +99,6 @@
             transition: transform 0.25s ease;
             z-index: 2;
         }
-        /* استوری حلقه رنگی دور مارکر */
         .story-ring {
             position: absolute;
             width: 44px;
@@ -134,7 +133,7 @@
     <div id="view-map" class="view-section relative w-full h-full">
         <div id="map" class="map-container"></div>
         
-        <!-- هدر بالا - نوار جستجو و ابزار پیشرفته -->
+        <!-- هدر بالای نقشه -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none flex flex-col gap-2">
             <div class="glass-panel px-3.5 py-2.5 rounded-2xl flex items-center justify-between gap-3 pointer-events-auto">
                 <div class="flex items-center gap-2.5 flex-1">
@@ -164,7 +163,7 @@
             </button>
         </div>
 
-        <!-- پنل افراد آنلاین در شعاع به همراه فیلترهای پیشرفته -->
+        <!-- پنل افراد آنلاین همراه با فیلترها -->
         <div id="online-panel" class="absolute bottom-0 left-0 right-0 z-20 glass-panel rounded-t-3xl p-5 transition-transform duration-300 transform translate-y-full max-h-[60vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-3 border-b border-slate-700/60 pb-3">
                 <div class="flex items-center gap-2">
@@ -174,16 +173,11 @@
                 <button onclick="toggleOnlineUsersPanel()" class="text-slate-400 hover:text-white text-sm font-bold w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
             </div>
             
-            <!-- فیلترهای پیشرفته جستجو -->
             <div class="flex items-center gap-2 mb-3 bg-slate-900/60 p-2 rounded-2xl border border-slate-800">
                 <select id="filter-gender" onchange="filterUsersList()" class="bg-slate-800 text-[11px] text-white px-2 py-1.5 rounded-xl border border-slate-700 outline-none flex-1">
                     <option value="all">همه جنسیت‌ها</option>
                     <option value="male">فقط آقا</option>
                     <option value="female">فقط خانم</option>
-                </select>
-                <select id="filter-status" onchange="filterUsersList()" class="bg-slate-800 text-[11px] text-white px-2 py-1.5 rounded-xl border border-slate-700 outline-none flex-1">
-                    <option value="all">همه وضعیت‌ها</option>
-                    <option value="online">فقط آنلاین‌های اخیر</option>
                 </select>
             </div>
 
@@ -192,7 +186,7 @@
             </div>
         </div>
 
-        <!-- مودال استوری ۲۴ ساعته -->
+        <!-- مودال استوری -->
         <div id="story-modal" class="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between p-4 hidden">
             <div class="flex items-center justify-between pt-2">
                 <div class="flex items-center gap-2.5">
@@ -206,7 +200,7 @@
             </div>
             <div class="flex-1 flex items-center justify-center my-4">
                 <div id="story-content-box" class="w-full max-w-sm h-[60vh] bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden flex items-center justify-center relative shadow-2xl">
-                    <p id="story-text" class="text-sm text-center text-white p-6">متن یا استوری کاربر اینجا نمایش داده می‌شود.</p>
+                    <p id="story-text" class="text-sm text-center text-white p-6">متن استوری کاربر اینجا نمایش داده می‌شود.</p>
                 </div>
             </div>
             <div class="flex gap-2">
@@ -214,7 +208,7 @@
             </div>
         </div>
 
-        <!-- مودال پروفایل سایر کاربران (همراه با سیستم لایک و مچ متقابل) -->
+        <!-- مودال پروفایل کاربر -->
         <div id="user-profile-modal" class="absolute inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
             <div class="glass-panel w-full max-w-sm rounded-3xl p-6 flex flex-col items-center text-center relative shadow-2xl border border-pink-500/30">
                 <button onclick="closeUserProfileModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
@@ -237,7 +231,7 @@
             </div>
         </div>
 
-        <!-- مودال مچ شدن موفق (Match!) -->
+        <!-- مودال مچ شدن موفق -->
         <div id="match-modal" class="absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center hidden">
             <div class="text-4xl mb-2 animate-bounce">💖✨</div>
             <h2 class="text-2xl font-extrabold text-white mb-2">تبریک! شما با هم مچ شدید!</h2>
@@ -245,14 +239,13 @@
             <button onclick="closeMatchModalAndChat()" class="px-8 py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold text-xs rounded-2xl shadow-lg">شروع گفتگو</button>
         </div>
 
-        <!-- مودال تنظیمات کامل (پروفایل، استوری، شعاع، تم رنگی، امنیت) -->
+        <!-- مودال تنظیمات و پروفایل -->
         <div id="settings-modal" class="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
             <div class="glass-panel w-full max-w-md rounded-3xl p-6 flex flex-col max-h-[90vh] overflow-y-auto relative shadow-2xl border border-purple-500/30">
                 <button onclick="closeSettingsModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
                 <h3 class="text-base font-bold text-white mb-4 text-center">تنظیمات و پروفایل کاربری</h3>
                 
                 <div class="flex flex-col gap-4">
-                    <!-- ویرایش پروفایل و استوری -->
                     <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
                         <h4 class="text-xs font-bold text-pink-400 mb-3">👤 پروفایل و استوری من</h4>
                         <div class="flex flex-col gap-2.5">
@@ -263,7 +256,6 @@
                         </div>
                     </div>
 
-                    <!-- شعاع جستجو -->
                     <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
                         <div class="flex justify-between text-xs font-bold text-purple-400 mb-2">
                             <span>شعاع جستجوی رادار:</span>
@@ -272,7 +264,6 @@
                         <input type="range" id="settings-radius-range" min="1" max="50" value="5" class="w-full accent-purple-500 cursor-pointer" oninput="updateSettingsRadius(this.value)">
                     </div>
 
-                    <!-- ترکیب رنگ و تم اپ -->
                     <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
                         <h4 class="text-xs font-bold text-blue-400 mb-3">🎨 انتخاب رنگ اصلی اپ</h4>
                         <div class="flex items-center justify-around">
@@ -283,7 +274,6 @@
                         </div>
                     </div>
 
-                    <!-- امنیت و حریم خصوصی -->
                     <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
                         <h4 class="text-xs font-bold text-emerald-400 mb-3">🔒 امنیت و حالت مخفی</h4>
                         <div class="flex items-center justify-between">
@@ -295,7 +285,7 @@
             </div>
         </div>
 
-        <!-- مودال مسیریابی پیشرفته -->
+        <!-- مودال مسیریابی -->
         <div id="navigation-modal" class="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
             <div class="glass-panel w-full max-w-sm rounded-3xl p-6 flex flex-col items-center text-center relative shadow-2xl border border-emerald-500/30">
                 <button onclick="closeNavigationModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
@@ -542,7 +532,6 @@
 
         function filterUsersList() { fetchActiveUsers(); }
 
-        // قابلیت توربو (آپدیت آنی)
         function toggleTurboMode() {
             isTurboActive = !isTurboActive;
             const btn = document.getElementById('turbo-btn');
@@ -559,7 +548,6 @@
             }
         }
 
-        // سیستم استوری
         function openStoryModal(userJsonStr) {
             const user = JSON.parse(decodeURIComponent(userJsonStr));
             selectedTargetUser = user;
@@ -572,11 +560,9 @@
         function closeStoryModal() { document.getElementById('story-modal').classList.add('hidden'); }
         function openPrivateChatFromStory() { if(selectedTargetUser) { closeStoryModal(); openPrivateChat(selectedTargetUser.telegram_id, selectedTargetUser.name); } }
 
-        // سیستم لایک و مچ متقابل
-        async function sendLikeToUser() {
+        function sendLikeToUser() {
             if(!selectedTargetUser) return;
             alert('درخواست پسندیدن (Like) برای ' + selectedTargetUser.name + ' ارسال شد!');
-            // شبیه‌سازی مچ موفق
             setTimeout(() => {
                 closeUserProfileModal();
                 document.getElementById('match-modal').classList.remove('hidden');
