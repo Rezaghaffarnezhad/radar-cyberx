@@ -27,11 +27,12 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
+        /* مارکر اختصاصی شما با دایره آبی پالس‌دار */
         .my-animated-marker {
             width: 72px;
             height: 72px;
             border-radius: 50%;
-            background: rgba(66, 133, 244, 0.18);
+            background: rgba(66, 133, 244, 0.22);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -115,17 +116,19 @@
         }
         .chat-3d-btn:active { transform: translateX(-50%) scale(0.94); }
 
-        /* غلطک مکانیکی حرفه‌ای شبیه غلطک موس */
+        /* ویجت غلطک مکانیکی دقیقاً الگوبرداری شده از غلطک وسط ماوس */
         .mouse-wheel-roller {
             background: #111822 !important;
             border: 2px solid #233142 !important;
-            border-radius: 12px;
+            border-radius: 14px;
             box-shadow: 0 6px 16px rgba(0,0,0,0.6), inset 0 1px 3px rgba(255,255,255,0.1);
             cursor: ns-resize;
             user-select: none;
             touch-action: none;
             position: relative;
             overflow: hidden;
+            width: 44px;
+            height: 76px;
         }
         .roller-wheel-inner {
             width: 100%;
@@ -137,9 +140,8 @@
                 #0f1722 4px,
                 #0f1722 8px
             );
-            border-radius: 8px;
+            border-radius: 10px;
             box-shadow: inset 0 3px 6px rgba(0,0,0,0.8), inset 0 -3px 6px rgba(0,0,0,0.8);
-            transition: transform 0.05s linear;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -147,7 +149,7 @@
         }
         .roller-wheel-inner::after {
             content: '';
-            width: 12px;
+            width: 14px;
             height: 2px;
             background: #5288c1;
             box-shadow: 0 0 8px #5288c1;
@@ -267,12 +269,12 @@
             </div>
         </div>
 
-        <!-- ابزارک غلطک با صدای آچار جغجغه -->
+        <!-- ابزارک غلطک ماوس تزیینی با صدای مکانیکی -->
         <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center gap-1">
-            <div id="radius-roller-widget" onclick="openRadiusSettingsModal(event)" class="mouse-wheel-roller w-11 h-20 flex items-center justify-center" title="برای تنظیم شعاع کلیک کنید">
-                <div id="roller-inner-bar" class="roller-wheel-inner"></div>
+            <div id="mouse-roller-widget" class="mouse-wheel-roller flex items-center justify-center" title="غلطک ماوس">
+                <div id="roller-inner-element" class="roller-wheel-inner"></div>
             </div>
-            <span id="current-radius-display" class="text-[11px] font-bold text-[#5288c1] drop-shadow">100 m</span>
+            <span class="text-[10px] font-bold text-slate-400">Scroll</span>
         </div>
 
         <div class="absolute bottom-24 right-4 z-10 pointer-events-auto">
@@ -285,28 +287,6 @@
             <div class="glass-box w-64 h-16 rounded-3xl flex items-center justify-center shadow-2xl pointer-events-auto relative">
                 <div onclick="openChatHubModal()" class="chat-3d-btn">💬</div>
             </div>
-        </div>
-    </div>
-
-    <!-- مودال تنظیمات شعاع -->
-    <div id="radius-settings-modal" class="hidden absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-        <div class="tg-card w-full max-w-xs rounded-3xl p-5 flex flex-col gap-4 shadow-2xl border border-slate-700">
-            <div class="flex items-center justify-between">
-                <h3 class="font-bold text-sm text-white">تنظیم شعاع رادار</h3>
-                <button onclick="closeRadiusSettingsModal()" class="text-slate-400 text-sm px-2 py-1 rounded-lg hover:bg-white/5 transition">✕</button>
-            </div>
-            <div class="flex flex-col items-center gap-2 py-2">
-                <div id="modal-roller-widget" class="mouse-wheel-roller w-14 h-24 flex items-center justify-center cursor-ns-resize">
-                    <div id="modal-roller-inner" class="roller-wheel-inner"></div>
-                </div>
-                <span id="modal-radius-display" class="text-sm font-bold text-[#5288c1] mt-1">100 m</span>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="setQuickRadius(100)" class="flex-1 py-2 bg-[#18222d] hover:bg-[#232e3c] rounded-xl text-[11px] text-slate-300 transition">100 متر</button>
-                <button onclick="setQuickRadius(500)" class="flex-1 py-2 bg-[#18222d] hover:bg-[#232e3c] rounded-xl text-[11px] text-slate-300 transition">500 متر</button>
-                <button onclick="setQuickRadius(1000)" class="flex-1 py-2 bg-[#18222d] hover:bg-[#232e3c] rounded-xl text-[11px] text-slate-300 transition">1 کیلومتر</button>
-            </div>
-            <button onclick="closeRadiusSettingsModal()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl text-xs font-bold text-white transition shadow">تایید و اعمال</button>
         </div>
     </div>
 
@@ -362,7 +342,7 @@
         <div class="flex border-b border-slate-800 px-3 bg-[#17212b]">
             <button onclick="switchHubTab('contacts')" id="hub-tab-contacts" class="flex-1 py-2.5 text-center text-xs font-bold text-[#5288c1] border-b-2 border-[#5288c1] transition">مخاطبین</button>
             <button onclick="switchHubTab('requests')" id="hub-tab-requests" class="flex-1 py-2.5 text-center text-xs font-medium text-slate-400 transition">درخواست‌ها</button>
-            <button onclick="switchHubTab('groups')" id="hub-tab-groups" class="flex-1 py-2.5 text-center text-xs font-medium text-slate-400 transition">گروه شعاعی</button>
+            <button onclick="switchHubTab('groups')" id="hub-tab-groups" class="flex-1 py-2.5 text-center text-xs font-medium text-slate-400 transition">گروه عمومی</button>
         </div>
 
         <div id="hub-content-contacts" class="flex-1 p-3 overflow-y-auto flex flex-col gap-1.5">
@@ -374,11 +354,11 @@
         </div>
 
         <div id="hub-content-groups" class="hidden flex-1 p-3 overflow-y-auto flex flex-col gap-1.5">
-            <div onclick="openGroupChat('radius_group_main', 'گروه عمومی شعاعی')" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
+            <div onclick="openGroupChat('global_main_room', 'گروه عمومی')" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
                 <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-sm shadow">🌐</div>
                 <div class="flex-1">
-                    <h4 class="font-bold text-xs text-white">گروه عمومی شعاعی (مخصوص شعاع فعلی)</h4>
-                    <p class="text-[10px] text-slate-400 mt-0.5">ارسال و دریافت پیام برای افراد داخل شعاع</p>
+                    <h4 class="font-bold text-xs text-white">گروه عمومی سراسری</h4>
+                    <p class="text-[10px] text-slate-400 mt-0.5">گفتگو با تمام کاربران آنلاین اپلیکیشن</p>
                 </div>
             </div>
         </div>
@@ -490,9 +470,7 @@
 
         let currentUser = null, selectedTargetUser = null, currentChatType = 'pv', currentChatTargetId = null;
         let map, myLocationMarker = null, userMarkersOnMap = {};
-        let radiusCircle = null;
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
-        let activeRadiusMeters = 100;
         let activePrivateChannel = null;
         let globalChannel = null;
         let onlineUsersMap = {};
@@ -507,16 +485,12 @@
         let cachedMessages = {};
         let searchDebounceTimer = null;
 
-        // صدای کلیک خشک و مکانیکی آچار جغجغه
+        // صدای کلیک مکانیکی آچار جغجغه برای غلطک
         let audioCtx = null;
         function playRatchetClickSound() {
             try {
-                if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
                 
                 const now = audioCtx.currentTime;
                 const osc = audioCtx.createOscillator();
@@ -524,13 +498,10 @@
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(1200, now);
                 osc.frequency.exponentialRampToValueAtTime(150, now + 0.03);
-                
-                gain.gain.setValueAtTime(0.22, now);
+                gain.gain.setValueAtTime(0.2, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
-                
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-                
                 osc.start(now);
                 osc.stop(now + 0.03);
             } catch (e) {}
@@ -565,10 +536,6 @@
         window.addEventListener('popstate', () => { handleMobileBackButton(); });
 
         function handleMobileBackButton() {
-            if(!document.getElementById('radius-settings-modal').classList.contains('hidden')) {
-                closeRadiusSettingsModal();
-                return;
-            }
             if(!document.getElementById('chat-window').classList.contains('hidden')) {
                 backToChatHub();
                 return;
@@ -653,7 +620,7 @@
             const longitude = parseFloat(lon);
             currentCoords = { lat: latitude, lng: longitude };
             if(map) map.setView([latitude, longitude], 16, { animate: true });
-            updateRadiusCircleOnMap();
+            updateMyLocationMarkerOnMap();
             updateMyLocation(latitude, longitude);
             
             document.getElementById('google-suggestions-list').style.display = 'none';
@@ -662,56 +629,24 @@
             showToast("موقعیت پیدا و ثبت شد");
         }
 
-        function openRadiusSettingsModal(e) {
-            if(e) e.stopPropagation();
-            updateModalRollerUI();
-            document.getElementById('radius-settings-modal').classList.remove('hidden');
-        }
-
-        function closeRadiusSettingsModal() {
-            document.getElementById('radius-settings-modal').classList.add('hidden');
-        }
-
-        function setQuickRadius(meters) {
-            activeRadiusMeters = meters;
-            playRatchetClickSound();
-            updateRadiusRollerUI();
-            updateModalRollerUI();
-        }
-
         window.addEventListener('DOMContentLoaded', () => {
-            setupRollerInteraction('radius-roller-widget', 'roller-inner-bar', (newMeters) => {
-                activeRadiusMeters = newMeters;
-                updateRadiusRollerUI();
-            });
-
-            setupRollerInteraction('modal-roller-widget', 'modal-roller-inner', (newMeters) => {
-                activeRadiusMeters = newMeters;
-                updateModalRollerUI();
-            });
+            setupMouseRollerInteraction();
         });
 
-        function setupRollerInteraction(widgetId, innerId, onUpdate) {
-            const widget = document.getElementById(widgetId);
-            const inner = document.getElementById(innerId);
+        function setupMouseRollerInteraction() {
+            const widget = document.getElementById('mouse-roller-widget');
+            const inner = document.getElementById('roller-inner-element');
             if(!widget || !inner) return;
 
+            let currentTranslateY = 0;
             let isDragging = false;
             let startY = 0;
-            let currentTranslateY = 0;
 
             widget.addEventListener('wheel', (e) => {
                 e.preventDefault();
-                if(e.deltaY < 0) {
-                    activeRadiusMeters = Math.min(50000, activeRadiusMeters + 100);
-                    currentTranslateY -= 6;
-                } else {
-                    activeRadiusMeters = Math.max(100, activeRadiusMeters - 100);
-                    currentTranslateY += 6;
-                }
+                currentTranslateY += (e.deltaY < 0 ? -8 : 8);
+                inner.style.transform = `translateY(${currentTranslateY % 24}px)`;
                 playRatchetClickSound();
-                inner.style.transform = `translateY(${currentTranslateY % 30}px)`;
-                onUpdate(activeRadiusMeters);
             }, { passive: false });
 
             widget.addEventListener('touchstart', (e) => {
@@ -722,60 +657,27 @@
             window.addEventListener('touchmove', (e) => {
                 if(!isDragging) return;
                 const deltaY = startY - e.touches[0].clientY;
-                if(Math.abs(deltaY) > 6) {
-                    if(deltaY > 0) {
-                        activeRadiusMeters = Math.min(50000, activeRadiusMeters + 100);
-                        currentTranslateY -= 6;
-                    } else {
-                        activeRadiusMeters = Math.max(100, activeRadiusMeters - 100);
-                        currentTranslateY += 6;
-                    }
+                if(Math.abs(deltaY) > 5) {
+                    currentTranslateY += (deltaY > 0 ? -6 : 6);
                     startY = e.touches[0].clientY;
+                    inner.style.transform = `translateY(${currentTranslateY % 24}px)`;
                     playRatchetClickSound();
-                    inner.style.transform = `translateY(${currentTranslateY % 30}px)`;
-                    onUpdate(activeRadiusMeters);
                 }
             }, { passive: true });
 
             window.addEventListener('touchend', () => { isDragging = false; });
-
-            widget.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                startY = e.clientY;
-            });
-
+            widget.addEventListener('mousedown', (e) => { isDragging = true; startY = e.clientY; });
             window.addEventListener('mousemove', (e) => {
                 if(!isDragging) return;
                 const deltaY = startY - e.clientY;
-                if(Math.abs(deltaY) > 6) {
-                    if(deltaY > 0) {
-                        activeRadiusMeters = Math.min(50000, activeRadiusMeters + 100);
-                        currentTranslateY -= 6;
-                    } else {
-                        activeRadiusMeters = Math.max(100, activeRadiusMeters - 100);
-                        currentTranslateY += 6;
-                    }
+                if(Math.abs(deltaY) > 5) {
+                    currentTranslateY += (deltaY > 0 ? -6 : 6);
                     startY = e.clientY;
+                    inner.style.transform = `translateY(${currentTranslateY % 24}px)`;
                     playRatchetClickSound();
-                    inner.style.transform = `translateY(${currentTranslateY % 30}px)`;
-                    onUpdate(activeRadiusMeters);
                 }
             });
-
             window.addEventListener('mouseup', () => { isDragging = false; });
-        }
-
-        function updateRadiusRollerUI() {
-            let displayString = activeRadiusMeters >= 1000 ? `${(activeRadiusMeters / 1000).toFixed(1)} km` : `${activeRadiusMeters} m`;
-            document.getElementById('current-radius-display').textContent = displayString;
-            updateRadiusCircleOnMap();
-            renderUsersOnMap();
-        }
-
-        function updateModalRollerUI() {
-            let displayString = activeRadiusMeters >= 1000 ? `${(activeRadiusMeters / 1000).toFixed(1)} کیلومتر` : `${activeRadiusMeters} متر`;
-            const modalDisplay = document.getElementById('modal-radius-display');
-            if(modalDisplay) modalDisplay.textContent = displayString;
         }
 
         function centerToMyLocation() {
@@ -784,7 +686,7 @@
                     currentCoords.lat = position.coords.latitude;
                     currentCoords.lng = position.coords.longitude;
                     if(map) map.setView([currentCoords.lat, currentCoords.lng], 15, { animate: true });
-                    updateRadiusCircleOnMap();
+                    updateMyLocationMarkerOnMap();
                     updateMyLocation(currentCoords.lat, currentCoords.lng);
                     showToast("موقعیت شما به‌روز شد");
                 }, () => {
@@ -793,19 +695,10 @@
             }
         }
 
-        function updateRadiusCircleOnMap() {
+        function updateMyLocationMarkerOnMap() {
             if(!map) return;
-            if(radiusCircle) map.removeLayer(radiusCircle);
-            
-            radiusCircle = L.circle([currentCoords.lat, currentCoords.lng], {
-                radius: activeRadiusMeters,
-                color: '#1a73e8',
-                weight: 1.8,
-                fillColor: '#1a73e8',
-                fillOpacity: 0.1
-            }).addTo(map);
-
             if(myLocationMarker) map.removeLayer(myLocationMarker);
+            
             const initial = (currentUser?.name || 'ک').charAt(0);
             const myAvatarInner = currentUser?.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : initial;
             
@@ -814,24 +707,15 @@
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
 
-        function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
-            const R = 6371000;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
         function formatTelegramLastSeen(dateString) {
-            if (!dateString) return 'آخرین بازدید اخیراً';
+            if (!dateString) return 'آنلاین';
             const date = new Date(dateString);
             const now = new Date();
             const diffSec = Math.floor((now - date) / 1000);
 
             if (diffSec < 60) return 'آنلاین';
             if (diffSec < 3600) return `آخرین بازدید ${Math.floor(diffSec / 60)} دقیقه پیش`;
-            if (diffSec < 86400) return `آخرین بازدید امروز ساعت ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-            return `آخرین بازدید در ${date.toLocaleDateString('fa-IR')} ساعت ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+            return `آنلاین`;
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
@@ -843,7 +727,7 @@
                     currentCoords.lat = position.coords.latitude;
                     currentCoords.lng = position.coords.longitude;
                     if(map) map.setView([currentCoords.lat, currentCoords.lng], 14, { animate: true });
-                    updateRadiusCircleOnMap();
+                    updateMyLocationMarkerOnMap();
                     initUserSession();
                 }, () => {
                     initUserSession();
@@ -894,11 +778,11 @@
             }
 
             updateMyAvatarUI();
-            updateRadiusCircleOnMap();
+            updateMyLocationMarkerOnMap();
             await fetchUsersData();
             initRealtimeGlobal();
             
-            setInterval(updateMyHeartbeat, 30000);
+            setInterval(updateMyHeartbeat, 15000);
         }
 
         async function updateMyHeartbeat() {
@@ -923,7 +807,7 @@
             }
             document.getElementById('profile-display-name').textContent = currentUser.name;
             document.getElementById('top-my-name').textContent = currentUser.name;
-            updateRadiusCircleOnMap();
+            updateMyLocationMarkerOnMap();
         }
 
         async function updateMyLocation(lat, lng) {
@@ -948,13 +832,9 @@
             Object.values(userMarkersOnMap).forEach(marker => map.removeLayer(marker));
             userMarkersOnMap = {};
 
-            const visibleUsers = activeUsersGlobalList.filter(u => {
-                if (!u.latitude || !u.longitude || u.telegram_id === currentUser.telegram_id) return false;
-                const distanceM = calculateDistanceMeters(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
-                return distanceM <= activeRadiusMeters;
-            });
+            const otherUsers = activeUsersGlobalList.filter(u => u.latitude && u.longitude && u.telegram_id !== currentUser.telegram_id);
 
-            visibleUsers.forEach(u => {
+            otherUsers.forEach(u => {
                 const initial = (u.name || 'ک').charAt(0);
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : initial;
                 const html = `<div class="other-user-pin">${avatarInner}</div>`;
@@ -968,39 +848,17 @@
         }
 
         function updateOnlineCountUI(usersList) {
-            let onlineCount = 0;
-            const now = new Date();
-            
-            usersList.forEach(u => {
-                const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
-                const isRecent = lastSeenDate && (now - lastSeenDate < 900000);
-                const distanceM = calculateDistanceMeters(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
-                
-                if((onlineUsersMap[u.telegram_id] || isRecent) && (distanceM <= activeRadiusMeters || u.telegram_id === currentUser?.telegram_id)) {
-                    onlineCount++;
-                }
-            });
-            
-            if(currentUser && onlineCount === 0) onlineCount = 1;
+            let onlineCount = usersList ? usersList.length : 1;
             document.getElementById('top-online-count').textContent = `${onlineCount} آنلاین`;
         }
 
         function openOnlineUsersModal() {
             const container = document.getElementById('online-users-list-container');
-            const now = new Date();
+            const usersList = activeUsersGlobalList || [];
             
-            const activeUsersInRadius = activeUsersGlobalList.filter(u => {
-                const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
-                const isRecent = lastSeenDate && (now - lastSeenDate < 900000);
-                const distanceM = calculateDistanceMeters(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
-                return (onlineUsersMap[u.telegram_id] || isRecent || u.telegram_id === currentUser?.telegram_id) && (distanceM <= activeRadiusMeters || u.telegram_id === currentUser?.telegram_id);
-            });
-            
-            container.innerHTML = activeUsersInRadius.length ? activeUsersInRadius.map(u => {
+            container.innerHTML = usersList.length ? usersList.map(u => {
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : (u.name || 'ک').charAt(0);
                 const isMeLabel = u.telegram_id === currentUser?.telegram_id ? ' (شما)' : '';
-                const distM = calculateDistanceMeters(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
-                const distanceVal = u.telegram_id === currentUser?.telegram_id ? 'موقعیت شما' : `فاصله: ${distM >= 1000 ? (distM/1000).toFixed(1) + ' کیلومتر' : Math.round(distM) + ' متر'}`;
                 return `
                     <div onclick="closeOnlineUsersModal(); openUserProfile(${u.telegram_id})" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
                         <div class="relative w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden">
@@ -1009,11 +867,11 @@
                         </div>
                         <div class="flex-1">
                             <h4 class="font-bold text-xs text-white">${u.name}${isMeLabel}</h4>
-                            <p class="text-[10px] text-emerald-400 mt-0.5">${distanceVal} • آنلاین</p>
+                            <p class="text-[10px] text-emerald-400 mt-0.5">آنلاین در اپلیکیشن</p>
                         </div>
                     </div>
                 `;
-            }).join('') : '<div class="text-center text-xs text-slate-400 py-6">هیچ کاربر آنلاین دیگری در این شعاع حاضر نیست.</div>';
+            }).join('') : '<div class="text-center text-xs text-slate-400 py-6">کاربری یافت نشد.</div>';
 
             document.getElementById('online-users-modal').classList.remove('hidden');
         }
@@ -1291,9 +1149,8 @@
             currentChatTargetId = roomName;
             selectedTargetUser = null;
 
-            let radiusText = activeRadiusMeters >= 1000 ? `${(activeRadiusMeters / 1000).toFixed(1)} کیلومتر` : `${activeRadiusMeters} متر`;
             document.getElementById('chat-title').textContent = title;
-            document.getElementById('chat-lastseen').textContent = `گروه شعاعی (${radiusText})`;
+            document.getElementById('chat-lastseen').textContent = `گروه سراسری`;
             document.getElementById('chat-header-avatar').textContent = '🌐';
 
             document.getElementById('chat-window').classList.remove('hidden');
@@ -1314,14 +1171,7 @@
             }
 
             const { data } = await query.order('created_at', { ascending: true });
-            let filteredMessages = data || [];
-
-            if(currentChatType === 'group') {
-                filteredMessages = filteredMessages.filter(m => {
-                    if(!m.sender_lat || !m.sender_lng) return true;
-                    return calculateDistanceMeters(currentCoords.lat, currentCoords.lng, m.sender_lat, m.sender_lng) <= activeRadiusMeters;
-                });
-            }
+            const filteredMessages = data || [];
 
             if (currentChatType === 'pv') {
                 cachedMessages[currentChatTargetId] = filteredMessages;
@@ -1521,14 +1371,7 @@
                 payload.receiver_id = null;
             }
 
-            const { data: insertedMsg } = await supabaseClient.from('messages').insert([payload]).select().single();
-
-            if (currentChatType === 'group' && insertedMsg) {
-                setTimeout(async () => {
-                    await supabaseClient.from('messages').delete().eq('id', insertedMsg.id);
-                    loadMessages();
-                }, 86400000);
-            }
+            await supabaseClient.from('messages').insert([payload]);
         }
 
         function initRealtimeChatChannel() {
