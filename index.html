@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - اشتراک‌گذاری لحظه‌ای لوکیشن</title>
+    <title>تلسکوپ - پنل مدیریت کاربران آنلاین</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- کتابخانه Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
@@ -86,7 +85,7 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ لوکیشن شما به صورت زنده برای همه فعال است</span>
+                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ آنلاینِ لحظه‌ای</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
@@ -97,17 +96,12 @@
             </div>
         </div>
 
-        <!-- دکمه تنظیم شعاع -->
-        <div class="absolute bottom-24 left-4 z-10 flex flex-col gap-2 pointer-events-auto">
-            <button onclick="openRadiusModal()" class="w-12 h-12 glass-box rounded-2xl flex items-center justify-center text-blue-400 shadow-xl transition hover:scale-105 active:scale-95" title="تنظیم شعاع نقشه">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            </button>
-        </div>
-
         <!-- دکمه‌های سمت راست (لیست افراد آنلاین + موقعیت من) -->
         <div class="absolute bottom-6 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
-            <button onclick="openUsersListModal()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10" title="لیست افراد آنلاین">
+            <button onclick="openUsersListModal()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10 relative" title="لیست افراد آنلاین">
                 <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                <!-- نشانگر تعداد افراد آنلاین روی دکمه -->
+                <span id="online-count-badge" class="absolute -top-1 -right-1 bg-emerald-500 text-slate-950 font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-900">0</span>
             </button>
             <button onclick="centerToMyLocation()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10" title="موقعیت من">
                 <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -115,31 +109,11 @@
         </div>
     </div>
 
-    <!-- مودال تنظیم شعاع -->
-    <div id="radius-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onclick="closeRadiusModal()">
-        <div class="tg-card w-full max-w-sm rounded-2xl p-5 flex flex-col gap-4 shadow-2xl border border-slate-700" onclick="event.stopPropagation()">
-            <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
-                <h3 class="font-bold text-sm text-white flex items-center gap-2">⚙️ تنظیم شعاع نقشه</h3>
-                <button onclick="closeRadiusModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
-            </div>
-            
-            <div class="flex flex-col gap-2">
-                <div class="flex justify-between items-center text-xs text-slate-300">
-                    <span>شعاع نقشه:</span>
-                    <span id="modal-radius-value" class="text-blue-400 font-bold">15 کیلومتر</span>
-                </div>
-                <input id="modal-radius-slider" type="range" min="1" max="50" step="1" value="15" oninput="onRadiusChange(this.value)" class="w-full accent-blue-500 cursor-pointer">
-            </div>
-
-            <button onclick="closeRadiusModal()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-xl font-medium text-xs text-white transition mt-1">تایید</button>
-        </div>
-    </div>
-
-    <!-- مودال لیست افراد آنلاین -->
-    <div id="users-list-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeUsersListModal()">
+    <!-- مودال لیست افراد آنلاین (به صورت پیش‌فرض هنگام ورود یا با کلیک روی دکمه باز می‌شود) -->
+    <div id="users-list-modal" class="absolute inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="tg-card w-full max-w-md max-h-[85vh] rounded-t-3xl sm:rounded-2xl p-5 flex flex-col gap-3 shadow-2xl border border-slate-700 overflow-hidden" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
-                <h3 class="font-bold text-sm text-white flex items-center gap-2">🟢 لیست افراد آنلاین روی نقشه</h3>
+                <h3 class="font-bold text-sm text-white flex items-center gap-2">🟢 اسامی افراد آنلاین در سیستم</h3>
                 <button onclick="closeUsersListModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
             </div>
             
@@ -149,12 +123,12 @@
                 <svg class="w-4 h-4 text-slate-400 absolute right-3 top-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </div>
 
-            <!-- لیست کاربران آنلاین -->
+            <!-- لیست اسامی کاربران -->
             <div id="users-scroll-container" class="flex flex-col gap-2 overflow-y-auto max-h-[45vh] pr-1">
-                <div class="text-center text-xs text-slate-400 py-6">در حال دریافت کاربران...</div>
+                <div class="text-center text-xs text-slate-400 py-6">در حال بارگذاری لیست افراد آنلاین...</div>
             </div>
 
-            <button onclick="closeUsersListModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl font-medium text-xs text-white transition mt-1">بستن</button>
+            <button onclick="closeUsersListModal()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-xl font-medium text-xs text-white transition mt-1">مشاهده روی نقشه</button>
         </div>
     </div>
 
@@ -181,7 +155,6 @@
         let activeRadiusKm = 15;
         let isFirstCenter = true;
 
-        // استخراج مشخصات کاربر از تلگرام یا تولید شناسهتاپ برای تست
         const tgUser = tg?.initDataUnsafe?.user;
         let currentUser = { 
             id: tgUser ? String(tgUser.id) : String(Math.floor(Math.random() * 900000) + 100000),
@@ -200,7 +173,6 @@
                 setupUserUI();
                 updateMapElements();
 
-                // فعال‌سازی ردیابی زنده GPS با watchPosition (برای آپدیت لحظه‌ای مکان شما به محض جابجایی)
                 if (navigator.geolocation) {
                     navigator.geolocation.watchPosition(
                         (position) => {
@@ -214,7 +186,6 @@
                                 }
                                 updateMapElements();
                             }
-                            // ارسال لوکیشن جدید به دیتابیس برای مشاهده همه
                             saveAndSyncData();
                         }, 
                         (error) => {
@@ -227,7 +198,6 @@
                     saveAndSyncData();
                 }
 
-                // اتصال Realtime برای دریافت لحظه‌ای موقعیت بقیه کاربران
                 setupRealtimeSubscription();
 
             } catch (err) {
@@ -322,7 +292,7 @@
             supabaseClient
                 .channel('public:users')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
-                    console.log('Realtime update received from another user:', payload);
+                    console.log('Realtime update received:', payload);
                     fetchAllUsers(); 
                 })
                 .subscribe();
@@ -334,7 +304,7 @@
             markersLayerGroup.clearLayers();
             onlineUsersList = [];
 
-            // افزودن خود کاربر به لیست محلی
+            // افزودن خود کاربر به لیست
             onlineUsersList.push({
                 id: currentUser.id,
                 name: currentUser.name,
@@ -354,7 +324,7 @@
                 
                 onlineUsersList.push({ ...user, distance: distanceKm, isMe: false });
 
-                // نمایش پین کاربران دیگر با عکس پروفایل
+                // نمایش پین روی نقشه
                 const userInitial = user.name ? user.name.charAt(0) : 'ک';
                 const avatarHtml = user.avatar_url 
                     ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
@@ -374,6 +344,15 @@
                 
                 markersLayerGroup.addLayer(marker);
             });
+
+            // به‌روزرسانی تعداد افراد آنلاین روی دکمه گوشه صفحه
+            document.getElementById('online-count-badge').textContent = onlineUsersList.length;
+
+            // به‌روزرسانی خودکار لیست داخل مودال اگر باز باشد
+            const modal = document.getElementById('users-list-modal');
+            if (!modal.classList.contains('hidden')) {
+                renderUsersList(onlineUsersList);
+            }
         }
 
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
@@ -400,22 +379,6 @@
             } catch (e) {
                 console.warn("Center map warning:", e);
             }
-        }
-
-        function openRadiusModal() {
-            document.getElementById('modal-radius-slider').value = activeRadiusKm;
-            document.getElementById('modal-radius-value').textContent = `${activeRadiusKm} کیلومتر`;
-            document.getElementById('radius-modal').classList.remove('hidden');
-        }
-
-        function closeRadiusModal() {
-            document.getElementById('radius-modal').classList.add('hidden');
-        }
-
-        function onRadiusChange(val) {
-            activeRadiusKm = parseFloat(val);
-            document.getElementById('modal-radius-value').textContent = `${activeRadiusKm} کیلومتر`;
-            updateMapElements();
         }
 
         function openUsersListModal() {
@@ -472,6 +435,7 @@
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-emerald-600/30 border border-emerald-400/30 flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow relative">
                                 ${avatarHtml}
+                                <div class="online-dot"></div>
                             </div>
                             <div class="flex flex-col">
                                 <div class="flex items-center">
