@@ -15,18 +15,18 @@
         .map-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
         
         .glass-box {
-            background: rgba(23, 33, 43, 0.45);
+            background: rgba(23, 33, 43, 0.65);
             backdrop-filter: blur(18px);
             -webkit-backdrop-filter: blur(18px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        /* نشانگر موقعیت مکانی من با سایه متحرک بازشونده (Pulse) */
+        /* نشانگر موقعیت مکانی من با سایه متحرک (Pulse) */
         .my-animated-marker {
             width: 64px;
             height: 64px;
             border-radius: 50%;
-            background: rgba(66, 133, 244, 0.15);
+            background: rgba(66, 133, 244, 0.2);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -54,6 +54,9 @@
         }
 
         .leaflet-container { background-color: #0e1621 !important; }
+        /* حالت دارک نقشه */
+        .dark-map .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
+
         .transparent-location-btn {
             background: transparent !important;
             border: none !important;
@@ -69,15 +72,18 @@
 
     <!-- نقشه زنده من -->
     <div class="relative w-full h-full">
-        <div id="map" class="map-container"></div>
+        <div id="map" class="map-container dark-map"></div>
         
         <!-- کادر بالای صفحه -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <span class="text-[11px] font-bold text-blue-400">نقشه اختصاصی من</span>
-                <div class="flex items-center gap-1.5">
-                    <span id="top-my-name" class="font-bold text-xs text-white truncate max-w-[100px]">کاربر</span>
-                    <div id="top-my-avatar" class="w-7 h-7 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow">ک</div>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleMapTheme()" class="w-7 h-7 rounded-xl flex items-center justify-center text-xs text-white bg-slate-800/60 hover:bg-slate-700 transition" title="تغییر حالت نقشه">🌓</button>
+                    <div class="flex items-center gap-1.5">
+                        <span id="top-my-name" class="font-bold text-xs text-white truncate max-w-[100px]">کاربر</span>
+                        <div id="top-my-avatar" class="w-7 h-7 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow">ک</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -101,17 +107,29 @@
         let map, myLocationMarker = null, radiusCircle = null;
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
         const activeRadiusKm = 15;
+        let isDarkMap = true;
 
-        const user = tg?.initDataUnsafe?.user || { 
+        // دریافت اطلاعات کاربر مستقیم از تلگرام (Web App API)
+        const tgUser = tg?.initDataUnsafe?.user || { 
             id: Math.floor(Math.random() * 900000) + 100000, 
-            first_name: "کاربر " + Math.floor(Math.random() * 100), 
-            username: "user_" + Math.random().toString(36).substring(7) 
+            first_name: "کاربر مهمان", 
+            last_name: "",
+            username: "guest",
+            photo_url: ""
         };
-        let currentUser = { telegram_id: user.id, name: user.first_name };
+
+        let currentUser = { 
+            telegram_id: tgUser.id, 
+            name: `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim(),
+            username: tgUser.username || '',
+            avatar_url: tgUser.photo_url || ''
+        };
 
         window.addEventListener('DOMContentLoaded', async () => {
             map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 13);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
+
+            setupUserProfileUI();
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
@@ -125,9 +143,27 @@
             } else {
                 updateRadiusCircleOnMap();
             }
-
-            document.getElementById('top-my-name').textContent = currentUser.name;
         });
+
+        function setupUserProfileUI() {
+            document.getElementById('top-my-name').textContent = currentUser.name;
+            const avatarEl = document.getElementById('top-my-avatar');
+            if(currentUser.avatar_url) {
+                avatarEl.innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">`;
+            } else {
+                avatarEl.textContent = currentUser.name.charAt(0);
+            }
+        }
+
+        function toggleMapTheme() {
+            isDarkMap = !isDarkMap;
+            const mapContainer = document.getElementById('map');
+            if(isDarkMap) {
+                mapContainer.classList.add('dark-map');
+            } else {
+                mapContainer.classList.remove('dark-map');
+            }
+        }
 
         function centerToMyLocation() {
             if (navigator.geolocation) {
@@ -152,12 +188,11 @@
             }).addTo(map);
 
             if(myLocationMarker) map.removeLayer(myLocationMarker);
-            const initial = (currentUser?.name || 'ک').charAt(0);
-            const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner"><span>${initial}</span></div></div>`;
+            const avatarInner = currentUser.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : currentUser.name.charAt(0);
+            const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner">${avatarInner}</div></div>`;
             const myIcon = L.divIcon({ html: myHtml, iconSize: [64, 64], iconAnchor: [32, 32] });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
     </script>
 </body>
 </html>
-```[cite: 1]
