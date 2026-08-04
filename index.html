@@ -28,36 +28,43 @@
         .tg-bubble-in { background: #182533; color: #fff; border-radius: 16px 16px 16px 4px; }
         .tg-input-box { background: #17212b; border-top: 1px solid rgba(255,255,255,0.06); }
 
-        /* نشانگر موقعیت مکانی من با شکل هندسی متمایز و سایه متحرک بازشونده (Pulse) */
-        .my-animated-marker {
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            background: rgba(66, 133, 244, 0.22);
+        /* نشانگر لوکیشن من به صورت فرم هندسی و گوه‌ای شکل متحرک با پالس */
+        .my-wedge-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: google-radar-pulse 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1);
         }
-        .my-marker-inner {
-            width: 42px;
-            height: 42px;
-            border-radius: 14px;
-            border: 3px solid #ffffff;
-            overflow: hidden;
-            background: #4285f4;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            color: white;
-            font-size: 14px;
-            box-shadow: 0 4px 18px rgba(66, 133, 244, 0.7);
+        .my-wedge-shape {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #4285f4, #1a73e8);
+            /* ساخت شکل گوه‌ای/چندضلعی متمایز با برش زاویه‌دار */
+            clip-path: polygon(50% 0%, 100% 85%, 50% 100%, 0% 85%);
+            border: 2px solid #ffffff;
+            box-shadow: 0 4px 16px rgba(66, 133, 244, 0.7);
+            z-index: 2;
+            animation: wedge-float 2s ease-in-out infinite alternate;
         }
-        @keyframes google-radar-pulse {
-            0% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.6), 0 0 0 0 rgba(66, 133, 244, 0.4); }
-            50% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(66, 133, 244, 0), 0 0 0 35px rgba(66, 133, 244, 0.15); }
-            100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0), 0 0 0 0 rgba(66, 133, 244, 0); }
+        .my-wedge-pulse {
+            position: absolute;
+            width: 65px;
+            height: 65px;
+            background: rgba(66, 133, 244, 0.3);
+            clip-path: polygon(50% 0%, 100% 85%, 50% 100%, 0% 85%);
+            animation: wedge-radar-pulse 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+            z-index: 1;
+        }
+        @keyframes wedge-float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            100% { transform: translateY(-4px) rotate(0deg); }
+        }
+        @keyframes wedge-radar-pulse {
+            0% { transform: scale(0.85); opacity: 0.8; }
+            50% { transform: scale(1.35); opacity: 0; }
+            100% { transform: scale(0.85); opacity: 0; }
         }
 
         /* نشانگر کاربران دیگر روی نقشه */
@@ -657,9 +664,15 @@
             }).addTo(map);
 
             if(myLocationMarker) map.removeLayer(myLocationMarker);
-            const avatarInner = currentUser.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : currentUser.name.charAt(0);
-            const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner">${avatarInner}</div></div>`;
-            const myIcon = L.divIcon({ html: myHtml, iconSize: [72, 72], iconAnchor: [36, 36] });
+            
+            // طراحی نشانگر به شکل گوه (Wedge/Arrow Pin) با پالس متحرک
+            const myHtml = `
+                <div class="my-wedge-container">
+                    <div class="my-wedge-pulse"></div>
+                    <div class="my-wedge-shape"></div>
+                </div>
+            `;
+            const myIcon = L.divIcon({ html: myHtml, iconSize: [60, 60], iconAnchor: [30, 30] });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
     </script>
