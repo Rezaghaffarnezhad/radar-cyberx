@@ -704,7 +704,7 @@
                 color: '#4285f4',
                 weight: 1.5,
                 fillColor: '#4285f4',
-                fillOpacity: 0.08
+                fillOpacity: 0.12
             }).addTo(map);
 
             if(myLocationMarker) map.removeLayer(myLocationMarker);
@@ -830,6 +830,7 @@
             }
             document.getElementById('profile-display-name').textContent = currentUser.name;
             document.getElementById('top-my-name').textContent = currentUser.name;
+            updateRadiusCircleOnMap();
         }
 
         async function updateMyLocation(lat, lng) {
@@ -937,7 +938,6 @@
                 await supabaseClient.from('users').update({ avatar_url: base64Image }).eq('telegram_id', currentUser.telegram_id);
                 currentUser.avatar_url = base64Image;
                 updateMyAvatarUI();
-                updateRadiusCircleOnMap();
                 showToast("عکس پروفایل ذخیره شد");
             };
             reader.readAsDataURL(file);
@@ -954,7 +954,6 @@
             currentUser.username = username;
             currentUser.bio = bio;
             updateMyAvatarUI();
-            updateRadiusCircleOnMap();
             showToast("پروفایل به‌روز شد");
         }
 
