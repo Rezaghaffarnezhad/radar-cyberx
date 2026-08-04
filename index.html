@@ -28,42 +28,42 @@
         .tg-bubble-in { background: #182533; color: #fff; border-radius: 16px 16px 16px 4px; }
         .tg-input-box { background: #17212b; border-top: 1px solid rgba(255,255,255,0.06); }
 
-        /* نشانگر لوکیشن من به صورت فرم هندسی و گوه‌ای شکل متحرک با پالس */
+        /* نشانگر لوکیشن من به صورت فرم هندسی و گوه‌ای شکل متحرک با پالس (بالاترین z-index برای اطمینان از دیده شدن روی نقشه) */
         .my-wedge-container {
             position: relative;
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 9999 !important;
         }
         .my-wedge-shape {
-            width: 38px;
-            height: 38px;
+            width: 42px;
+            height: 42px;
             background: linear-gradient(135deg, #4285f4, #1a73e8);
-            /* ساخت شکل گوه‌ای/چندضلعی متمایز با برش زاویه‌دار */
             clip-path: polygon(50% 0%, 100% 85%, 50% 100%, 0% 85%);
-            border: 2px solid #ffffff;
-            box-shadow: 0 4px 16px rgba(66, 133, 244, 0.7);
+            border: 2.5px solid #ffffff;
+            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.9);
             z-index: 2;
             animation: wedge-float 2s ease-in-out infinite alternate;
         }
         .my-wedge-pulse {
             position: absolute;
-            width: 65px;
-            height: 65px;
-            background: rgba(66, 133, 244, 0.3);
+            width: 75px;
+            height: 75px;
+            background: rgba(66, 133, 244, 0.35);
             clip-path: polygon(50% 0%, 100% 85%, 50% 100%, 0% 85%);
             animation: wedge-radar-pulse 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1);
             z-index: 1;
         }
         @keyframes wedge-float {
             0% { transform: translateY(0px) rotate(0deg); }
-            100% { transform: translateY(-4px) rotate(0deg); }
+            100% { transform: translateY(-5px) rotate(0deg); }
         }
         @keyframes wedge-radar-pulse {
             0% { transform: scale(0.85); opacity: 0.8; }
-            50% { transform: scale(1.35); opacity: 0; }
+            50% { transform: scale(1.4); opacity: 0; }
             100% { transform: scale(0.85); opacity: 0; }
         }
 
@@ -278,22 +278,23 @@
         };
 
         window.addEventListener('DOMContentLoaded', async () => {
-            map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 13);
+            map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 15);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
             setupUserProfileUI();
             await registerOrUpdateUserInSupabase();
 
+            // دریافت لوکیشن کاربر با دقت بالا و فوراً قرار دادن نشانگر روی نقشه
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
                     currentCoords.lat = position.coords.latitude;
                     currentCoords.lng = position.coords.longitude;
-                    if(map) map.setView([currentCoords.lat, currentCoords.lng], 15, { animate: true });
+                    if(map) map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
                     updateRadiusCircleOnMap();
                     updateMyHeartbeat();
                 }, () => {
                     updateRadiusCircleOnMap();
-                }, { enableHighAccuracy: true, timeout: 5000 });
+                }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
             } else {
                 updateRadiusCircleOnMap();
             }
@@ -645,7 +646,7 @@
                 navigator.geolocation.getCurrentPosition(position => {
                     currentCoords.lat = position.coords.latitude;
                     currentCoords.lng = position.coords.longitude;
-                    if(map) map.setView([currentCoords.lat, currentCoords.lng], 15, { animate: true });
+                    if(map) map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
                     updateRadiusCircleOnMap();
                     updateMyHeartbeat();
                 }, () => {}, { enableHighAccuracy: true, timeout: 5000 });
@@ -665,15 +666,15 @@
 
             if(myLocationMarker) map.removeLayer(myLocationMarker);
             
-            // طراحی نشانگر به شکل گوه (Wedge/Arrow Pin) با پالس متحرک
+            // طراحی کامل نشانگر گوه‌ای با پالس اختصاصی و لایه بالای نقشه برای اطمینان از دیده شدن
             const myHtml = `
                 <div class="my-wedge-container">
                     <div class="my-wedge-pulse"></div>
                     <div class="my-wedge-shape"></div>
                 </div>
             `;
-            const myIcon = L.divIcon({ html: myHtml, iconSize: [60, 60], iconAnchor: [30, 30] });
-            myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
+            const myIcon = L.divIcon({ html: myHtml, iconSize: [70, 70], iconAnchor: [35, 35], className: 'my-custom-marker' });
+            myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon, zIndexOffset: 1000 }).addTo(map);
         }
     </script>
 </body>
