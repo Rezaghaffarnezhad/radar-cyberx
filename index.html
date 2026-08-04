@@ -85,7 +85,7 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ رادیکالِ زنده (Online)</span>
+                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ متصل به ساب‌پیس</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
@@ -96,7 +96,7 @@
             </div>
         </div>
 
-        <!-- دکمه‌های سمت راست (لیست افراد آنلاین + موقعیت من) -->
+        <!-- دکمه‌های سمت راست -->
         <div class="absolute bottom-6 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
             <button onclick="openUsersListModal()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10 relative" title="لیست افراد آنلاین">
                 <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
@@ -116,18 +116,16 @@
                 <button onclick="closeUsersListModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
             </div>
             
-            <!-- باکس جستجو -->
             <div class="relative w-full">
                 <input type="text" id="user-search-input" oninput="filterUsersList(this.value)" placeholder="جستجو بر اساس نام یا یوزرنیم (@)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl py-2.5 px-3 pr-9 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-500">
                 <svg class="w-4 h-4 text-slate-400 absolute right-3 top-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </div>
 
-            <!-- لیست اسامی کاربران -->
             <div id="users-scroll-container" class="flex flex-col gap-2 overflow-y-auto max-h-[45vh] pr-1">
                 <div class="text-center text-xs text-slate-400 py-6">در حال بارگذاری لیست افراد آنلاین...</div>
             </div>
 
-            <button onclick="closeUsersListModal()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-xl font-medium text-xs text-white transition mt-1">مشاهده روی نقشه</button>
+            <button onclick="closeUsersListModal()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-xl font-medium text-xs text-white transition mt-1">بستن</button>
         </div>
     </div>
 
@@ -150,16 +148,15 @@
         let map = null, myLocationMarker = null, radiusCircle = null;
         let markersLayerGroup = L.layerGroup(); 
         let onlineUsersList = []; 
-        let currentCoords = { lat: 35.6892, lng: 51.3890 }; 
+        let currentCoords = { lat: 35.6892, lng: 51.3890 }; // پیش‌فرض تهران
         let activeRadiusKm = 15;
         let isFirstCenter = true;
 
-        // استخراج مشخصات کاربر حاضر در این اکانت تلگرام
         const tgUser = tg?.initDataUnsafe?.user;
         let currentUser = { 
             id: tgUser ? String(tgUser.id) : String(Math.floor(Math.random() * 900000) + 100000),
-            name: tgUser ? `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() : "کاربر تستی",
-            username: tgUser?.username || 'guest_user',
+            name: tgUser ? `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() : "کاربر تستی (" + Math.floor(Math.random()*100) + ")",
+            username: tgUser?.username || 'user_' + Math.floor(Math.random()*1000),
             avatar_url: tgUser?.photo_url || ''
         };
 
@@ -169,37 +166,33 @@
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
                 
                 markersLayerGroup.addTo(map);
-
                 setupUserUI();
                 updateMapElements();
 
-                // گرفتن موقعیت GPS لحظه‌ای کاربر فعلی
+                // گرفتن لوکیشن با کمی تلورانس تصادفی اندک اگر دو اکانت روی یک سیستم تست می‌شوند تا روی هم نیفتند
                 if (navigator.geolocation) {
-                    navigator.geolocation.watchPosition(
+                    navigator.geolocation.getCurrentPosition(
                         (position) => {
-                            currentCoords.lat = position.coords.latitude;
-                            currentCoords.lng = position.coords.longitude;
-                            
-                            if(map) {
-                                if(isFirstCenter) {
-                                    map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
-                                    isFirstCenter = false;
-                                }
-                                updateMapElements();
+                            currentCoords.lat = position.coords.latitude + (Math.random() - 0.5) * 0.002;
+                            currentCoords.lng = position.coords.longitude + (Math.random() - 0.5) * 0.002;
+                            if(map && isFirstCenter) {
+                                map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+                                isFirstCenter = false;
                             }
+                            updateMapElements();
                             saveAndSyncData();
-                        }, 
+                        },
                         (error) => {
-                            console.warn("Geolocation warning:", error.message);
+                            console.warn("GPS error, using default/random offset:", error);
                             saveAndSyncData();
-                        }, 
-                        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                        },
+                        { enableHighAccuracy: true, timeout: 10000 }
                     );
                 } else {
                     saveAndSyncData();
                 }
 
-                // برقراری ارتباط زنده با دیتابیس برای افزودن آنی کاربران جدید
+                // راه‌اندازی اشتراک Realtime برای دریافت آنی ورود بقیه
                 setupRealtimeSubscription();
 
             } catch (err) {
@@ -224,7 +217,6 @@
         function updateMapElements() {
             try {
                 if(!map) return;
-
                 if(radiusCircle) map.removeLayer(radiusCircle);
                 if(myLocationMarker) map.removeLayer(myLocationMarker);
 
@@ -252,18 +244,18 @@
         async function saveAndSyncData() {
             if (!supabaseClient) return;
             try {
-                // ثبت یا بروزرسانی فوری اطلاعات اکانت فعلی در ساب‌پیس
-                await supabaseClient.from('users').upsert({
+                const { error } = await supabaseClient.from('users').upsert({
                     id: currentUser.id,
                     name: currentUser.name,
                     username: currentUser.username,
                     avatar_url: currentUser.avatar_url,
                     lat: currentCoords.lat,
                     lng: currentCoords.lng,
-                    updated_at: new Date()
+                    updated_at: new Date().toISOString()
                 }, { onConflict: 'id' });
 
-                fetchAllUsers();
+                if (error) console.error("Supabase upsert error:", error);
+                else fetchAllUsers();
             } catch (err) {
                 console.error("Error saving location:", err);
             }
@@ -272,15 +264,11 @@
         async function fetchAllUsers() {
             if (!supabaseClient) return;
             try {
-                const { data, error } = await supabaseClient
-                    .from('users')
-                    .select('*');
-
+                const { data, error } = await supabaseClient.from('users').select('*');
                 if (error) {
                     console.error("Fetch error:", error);
                     return;
                 }
-
                 if (data) {
                     processUsersData(data);
                 }
@@ -292,14 +280,15 @@
         function setupRealtimeSubscription() {
             if (!supabaseClient) return;
 
-            // گوش دادن به تمامی رویدادها (INSERT, UPDATE, DELETE) جدول users به صورت زنده
             supabaseClient
                 .channel('public:users')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
-                    console.log('ورود یا تغییر کاربر جدید به صورت زنده:', payload);
+                    console.log('تغییر Realtime دریافت شد:', payload);
                     fetchAllUsers(); 
                 })
-                .subscribe();
+                .subscribe((status) => {
+                    console.log("وضعیت کانال Realtime ساب‌پیس:", status);
+                });
 
             fetchAllUsers();
         }
@@ -308,7 +297,7 @@
             markersLayerGroup.clearLayers();
             onlineUsersList = [];
 
-            // افزودن کاربر حاضر به لیست
+            // افزودن کاربر جاری
             onlineUsersList.push({
                 id: currentUser.id,
                 name: currentUser.name,
@@ -325,10 +314,8 @@
                 if (!user.lat || !user.lng) return;
 
                 const distanceKm = getDistanceFromLatLonInKm(currentCoords.lat, currentCoords.lng, user.lat, user.lng);
-                
                 onlineUsersList.push({ ...user, distance: distanceKm, isMe: false });
 
-                // ساخت پین روی نقشه برای سایر کاربران/اکانت‌ها به صورت کاملاً زنده
                 const userInitial = user.name ? user.name.charAt(0) : 'ک';
                 const avatarHtml = user.avatar_url 
                     ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
@@ -344,15 +331,13 @@
                 });
 
                 const marker = L.marker([user.lat, user.lng], { icon: userIcon });
-                marker.bindPopup(`<div style="direction: rtl; font-family: 'Vazirmatn'; text-align: right;"><b style="color: #10b981;">${user.name || 'کاربر'} (آنلاین)</b><br><span style="font-size: 11px; color: #64748b;">@${user.username || 'بدون نام کاربری'}</span><br><span style="font-size: 11px; color: #10b981;">فاصله: ${distanceKm.toFixed(1)} کیلومتر</span></div>`);
+                marker.bindPopup(`<div style="direction: rtl; font-family: 'Vazirmatn'; text-align: right;"><b style="color: #10b981;">${user.name || 'کاربر'} (آنلاین)</b><br><span style="font-size: 11px; color: #64748b;">@${user.username || 'بدون نام'}</span><br><span style="font-size: 11px; color: #10b981;">فاصله: ${distanceKm.toFixed(1)} کیلومتر</span></div>`);
                 
                 markersLayerGroup.addLayer(marker);
             });
 
-            // به‌روزرسانی شمارنده تعداد افراد آنلاین
             document.getElementById('online-count-badge').textContent = onlineUsersList.length;
 
-            // به‌روزرسانی آنی لیست داخل مودال اگر باز باشد
             const modal = document.getElementById('users-list-modal');
             if (!modal.classList.contains('hidden')) {
                 renderUsersList(onlineUsersList);
@@ -371,18 +356,10 @@
             return R * c;
         }
 
-        function deg2rad(deg) {
-            return deg * (Math.PI/180);
-        }
+        function deg2rad(deg) { return deg * (Math.PI/180); }
 
         function centerToMyLocation() {
-            try {
-                if(map) {
-                    map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
-                }
-            } catch (e) {
-                console.warn("Center map warning:", e);
-            }
+            if(map) map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
         }
 
         function openUsersListModal() {
@@ -397,15 +374,8 @@
 
         function filterUsersList(query) {
             const q = query.trim().toLowerCase();
-            if (!q) {
-                renderUsersList(onlineUsersList);
-                return;
-            }
-            const filtered = onlineUsersList.filter(u => {
-                const nameMatch = u.name && u.name.toLowerCase().includes(q);
-                const usernameMatch = u.username && u.username.toLowerCase().includes(q);
-                return nameMatch || usernameMatch;
-            });
+            if (!q) { renderUsersList(onlineUsersList); return; }
+            const filtered = onlineUsersList.filter(u => (u.name && u.name.toLowerCase().includes(q)) || (u.username && u.username.toLowerCase().includes(q)));
             renderUsersList(filtered);
         }
 
@@ -422,19 +392,11 @@
 
             usersArray.forEach(user => {
                 const userInitial = user.name ? user.name.charAt(0) : 'ک';
-                const avatarHtml = user.avatar_url 
-                    ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
-                    : userInitial;
+                const avatarHtml = user.avatar_url ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` : userInitial;
+                const badgeHtml = user.isMe ? `<span class="text-[9px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded mr-1.5">شما (این اکانت)</span>` : `<span class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded mr-1.5">آنلاین</span>`;
+                const distanceBadge = user.isMe ? `<span class="text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2 py-1 rounded-lg">موقعیت من</span>` : `<span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg">${user.distance.toFixed(1)} کیلومتر</span>`;
 
-                const badgeHtml = user.isMe 
-                    ? `<span class="text-[9px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded mr-1.5">شما (این اکانت)</span>` 
-                    : `<span class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded mr-1.5">آنلاین</span>`;
-
-                const distanceBadge = user.isMe 
-                    ? `<span class="text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2 py-1 rounded-lg">موقعیت من</span>`
-                    : `<span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg">${user.distance.toFixed(1)} کیلومتر</span>`;
-
-                const itemHtml = `
+                container.innerHTML += `
                     <div onclick="focusOnUser(${user.lat}, ${user.lng})" class="flex items-center justify-between p-2.5 bg-slate-800/60 hover:bg-slate-800 rounded-xl cursor-pointer transition border border-slate-700/50">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-emerald-600/30 border border-emerald-400/30 flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow relative">
@@ -449,20 +411,15 @@
                                 <span class="text-[10px] text-slate-400">@${user.username || 'بدون نام کاربری'}</span>
                             </div>
                         </div>
-                        <div class="text-left">
-                            ${distanceBadge}
-                        </div>
+                        <div class="text-left">${distanceBadge}</div>
                     </div>
                 `;
-                container.innerHTML += itemHtml;
             });
         }
 
         function focusOnUser(lat, lng) {
             closeUsersListModal();
-            if (map) {
-                map.setView([lat, lng], 17, { animate: true });
-            }
+            if (map) map.setView([lat, lng], 17, { animate: true });
         }
     </script>
 </body>
