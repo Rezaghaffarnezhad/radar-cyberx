@@ -32,61 +32,103 @@
         .g-fab-btn:hover { background: rgba(35, 46, 60, 0.95) !important; transform: scale(1.05); }
         .g-fab-btn:active { transform: scale(0.95); }
 
+        /* حذف کامل کادر مربع Leaflet و طراحی مارکر دایره‌ای خالص */
+        .leaflet-div-icon {
+            background: transparent !important;
+            border: none !important;
+        }
+
         /* نشانگر من با تک حلقه بازشونده */
-        .pulse-marker-container {
+        .my-pulse-container {
             position: relative;
-            width: 50px;
-            height: 50px;
+            width: 52px;
+            height: 52px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .pulse-core {
-            width: 38px;
-            height: 38px;
-            background: #1a73e8;
-            border: 3px solid #ffffff;
+        .my-avatar-core {
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
+            border: 2.5px solid #3b82f6;
             overflow: hidden;
+            background: #1a73e8;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
             color: white;
-            font-size: 13px;
-            box-shadow: 0 4px 15px rgba(26, 115, 232, 0.7);
+            font-size: 14px;
+            box-shadow: 0 4px 18px rgba(59, 130, 246, 0.6);
             z-index: 2;
         }
-        .pulse-ring {
+        .my-single-ring {
             position: absolute;
             width: 44px;
             height: 44px;
-            border: 2px solid rgba(26, 115, 232, 0.8);
+            border: 2px solid rgba(59, 130, 246, 0.8);
             border-radius: 50%;
             animation: single-radar 2s infinite cubic-bezier(0.2, 0.8, 0.4, 1);
             z-index: 1;
         }
         @keyframes single-radar {
-            0% { transform: scale(0.6); opacity: 1; }
-            100% { transform: scale(2.4); opacity: 0; }
+            0% { transform: scale(0.7); opacity: 1; }
+            100% { transform: scale(2.2); opacity: 0; }
         }
 
-        /* مارکر سایر کاربران واقعی با عکس پروفایل */
-        .other-user-marker {
-            width: 38px;
-            height: 38px;
-            background: #ffffff;
-            border: 3px solid #10b981;
+        /* مارکر سایر کاربران با قابلیت هاور اسم و کلیک */
+        .user-marker-wrapper {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .user-avatar-circle {
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
+            border: 2.5px solid #10b981;
+            overflow: hidden;
+            background: #0f172a;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
             color: #10b981;
-            font-size: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            cursor: pointer;
+            font-size: 13px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: transform 0.2s ease;
+        }
+        .user-marker-wrapper:hover .user-avatar-circle {
+            transform: scale(1.12);
+            border-color: #34d399;
+        }
+        /* باکس نمایش نام هنگام رفتن موس روی مارکر */
+        .user-name-tooltip {
+            position: absolute;
+            bottom: 45px;
+            left: 50%;
+            transform: translateX(-50%) translateY(5px);
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        .user-marker-wrapper:hover .user-name-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
         }
 
         .leaflet-container { background-color: #070b12 !important; }
@@ -152,7 +194,7 @@
         const currentUserData = {
             id: tgUser?.id || Math.floor(Math.random() * 900000) + 100000,
             first_name: [tgUser?.first_name, tgUser?.last_name].filter(Boolean).join(' ') || "کاربر مهمان",
-            username: tgUser?.username || "user_" + Math.random().toString(36).substring(7),
+            username: tgUser?.username || "",
             photo_url: tgUser?.photo_url || null
         };
 
@@ -181,7 +223,6 @@
                 await registerAndSyncUser();
             }
 
-            // همگام‌سازی لحظه‌ای با دیتابیس
             supabaseClient.channel('realtime_users')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
                     fetchActiveUsers();
@@ -230,12 +271,25 @@
 
             const initial = currentUserData.first_name.charAt(0);
             const coreContent = currentUserData.photo_url 
-                ? `<img src="${currentUserData.photo_url}" class="w-full h-full object-cover">` 
+                ? `<img src="${currentUserData.photo_url}" style="width:100%; height:100%; object-fit:cover;">` 
                 : initial;
 
-            const html = `<div class="pulse-marker-container"><div class="pulse-ring"></div><div class="pulse-core">${coreContent}</div></div>`;
-            const icon = L.divIcon({ html, iconSize: [50, 50], iconAnchor: [25, 25] });
+            const html = `
+                <div class="my-pulse-container" title="موقعیت من">
+                    <div class="my-single-ring"></div>
+                    <div class="my-avatar-core">${coreContent}</div>
+                </div>
+            `;
+            const icon = L.divIcon({ html, iconSize: [52, 52], iconAnchor: [26, 26] });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
+        }
+
+        function openUserProfile(username) {
+            if (username) {
+                window.open(`https://t.me/${username}`, '_blank');
+            } else {
+                alert('این کاربر نام کاربری تلگرام ندارد.');
+            }
         }
 
         function renderUsersOnMapAndUI() {
@@ -246,35 +300,43 @@
             let htmlContent = '';
 
             allOnlineUsers.forEach(u => {
-                if(u.telegram_id === currentUserData.id) return; // کاربر جاری مستقیماً روی مپ با پالس است
+                if(u.telegram_id === currentUserData.id) return;
                 activeIds.push(u.telegram_id);
 
                 const initial = (u.name || 'ک').charAt(0);
-                const markerInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : initial;
+                const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" style="width:100%; height:100%; object-fit:cover;">` : initial;
 
                 if(userMarkersMap[u.telegram_id]) {
                     userMarkersMap[u.telegram_id].setLatLng([u.latitude, u.longitude]);
                 } else {
+                    const html = `
+                        <div class="user-marker-wrapper" onclick="openUserProfile('${u.username}')">
+                            <div class="user-name-tooltip">${u.name}</div>
+                            <div class="user-avatar-circle">${avatarInner}</div>
+                        </div>
+                    `;
                     const icon = L.divIcon({
-                        html: `<div class="other-user-marker">${markerInner}</div>`,
-                        iconSize: [38, 38],
-                        iconAnchor: [19, 19]
+                        html: html,
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 20]
                     });
                     const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
-                    marker.bindPopup(`<b style="font-family:Vazirmatn">${u.name}</b><br><span style="font-size:11px">آنلاین روی نقشه</span>`);
                     userMarkersMap[u.telegram_id] = marker;
                 }
 
                 htmlContent += `
                     <div class="flex items-center justify-between bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/40">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-full bg-slate-700 overflow-hidden flex items-center justify-center font-bold text-white text-xs">${markerInner}</div>
+                            <div class="w-9 h-9 rounded-full bg-slate-700 overflow-hidden flex items-center justify-center font-bold text-white text-xs">${avatarInner}</div>
                             <div>
                                 <div class="text-xs font-bold text-white">${u.name}</div>
                                 <div class="text-[10px] text-emerald-400">● آنلاین</div>
                             </div>
                         </div>
-                        <button onclick="focusOnUser(${u.latitude}, ${u.longitude})" class="px-3 py-1 bg-blue-600/80 hover:bg-blue-600 text-white text-[11px] rounded-lg transition">مشاهده</button>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="openUserProfile('${u.username}')" class="px-2.5 py-1 bg-emerald-600/80 hover:bg-emerald-600 text-white text-[11px] rounded-lg transition">پروفایل</button>
+                            <button onclick="focusOnUser(${u.latitude}, ${u.longitude})" class="px-2.5 py-1 bg-blue-600/80 hover:bg-blue-600 text-white text-[11px] rounded-lg transition">مشاهده</button>
+                        </div>
                     </div>
                 `;
             });
