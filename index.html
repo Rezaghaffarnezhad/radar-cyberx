@@ -13,7 +13,6 @@
         body, html { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #070b12; color: #f5f5f5; font-family: 'Vazirmatn', sans-serif; }
         .map-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        /* افکت شیشه‌ای فوق‌العاده مدرن (Glassmorphism) */
         .glass-panel {
             background: rgba(15, 23, 42, 0.65);
             backdrop-filter: blur(20px);
@@ -22,55 +21,48 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
-        /* نشانگر فوق‌العاده جذاب لوکیشن با افکت نئونی و پالس سه‌بعدی */
+        /* نشانگر با حلقه بازشونده ظریف و بدون سایه اضافی */
         .pulse-marker-container {
             position: relative;
-            width: 50px;
-            height: 50px;
+            width: 44px;
+            height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         .pulse-core {
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            border: 3px solid #ffffff;
+            border: 2.5px solid #ffffff;
             border-radius: 50%;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.9), inset 0 2px 4px rgba(255, 255, 255, 0.6);
             z-index: 2;
-            animation: core-bounce 2s infinite ease-in-out;
         }
         .pulse-ring-1 {
             position: absolute;
-            width: 50px;
-            height: 50px;
-            background: rgba(59, 130, 246, 0.3);
+            width: 40px;
+            height: 40px;
+            border: 1.5px solid rgba(59, 130, 246, 0.75);
             border-radius: 50%;
-            animation: radar-wave 2s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+            animation: delicate-radar 2s infinite cubic-bezier(0.2, 0.8, 0.4, 1);
             z-index: 1;
         }
         .pulse-ring-2 {
             position: absolute;
-            width: 50px;
-            height: 50px;
-            background: rgba(59, 130, 246, 0.2);
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(59, 130, 246, 0.45);
             border-radius: 50%;
-            animation: radar-wave 2s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+            animation: delicate-radar 2s infinite cubic-bezier(0.2, 0.8, 0.4, 1);
             animation-delay: 0.8s;
             z-index: 1;
         }
 
-        @keyframes radar-wave {
-            0% { transform: scale(0.6); opacity: 1; }
-            100% { transform: scale(2.8); opacity: 0; }
-        }
-        @keyframes core-bounce {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+        @keyframes delicate-radar {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(2.2); opacity: 0; }
         }
 
-        /* دکمه شناور مدرن با گرادانت و سایه نئونی */
         .action-btn {
             background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95)) !important;
             backdrop-filter: blur(12px);
@@ -99,7 +91,6 @@
     <div id="view-map" class="view-section relative w-full h-full">
         <div id="map" class="map-container"></div>
         
-        <!-- هدر شیشه‌ای بالا -->
         <div class="absolute top-4 left-4 right-4 z-10 pointer-events-none">
             <div class="glass-panel px-4 py-3 rounded-2xl flex items-center justify-between shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2.5">
@@ -114,7 +105,6 @@
             </div>
         </div>
 
-        <!-- دکمه شناور لوکیشن من در پایین صفحه -->
         <div class="absolute bottom-6 right-5 z-10 pointer-events-auto">
             <button onclick="centerToMyLocation()" class="action-btn w-13 h-13 rounded-2xl flex items-center justify-center text-white transition" title="موقعیت من">
                 <svg class="w-6 h-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -132,7 +122,6 @@
         window.addEventListener('DOMContentLoaded', () => {
             map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 14);
             
-            // لایه پیش‌فرض (تم تاریک مدرن)
             tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
             updateMyLocationMarkerOnMap();
@@ -158,8 +147,8 @@
             const customIcon = L.divIcon({
                 className: '',
                 html: '<div class="pulse-marker-container"><div class="pulse-ring-1"></div><div class="pulse-ring-2"></div><div class="pulse-core"></div></div>',
-                iconSize: [50, 50],
-                iconAnchor: [25, 25]
+                iconSize: [44, 44],
+                iconAnchor: [22, 22]
             });
 
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon: customIcon }).addTo(map);
