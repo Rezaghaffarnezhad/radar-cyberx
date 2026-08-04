@@ -633,7 +633,7 @@
                     ${avatarInner}
                 </div>
             `;
-            const myIcon = L.divIcon({ html: myHtml, iconSize: [44, 44], iconAnchor: [22, 22], className: 'my-standard-pin' });
+            const myIcon = L.divIcon({ html: myHtml, iconSize: [44, 44], iconAnchor: [22, 22], className: 'my-center-pin' });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon, zIndexOffset: 1000 }).addTo(map);
         }
     </script>
