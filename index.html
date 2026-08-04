@@ -510,10 +510,13 @@
         let isPickingLocation = false;
         let searchDebounceTimer = null;
 
-        const user = tg?.initDataUnsafe?.user || { 
-            id: Math.floor(Math.random() * 900000) + 100000, 
-            first_name: "کاربر " + Math.floor(Math.random() * 100), 
-            username: "user_" + Math.random().toString(36).substring(7) 
+        // دریافت اطلاعات کاربر مستقیم از تلگرام (در صورت اجرا خارج از تلگرام از مقدار تستی استفاده می‌شود)
+        const tgUser = tg?.initDataUnsafe?.user;
+        const user = { 
+            id: tgUser?.id || Math.floor(Math.random() * 900000) + 100000, 
+            first_name: [tgUser?.first_name, tgUser?.last_name].filter(Boolean).join(' ') || tgUser?.first_name || "کاربر " + Math.floor(Math.random() * 100), 
+            username: tgUser?.username || "user_" + Math.random().toString(36).substring(7),
+            photo_url: tgUser?.photo_url || null
         };
 
         function showToast(text) {
@@ -777,11 +780,21 @@
 
             if (data) {
                 currentUser = data;
+                // اگر کاربر در تلگرام عکس یا نام جدیدی داشت و در دیتابیس ثبت نشده بود، اتوماتیک آپدیت کن
+                let updates = {};
+                if(user.photo_url && !currentUser.avatar_url) {
+                    updates.avatar_url = user.photo_url;
+                    currentUser.avatar_url = user.photo_url;
+                }
+                if(Object.keys(updates).length > 0) {
+                    await supabaseClient.from('users').update(updates).eq('telegram_id', user.id);
+                }
             } else {
                 const newUserData = { 
                     telegram_id: user.id, 
                     name: user.first_name, 
                     username: user.username, 
+                    avatar_url: user.photo_url || null,
                     latitude: currentCoords.lat, 
                     longitude: currentCoords.lng,
                     last_seen: new Date().toISOString() 
