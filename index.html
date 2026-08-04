@@ -230,7 +230,7 @@
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition" onclick="openOnlineUsersModal()">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span id="top-online-count" class="text-[11px] font-bold text-emerald-400">0 آنلاین</span>
+                        <span id="top-online-count" class="text-[11px] font-bold text-emerald-400">1 آنلاین</span>
                     </div>
 
                     <!-- جستجوی آدرس با انتخاب ذره‌بین -->
@@ -863,7 +863,6 @@
 
             visibleUsers.forEach(u => {
                 const initial = (u.name || 'ک').charAt(0);
-                // نشانگر کاربران دیگر با عکس پروفایل یا حرف اول نام
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : initial;
                 const html = `<div class="other-user-pin">${avatarInner}</div>`;
                 
@@ -886,7 +885,7 @@
                 const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
                 const isRecent = lastSeenDate && (now - lastSeenDate < 180000);
                 
-                if(onlineUsersMap[u.telegram_id] || isRecent) {
+                if(onlineUsersMap[Number(u.telegram_id)] || onlineUsersMap[String(u.telegram_id)] || isRecent) {
                     onlineCount++;
                 }
             });
@@ -903,7 +902,7 @@
                 if(u.telegram_id === currentUser?.telegram_id) return true;
                 const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
                 const isRecent = lastSeenDate && (now - lastSeenDate < 180000);
-                return onlineUsersMap[u.telegram_id] || isRecent;
+                return onlineUsersMap[Number(u.telegram_id)] || onlineUsersMap[String(u.telegram_id)] || isRecent;
             });
             
             container.innerHTML = onlineUsers.length ? onlineUsers.map(u => {
@@ -1522,7 +1521,10 @@
             .on('presence', { event: 'sync' }, () => {
                 const state = globalChannel.presenceState();
                 onlineUsersMap = {};
-                Object.keys(state).forEach(key => { onlineUsersMap[Number(key)] = true; });
+                Object.keys(state).forEach(key => { 
+                    onlineUsersMap[key] = true;
+                    onlineUsersMap[Number(key)] = true;
+                });
                 fetchUsersData();
             })
             .subscribe(async (status) => {
