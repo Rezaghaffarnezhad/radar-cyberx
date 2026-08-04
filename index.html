@@ -711,6 +711,7 @@
             const initial = (currentUser?.name || 'ک').charAt(0);
             const myAvatarInner = currentUser?.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : initial;
             
+            // دایره متحرک انیمیشنی (Pulse) مختص شما
             const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner">${myAvatarInner}</div></div>`;
             const myIcon = L.divIcon({ html: myHtml, iconSize: [64, 64], iconAnchor: [32, 32] });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
@@ -862,6 +863,7 @@
 
             visibleUsers.forEach(u => {
                 const initial = (u.name || 'ک').charAt(0);
+                // نشانگر کاربران دیگر با عکس پروفایل یا حرف اول نام
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : initial;
                 const html = `<div class="other-user-pin">${avatarInner}</div>`;
                 
