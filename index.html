@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - رادار و پیام‌رسان تلگرامی</title>
+    <title>تلسکوپ - رادار و پیام‌رسان آنی</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -72,17 +72,8 @@
             border-radius: 50%;
         }
 
-        .msg-bubble-out {
-            background-color: #2b5278;
-            color: #ffffff;
-            border-radius: 16px 16px 4px 16px;
-        }
-        .msg-bubble-in {
-            background-color: #18222d;
-            color: #ffffff;
-            border-radius: 16px 16px 16px 4px;
-            border: 1px solid rgba(255,255,255,0.04);
-        }
+        .msg-bubble-out { background-color: #2b5278; color: #ffffff; border-radius: 16px 16px 4px 16px; }
+        .msg-bubble-in { background-color: #18222d; color: #ffffff; border-radius: 16px 16px 16px 4px; border: 1px solid rgba(255,255,255,0.04); }
 
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
@@ -97,7 +88,7 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ رادار و پیام‌رسان تلگرامی</span>
+                    <span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ رادار و پیام‌رسان آنی</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
@@ -110,14 +101,14 @@
 
         <!-- دکمه‌های کنترل سمت راست -->
         <div class="absolute bottom-6 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
-            <button onclick="openChatModal('public', null, 'چت عمومی')" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10 relative" title="چت عمومی">
+            <button onclick="openChatModal('public', null, 'چت عمومی')" class="w-12 h-12 bg-slate-800/85 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10 relative" title="چت عمومی">
                 <svg class="w-6 h-6 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
             </button>
-            <button onclick="openUsersListModal()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10 relative" title="لیست افراد آنلاین">
+            <button onclick="openUsersListModal()" class="w-12 h-12 bg-slate-800/85 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10 relative" title="لیست افراد آنلاین">
                 <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 <span id="online-count-badge" class="absolute -top-1 -right-1 bg-emerald-500 text-slate-950 font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-900">0</span>
             </button>
-            <button onclick="centerToMyLocation()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10" title="موقعیت من">
+            <button onclick="centerToMyLocation()" class="w-12 h-12 bg-slate-800/85 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10" title="موقعیت من">
                 <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </button>
         </div>
@@ -144,7 +135,7 @@
         </div>
     </div>
 
-    <!-- مودال چت تلگرامی پیشرفته -->
+    <!-- مودال چت تلگرامی پیشرفته و آنی -->
     <div id="chat-modal" class="hidden absolute inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeChatModalUI()">
         <div class="tg-card w-full max-w-md h-[90vh] sm:h-[80vh] rounded-t-3xl sm:rounded-2xl flex flex-col shadow-2xl border border-slate-700 overflow-hidden" onclick="event.stopPropagation()">
             <!-- هدر چت تلگرام -->
@@ -211,8 +202,7 @@
         let currentReceiverId = null;
         let replyingToMessage = null;
         let editingMessageId = null;
-        let messagesCache = new Map();
-        let typingTimeout = null;
+        let activeMessagesArray = []; // آرشیو حافظه موقت برای رندر آنی
         let isTypingSent = false;
 
         const tgUser = tg?.initDataUnsafe?.user;
@@ -340,7 +330,7 @@
             if (!document.getElementById('users-list-modal').classList.contains('hidden')) renderUsersList(onlineUsersList);
         }
 
-        // --- مدیریت چت و کانال تایپینگ زنده ---
+        // --- باز کردن چت و ایجاد کانال اختصاصی Broadcast ---
         function openChatModal(type, receiverId, receiverName, receiverAvatar = '') {
             currentChatType = type;
             currentReceiverId = receiverId;
@@ -361,8 +351,6 @@
             document.getElementById('users-list-modal').classList.add('hidden');
             document.getElementById('chat-modal').classList.remove('hidden');
 
-            const cacheKey = type === 'public' ? 'public' : receiverId;
-            if (messagesCache.has(cacheKey)) renderMessages(messagesCache.get(cacheKey));
             fetchMessages();
         }
 
@@ -419,7 +407,7 @@
             if (chatRealtimeChannel) { supabaseClient.removeChannel(chatRealtimeChannel); chatRealtimeChannel = null; }
         }
 
-        // --- عملیات ارسال، ویرایش و ریپلی ---
+        // --- ارسال، ویرایش و حذف لحظه‌ای ---
         async function handleSendOrEditMessage() {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
@@ -430,7 +418,6 @@
                 const msgId = editingMessageId;
                 cancelActionState();
                 await supabaseClient.from('messages').update({ message: text }).eq('id', msgId);
-                fetchMessages();
                 return;
             }
 
@@ -477,9 +464,7 @@
         }
 
         async function deleteMessage(id) {
-            if (!confirm('آیا این پیام حذف شود؟')) return;
             await supabaseClient.from('messages').delete().eq('id', id);
-            fetchMessages();
         }
 
         async function fetchMessages() {
@@ -494,27 +479,51 @@
 
                 const { data, error } = await query;
                 if (!error && data) {
-                    const cacheKey = currentChatType === 'public' ? 'public' : currentReceiverId;
-                    messagesCache.set(cacheKey, data);
-                    renderMessages(data);
+                    activeMessagesArray = data;
+                    renderMessages(activeMessagesArray);
                 }
             } catch (err) { console.error("Error fetching messages:", err); }
         }
 
+        // --- سیستم صاعقه‌آسا Realtime برای اعمال تغییرات به صورت آنی ---
         function initGlobalMessagesRealtime() {
             if (!supabaseClient) return;
             supabaseClient
                 .channel('public:messages')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
-                    const msg = payload.new || payload.old;
-                    if (!msg) return;
                     const chatModal = document.getElementById('chat-modal');
-                    if (!chatModal.classList.contains('hidden')) {
-                        if (currentChatType === 'public' && !msg.receiver_id) fetchMessages();
-                        else if (currentChatType === 'private' && (
+                    if (chatModal.classList.contains('hidden')) return;
+
+                    const newMsg = payload.new;
+                    const oldMsg = payload.old;
+
+                    const isRelevant = (msg) => {
+                        if (!msg) return false;
+                        if (currentChatType === 'public' && !msg.receiver_id) return true;
+                        if (currentChatType === 'private' && (
                             (String(msg.sender_id) === String(currentUser.id) && String(msg.receiver_id) === String(currentReceiverId)) ||
                             (String(msg.sender_id) === String(currentReceiverId) && String(msg.receiver_id) === String(currentUser.id))
-                        )) fetchMessages();
+                        )) return true;
+                        return false;
+                    };
+
+                    if (payload.eventType === 'INSERT' && isRelevant(newMsg)) {
+                        // افزودن لحظه‌ای به آرایه بدون درخواست مجدد به سرور
+                        if (!activeMessagesArray.some(m => m.id === newMsg.id)) {
+                            activeMessagesArray.push(newMsg);
+                            renderMessages(activeMessagesArray);
+                        }
+                    } else if (payload.eventType === 'UPDATE' && isRelevant(newMsg)) {
+                        // آپدیت لحظه‌ای متن ویرایش شده
+                        const index = activeMessagesArray.findIndex(m => m.id === newMsg.id);
+                        if (index !== -1) {
+                            activeMessagesArray[index] = newMsg;
+                            renderMessages(activeMessagesArray);
+                        }
+                    } else if (payload.eventType === 'DELETE' && oldMsg) {
+                        // حذف لحظه‌ای از لیست
+                        activeMessagesArray = activeMessagesArray.filter(m => m.id !== oldMsg.id);
+                        renderMessages(activeMessagesArray);
                     }
                 })
                 .subscribe();
