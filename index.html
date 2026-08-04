@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - نقشه اختصاصی من</title>
+    <title>تلسکوپ - نقشه و افراد آنلاین</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -55,6 +55,26 @@
             100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0), 0 0 0 0 rgba(66, 133, 244, 0); }
         }
 
+        /* نشانگر کاربران دیگر روی نقشه */
+        .other-user-pin {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #17212b;
+            border: 2.5px solid #22c55e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 13px;
+            overflow: hidden;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .other-user-pin:hover { transform: scale(1.12); }
+
         .leaflet-container { background-color: #0e1621 !important; }
         .dark-map .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
 
@@ -97,7 +117,7 @@
         <!-- کادر بالای صفحه -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
-                <span class="text-[11px] font-bold text-blue-400">نقشه اختصاصی من</span>
+                <span id="online-count-badge" class="text-[11px] font-bold text-emerald-400">0 آنلاین</span>
                 <div class="flex items-center gap-2">
                     <button onclick="toggleMapTheme()" class="w-7 h-7 rounded-xl flex items-center justify-center text-xs text-white bg-slate-800/60 hover:bg-slate-700 transition" title="تغییر حالت نقشه">🌓</button>
                     <div onclick="openProfileModal()" class="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition">
@@ -108,10 +128,9 @@
             </div>
         </div>
 
-        <!-- اسلایدر عمودی تنظیم شعاع در سمت چپ -->
-        <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center gap-2">
+        <!-- اسلایدر عمودی تنظیم شعاع (بدون متن اضافی زیر آن) -->
+        <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center">
             <input id="radius-slider" type="range" min="0.5" max="50" step="0.5" value="15" oninput="onRadiusSliderChange(this.value)" class="vertical-slider-container accent-blue-600 cursor-pointer" title="تنظیم شعاع">
-            <span id="radius-label" class="text-[10px] bg-[#17212b]/80 px-2 py-0.5 rounded-md text-blue-400 font-bold">15 ک.م</span>
         </div>
 
         <!-- دکمه مرکزیت لوکیشن من در سمت راست -->
@@ -134,6 +153,18 @@
         </div>
     </div>
 
+    <!-- مودال پروفایل مخاطب روی نقشه -->
+    <div id="user-profile-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onclick="closeUserProfileModal()">
+        <div class="tg-card w-full max-w-sm rounded-2xl p-5 flex flex-col items-center gap-4 shadow-2xl border border-slate-700" onclick="event.stopPropagation()">
+            <div id="target-modal-avatar" class="w-20 h-20 rounded-full bg-[#2b5278] flex items-center justify-center text-2xl font-bold text-white overflow-hidden shadow-lg">ک</div>
+            <div class="text-center">
+                <h3 id="target-modal-name" class="font-bold text-base text-white">نام کاربر</h3>
+                <p id="target-modal-username" class="text-xs text-blue-400 mt-1">@username</p>
+            </div>
+            <button onclick="closeUserProfileModal()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition">بستن</button>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_URL = "https://dxdskvkcmovotzxixxhd.supabase.co";
         const SUPABASE_KEY = "sb_publishable_3-rNuWmg9jAyPPQ89hE4ZQ_avo0wsPd";
@@ -143,9 +174,11 @@
         if(tg) tg.expand();
 
         let map, myLocationMarker = null, radiusCircle = null;
+        let userMarkersOnMap = {};
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
         let activeRadiusKm = 15;
         let isDarkMap = true;
+        let activeUsersGlobalList = [];
 
         const tgUser = tg?.initDataUnsafe?.user || { 
             id: Math.floor(Math.random() * 900000) + 100000, 
@@ -167,6 +200,7 @@
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
             setupUserProfileUI();
+            await registerOrUpdateUserInSupabase();
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
@@ -174,13 +208,111 @@
                     currentCoords.lng = position.coords.longitude;
                     if(map) map.setView([currentCoords.lat, currentCoords.lng], 15, { animate: true });
                     updateRadiusCircleOnMap();
+                    updateMyHeartbeat();
                 }, () => {
                     updateRadiusCircleOnMap();
                 }, { enableHighAccuracy: true, timeout: 5000 });
             } else {
                 updateRadiusCircleOnMap();
             }
+
+            setInterval(updateMyHeartbeat, 10000);
+            fetchUsersData();
+            setInterval(fetchUsersData, 8000);
         });
+
+        async function registerOrUpdateUserInSupabase() {
+            const { data } = await supabaseClient.from('users').select('*').eq('telegram_id', currentUser.telegram_id).single();
+            if(!data) {
+                await supabaseClient.from('users').upsert([{
+                    telegram_id: currentUser.telegram_id,
+                    name: currentUser.name,
+                    username: currentUser.username,
+                    avatar_url: currentUser.avatar_url,
+                    latitude: currentCoords.lat,
+                    longitude: currentCoords.lng,
+                    last_seen: new Date().toISOString()
+                }]);
+            }
+        }
+
+        async function updateMyHeartbeat() {
+            if(!currentUser) return;
+            await supabaseClient.from('users').update({
+                latitude: currentCoords.lat,
+                longitude: currentCoords.lng,
+                last_seen: new Date().toISOString()
+            }).eq('telegram_id', currentUser.telegram_id);
+            fetchUsersData();
+        }
+
+        async function fetchUsersData() {
+            const { data } = await supabaseClient.from('users').select('*');
+            if(data) {
+                activeUsersGlobalList = data;
+                renderUsersOnMap();
+                updateOnlineCountUI(data);
+            }
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function renderUsersOnMap() {
+            if(!map || !currentUser) return;
+
+            Object.values(userMarkersOnMap).forEach(marker => map.removeLayer(marker));
+            userMarkersOnMap = {};
+
+            const visibleUsers = activeUsersGlobalList.filter(u => {
+                if(!u.latitude || !u.longitude || u.telegram_id === currentUser.telegram_id) return false;
+                const distance = calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
+                return distance <= activeRadiusKm;
+            });
+
+            visibleUsers.forEach(u => {
+                const initial = (u.name || 'ک').charAt(0);
+                const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : initial;
+                const html = `<div class="other-user-pin">${avatarInner}</div>`;
+                
+                const icon = L.divIcon({ html, iconSize: [44, 44], iconAnchor: [22, 22] });
+                const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
+                
+                marker.on('click', () => {
+                    openTargetUserProfile(u);
+                });
+
+                userMarkersOnMap[u.telegram_id] = marker;
+            });
+        }
+
+        function updateOnlineCountUI(usersList) {
+            let count = usersList.filter(u => {
+                if(!u.last_seen) return false;
+                return (new Date() - new Date(u.last_seen)) < 180000;
+            }).length;
+            if(count === 0) count = 1;
+            document.getElementById('online-count-badge').textContent = `${count} آنلاین`;
+        }
+
+        function openTargetUserProfile(u) {
+            document.getElementById('target-modal-name').textContent = u.name;
+            document.getElementById('target-modal-username').textContent = u.username ? `@${u.username}` : 'بدون نام کاربری';
+            const avatarEl = document.getElementById('target-modal-avatar');
+            if(u.avatar_url) {
+                avatarEl.innerHTML = `<img src="${u.avatar_url}" class="w-full h-full object-cover">`;
+            } else {
+                avatarEl.textContent = (u.name || 'ک').charAt(0);
+            }
+            document.getElementById('user-profile-modal').classList.remove('hidden');
+        }
+
+        function closeUserProfileModal() { document.getElementById('user-profile-modal').classList.add('hidden'); }
 
         function setupUserProfileUI() {
             document.getElementById('top-my-name').textContent = currentUser.name;
@@ -212,8 +344,8 @@
 
         function onRadiusSliderChange(val) {
             activeRadiusKm = parseFloat(val);
-            document.getElementById('radius-label').textContent = `${val} ک.م`;
             updateRadiusCircleOnMap();
+            renderUsersOnMap();
         }
 
         function centerToMyLocation() {
@@ -223,6 +355,7 @@
                     currentCoords.lng = position.coords.longitude;
                     if(map) map.setView([currentCoords.lat, currentCoords.lng], 15, { animate: true });
                     updateRadiusCircleOnMap();
+                    updateMyHeartbeat();
                 }, () => {}, { enableHighAccuracy: true, timeout: 5000 });
             }
         }
