@@ -21,6 +21,8 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
+        .tg-card { background: #17212b; border: 1px solid rgba(255,255,255,0.03); }
+
         /* نشانگر موقعیت مکانی من با سایه متحرک (Pulse) */
         .my-animated-marker {
             width: 64px;
@@ -54,8 +56,26 @@
         }
 
         .leaflet-container { background-color: #0e1621 !important; }
-        /* حالت دارک نقشه */
         .dark-map .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
+
+        .vertical-slider-container {
+            -webkit-appearance: slider-vertical;
+            appearance: slider-vertical;
+            width: 6px;
+            height: 110px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            outline: none;
+        }
+        .vertical-slider-container::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+        }
 
         .transparent-location-btn {
             background: transparent !important;
@@ -70,7 +90,7 @@
 </head>
 <body class="relative flex flex-col h-full justify-between select-none">
 
-    <!-- نقشه زنده من -->
+    <!-- نقشه زنده -->
     <div class="relative w-full h-full">
         <div id="map" class="map-container dark-map"></div>
         
@@ -80,19 +100,37 @@
                 <span class="text-[11px] font-bold text-blue-400">نقشه اختصاصی من</span>
                 <div class="flex items-center gap-2">
                     <button onclick="toggleMapTheme()" class="w-7 h-7 rounded-xl flex items-center justify-center text-xs text-white bg-slate-800/60 hover:bg-slate-700 transition" title="تغییر حالت نقشه">🌓</button>
-                    <div class="flex items-center gap-1.5">
-                        <span id="top-my-name" class="font-bold text-xs text-white truncate max-w-[100px]">کاربر</span>
+                    <div onclick="openProfileModal()" class="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition">
+                        <span id="top-my-name" class="font-bold text-xs text-white truncate max-w-[80px]">کاربر</span>
                         <div id="top-my-avatar" class="w-7 h-7 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow">ک</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- دکمه مرکزیت لوکیشن من -->
+        <!-- اسلایدر عمودی تنظیم شعاع در سمت چپ -->
+        <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center gap-2">
+            <input id="radius-slider" type="range" min="0.5" max="50" step="0.5" value="15" oninput="onRadiusSliderChange(this.value)" class="vertical-slider-container accent-blue-600 cursor-pointer" title="تنظیم شعاع">
+            <span id="radius-label" class="text-[10px] bg-[#17212b]/80 px-2 py-0.5 rounded-md text-blue-400 font-bold">15 ک.م</span>
+        </div>
+
+        <!-- دکمه مرکزیت لوکیشن من در سمت راست -->
         <div class="absolute bottom-6 right-4 z-10 pointer-events-auto">
             <button onclick="centerToMyLocation()" class="w-12 h-12 transparent-location-btn rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95" title="موقعیت من">
                 <svg class="w-7 h-7 text-blue-400 drop-shadow-md" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </button>
+        </div>
+    </div>
+
+    <!-- مودال نمایش پروفایل کاربر -->
+    <div id="profile-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onclick="closeProfileModal()">
+        <div class="tg-card w-full max-w-sm rounded-2xl p-5 flex flex-col items-center gap-4 shadow-2xl border border-slate-700" onclick="event.stopPropagation()">
+            <div id="profile-modal-avatar" class="w-20 h-20 rounded-full bg-[#2b5278] flex items-center justify-center text-2xl font-bold text-white overflow-hidden shadow-lg">ک</div>
+            <div class="text-center">
+                <h3 id="profile-modal-name" class="font-bold text-base text-white">نام کاربر</h3>
+                <p id="profile-modal-username" class="text-xs text-blue-400 mt-1">@username</p>
+            </div>
+            <button onclick="closeProfileModal()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition">بستن</button>
         </div>
     </div>
 
@@ -106,10 +144,9 @@
 
         let map, myLocationMarker = null, radiusCircle = null;
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
-        const activeRadiusKm = 15;
+        let activeRadiusKm = 15;
         let isDarkMap = true;
 
-        // دریافت اطلاعات کاربر مستقیم از تلگرام (Web App API)
         const tgUser = tg?.initDataUnsafe?.user || { 
             id: Math.floor(Math.random() * 900000) + 100000, 
             first_name: "کاربر مهمان", 
@@ -147,22 +184,36 @@
 
         function setupUserProfileUI() {
             document.getElementById('top-my-name').textContent = currentUser.name;
+            document.getElementById('profile-modal-name').textContent = currentUser.name;
+            document.getElementById('profile-modal-username').textContent = currentUser.username ? `@${currentUser.username}` : 'بدون نام کاربری';
+
             const avatarEl = document.getElementById('top-my-avatar');
+            const modalAvatarEl = document.getElementById('profile-modal-avatar');
+            
             if(currentUser.avatar_url) {
                 avatarEl.innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">`;
+                modalAvatarEl.innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">`;
             } else {
-                avatarEl.textContent = currentUser.name.charAt(0);
+                const initial = currentUser.name.charAt(0);
+                avatarEl.textContent = initial;
+                modalAvatarEl.textContent = initial;
             }
         }
+
+        function openProfileModal() { document.getElementById('profile-modal').classList.remove('hidden'); }
+        function closeProfileModal() { document.getElementById('profile-modal').classList.add('hidden'); }
 
         function toggleMapTheme() {
             isDarkMap = !isDarkMap;
             const mapContainer = document.getElementById('map');
-            if(isDarkMap) {
-                mapContainer.classList.add('dark-map');
-            } else {
-                mapContainer.classList.remove('dark-map');
-            }
+            if(isDarkMap) mapContainer.classList.add('dark-map');
+            else mapContainer.classList.remove('dark-map');
+        }
+
+        function onRadiusSliderChange(val) {
+            activeRadiusKm = parseFloat(val);
+            document.getElementById('radius-label').textContent = `${val} ک.م`;
+            updateRadiusCircleOnMap();
         }
 
         function centerToMyLocation() {
@@ -196,3 +247,4 @@
     </script>
 </body>
 </html>
+```[cite: 1]
