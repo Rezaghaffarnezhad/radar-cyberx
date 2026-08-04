@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>رادار دوستیابی و چت زنده</title>
+    <title>رادار دوستیابی حرفه‌ای</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -15,7 +15,7 @@
         .map-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
         
         .glass-panel {
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -46,9 +46,9 @@
             width: 42px;
             height: 42px;
             border-radius: 50%;
-            border: 2.5px solid #ec4899;
+            border: 2.5px solid var(--theme-primary, #ec4899);
             overflow: hidden;
-            background: linear-gradient(135deg, #ec4899, #8b5cf6);
+            background: linear-gradient(135deg, var(--theme-primary, #ec4899), #8b5cf6);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -62,7 +62,7 @@
             position: absolute;
             width: 48px;
             height: 48px;
-            border: 2px solid rgba(236, 72, 153, 0.8);
+            border: 2px solid var(--theme-primary, #ec4899);
             border-radius: 50%;
             animation: dating-radar 2.2s infinite cubic-bezier(0.2, 0.8, 0.4, 1);
             z-index: 1;
@@ -97,35 +97,17 @@
             box-shadow: 0 6px 20px rgba(0,0,0,0.6);
             transition: transform 0.25s ease;
         }
-        .user-pin-wrap:hover .user-pin-circle {
-            transform: scale(1.15);
-            border-color: #ec4899;
-        }
+        .user-pin-wrap:hover .user-pin-circle { transform: scale(1.15); border-color: var(--theme-primary, #ec4899); }
         .pin-tooltip {
-            position: absolute;
-            bottom: 48px;
-            left: 50%;
-            transform: translateX(-50%) translateY(5px);
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #fff;
-            padding: 4px 10px;
-            border-radius: 10px;
-            font-size: 11px;
-            white-space: nowrap;
-            pointer-events: none;
-            opacity: 0;
-            transition: all 0.2s ease;
+            position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%) translateY(5px);
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; padding: 4px 10px;
+            border-radius: 10px; font-size: 11px; white-space: nowrap; pointer-events: none; opacity: 0; transition: all 0.2s ease;
         }
-        .user-pin-wrap:hover .pin-tooltip {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
+        .user-pin-wrap:hover .pin-tooltip { opacity: 1; transform: translateX(-50%) translateY(0); }
 
         .leaflet-container { background-color: #05080f !important; }
         .dark-map .leaflet-tile-pane { filter: brightness(0.55) invert(1) contrast(3) hue-rotate(200deg) saturate(0.25); }
-
         ::-webkit-scrollbar { width: 3px; height: 3px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
     </style>
@@ -135,30 +117,28 @@
     <div id="view-map" class="view-section relative w-full h-full">
         <div id="map" class="map-container"></div>
         
-        <!-- نوار جستجو و ابزار بالا (الگو گرفته از گوگل مپ) -->
+        <!-- هدر بالای نقشه -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none flex flex-col gap-2">
             <div class="glass-panel px-3.5 py-2.5 rounded-2xl flex items-center justify-between gap-3 pointer-events-auto">
                 <div class="flex items-center gap-2.5 flex-1">
                     <svg class="w-5 h-5 text-pink-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input type="text" id="map-search-input" placeholder="جستجوی مکان، آدرس یا کاربر..." class="bg-transparent text-xs text-white placeholder-slate-400 outline-none w-full" onkeypress="handleMapSearch(event)">
                 </div>
-                <div class="flex items-center gap-2 border-r border-slate-700/80 pr-2.5">
+                <div class="flex items-center gap-1.5 border-r border-slate-700/80 pr-2">
                     <button onclick="toggleMapTheme()" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm action-fab text-slate-200" title="لایه نقشه">🗺️</button>
-                    <button onclick="toggleRadiusModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm action-fab text-purple-400" title="تنظیم شعاع">⚙️</button>
-                    <button onclick="openGlobalChat()" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm action-fab text-pink-400 relative" title="چت عمومی شعاع">
-                        💬
-                    </button>
+                    <button onclick="openGlobalChat()" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm action-fab text-pink-400" title="چت عمومی">🌐</button>
                     <button onclick="toggleOnlineUsersPanel()" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm action-fab text-emerald-400 relative" title="افراد آنلاین">
-                        🔥
+                        👥
                         <span id="online-count-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-pink-600 text-[10px] font-bold text-white rounded-full flex items-center justify-center">0</span>
                     </button>
+                    <button onclick="openSettingsModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm action-fab text-purple-400" title="تنظیمات">⚙️</button>
                 </div>
             </div>
         </div>
 
         <!-- دکمه‌های شناور سمت راست -->
         <div class="absolute bottom-6 right-4 z-10 pointer-events-auto flex flex-col gap-3">
-            <button onclick="startNavigation()" class="action-fab w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl" title="مسیریابی دقیق">
+            <button onclick="openNavigationMenu()" class="action-fab w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl" title="مسیریابی پیشرفته">
                 <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
             </button>
             <button onclick="centerToMyLocation()" class="action-fab w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xl" title="موقعیت من">
@@ -166,53 +146,106 @@
             </button>
         </div>
 
-        <!-- پنل لیست کاربران آنلاین -->
+        <!-- پنل افراد آنلاین در شعاع -->
         <div id="online-panel" class="absolute bottom-0 left-0 right-0 z-20 glass-panel rounded-t-3xl p-5 transition-transform duration-300 transform translate-y-full max-h-[55vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-4 border-b border-slate-700/60 pb-3">
                 <div class="flex items-center gap-2">
                     <span class="w-2.5 h-2.5 rounded-full bg-pink-500 animate-ping"></span>
                     <span class="text-xs font-bold text-white">افراد داخل شعاع (<span id="radius-label-display">5</span> کیلومتر)</span>
                 </div>
-                <button onclick="toggleOnlineUsersPanel()" class="text-slate-400 hover:text-white text-sm font-bold w-7 h-7 rounded-full bg-slate-800/80 flex items-center justify-center">✕</button>
+                <button onclick="toggleOnlineUsersPanel()" class="text-slate-400 hover:text-white text-sm font-bold w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
             </div>
             <div id="online-users-list" class="flex flex-col gap-2.5">
                 <div class="text-xs text-slate-400 text-center py-6">در حال اسکن رادار...</div>
             </div>
         </div>
 
-        <!-- مدال تنظیم دستی شعاع -->
-        <div id="radius-modal" class="absolute inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
-            <div class="glass-panel w-full max-w-sm rounded-3xl p-6 flex flex-col items-center text-center relative shadow-2xl border border-purple-500/30">
-                <button onclick="toggleRadiusModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800/90 flex items-center justify-center">✕</button>
-                <h3 class="text-base font-bold text-white mb-2">تنظیم دستی شعاع جستجو</h3>
-                <p class="text-xs text-slate-400 mb-6">محدوده نمایش افراد و چت عمومی را تعیین کنید</p>
-                <div class="w-full flex flex-col gap-4 mb-6">
-                    <div class="flex justify-between text-sm font-bold text-pink-400">
-                        <span>شعاع فعلی:</span>
-                        <span id="radius-slider-val">5 کیلومتر</span>
+        <!-- مودال تنظیمات کامل (پروفایل، شعاع، امنیت، اعلان‌ها، رنگ‌بندی) -->
+        <div id="settings-modal" class="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+            <div class="glass-panel w-full max-w-md rounded-3xl p-6 flex flex-col max-h-[90vh] overflow-y-auto relative shadow-2xl border border-purple-500/30">
+                <button onclick="closeSettingsModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
+                <h3 class="text-base font-bold text-white mb-4 text-center">تنظیمات و مدیریت اپلیکیشن</h3>
+                
+                <div class="flex flex-col gap-5">
+                    <!-- ویرایش پروفایل -->
+                    <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
+                        <h4 class="text-xs font-bold text-pink-400 mb-3">👤 ویرایش پروفایل</h4>
+                        <div class="flex flex-col gap-2.5">
+                            <input type="text" id="setting-name" placeholder="نام نمایشی" class="bg-slate-900 text-xs text-white px-3 py-2.5 rounded-xl border border-slate-700 outline-none">
+                            <textarea id="setting-bio" placeholder="بیوگرافی یا وضعیت شما..." class="bg-slate-900 text-xs text-white px-3 py-2.5 rounded-xl border border-slate-700 outline-none resize-none h-16"></textarea>
+                            <button onclick="saveProfileChanges()" class="py-2 bg-pink-600 text-white font-bold text-xs rounded-xl shadow">ذخیره پروفایل</button>
+                        </div>
                     </div>
-                    <input type="range" id="radius-range" min="1" max="50" value="5" class="w-full accent-pink-500 cursor-pointer" oninput="updateRadiusValue(this.value)">
+
+                    <!-- تنظیم شعاع جستجو -->
+                    <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
+                        <div class="flex justify-between text-xs font-bold text-purple-400 mb-2">
+                            <span>تنظیم شعاع جستجوی رادار:</span>
+                            <span id="settings-radius-val">5 کیلومتر</span>
+                        </div>
+                        <input type="range" id="settings-radius-range" min="1" max="50" value="5" class="w-full accent-purple-500 cursor-pointer" oninput="updateSettingsRadius(this.value)">
+                    </div>
+
+                    <!-- ترکیب رنگ و تم اپ -->
+                    <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
+                        <h4 class="text-xs font-bold text-blue-400 mb-3">🎨 ترکیب رنگ اصلی</h4>
+                        <div class="flex items-center justify-around">
+                            <button onclick="setAppTheme('#ec4899')" class="w-8 h-8 rounded-full bg-pink-500 border-2 border-white shadow"></button>
+                            <button onclick="setAppTheme('#8b5cf6')" class="w-8 h-8 rounded-full bg-purple-500 border-2 border-white shadow"></button>
+                            <button onclick="setAppTheme('#3b82f6')" class="w-8 h-8 rounded-full bg-blue-500 border-2 border-white shadow"></button>
+                            <button onclick="setAppTheme('#10b981')" class="w-8 h-8 rounded-full bg-emerald-500 border-2 border-white shadow"></button>
+                        </div>
+                    </div>
+
+                    <!-- امنیت و حریم خصوصی -->
+                    <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
+                        <h4 class="text-xs font-bold text-emerald-400 mb-3">🔒 امنیت و حریم خصوصی</h4>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-slate-300">نمایش لوکیشن من به دیگران</span>
+                            <input type="checkbox" id="setting-stealth-mode" class="w-4 h-4 accent-emerald-500 cursor-pointer" checked onchange="toggleStealthMode(this.checked)">
+                        </div>
+                    </div>
+
+                    <!-- مدیریت اعلان‌ها -->
+                    <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700">
+                        <h4 class="text-xs font-bold text-amber-400 mb-3">🔔 اعلان‌ها و هشدارها</h4>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-slate-300">دریافت هشدار نزدیک شدن افراد جدید</span>
+                            <input type="checkbox" id="setting-notif" class="w-4 h-4 accent-amber-500 cursor-pointer" checked>
+                        </div>
+                    </div>
                 </div>
-                <button onclick="applyRadiusSetting()" class="w-full py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold text-xs rounded-2xl shadow-lg">اعمال شعاع جدید</button>
             </div>
         </div>
 
-        <!-- مدال چت (عمومی یا خصوصی) -->
-        <div id="chat-modal" class="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col justify-between hidden">
+        <!-- مودال مسیریابی پیشرفته -->
+        <div id="navigation-modal" class="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+            <div class="glass-panel w-full max-w-sm rounded-3xl p-6 flex flex-col items-center text-center relative shadow-2xl border border-emerald-500/30">
+                <button onclick="closeNavigationModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
+                <h3 class="text-base font-bold text-white mb-2">مسیریابی پیشرفته</h3>
+                <p class="text-xs text-slate-400 mb-5">انتخاب نقشه مقصد و مسیریاب دلخواه</p>
+                <div class="w-full flex flex-col gap-2.5">
+                    <button onclick="openExternalNav('google')" class="w-full py-3 bg-blue-600 text-white font-bold text-xs rounded-2xl shadow">مسیریابی با گوگل مپ</button>
+                    <button onclick="openExternalNav('balad')" class="w-full py-3 bg-emerald-600 text-white font-bold text-xs rounded-2xl shadow">مسیریابی با نشان / بلد</button>
+                    <button onclick="openExternalNav('neshan')" class="w-full py-3 bg-purple-600 text-white font-bold text-xs rounded-2xl shadow">مسیریابی سریع هوشمند</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- مودال چت عمومی و خصوصی -->
+        <div id="chat-modal" class="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between hidden">
             <div class="glass-panel px-4 py-3.5 flex items-center justify-between border-b border-slate-700/80">
                 <div class="flex items-center gap-3">
                     <div id="chat-header-avatar" class="w-10 h-10 rounded-full border border-pink-500 overflow-hidden bg-slate-800 flex items-center justify-center font-bold text-white text-xs">🌐</div>
                     <div>
                         <h4 id="chat-header-title" class="text-xs font-bold text-white">چت عمومی شعاع</h4>
-                        <span class="text-[10px] text-emerald-400">● آنلاین</span>
+                        <span class="text-[10px] text-emerald-400">● آنلاین و فعال</span>
                     </div>
                 </div>
                 <button onclick="closeChatModal()" class="text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
             </div>
             
-            <div id="chat-messages-container" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3">
-                <!-- پیام‌ها اینجا لود می‌شوند -->
-            </div>
+            <div id="chat-messages-container" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3"></div>
 
             <div class="glass-panel p-3 flex items-center gap-2 border-t border-slate-700/80">
                 <input type="text" id="chat-input-message" placeholder="پیام خود را بنویسید..." class="bg-slate-800/80 text-xs text-white placeholder-slate-400 px-3.5 py-3 rounded-2xl outline-none flex-1 border border-slate-700" onkeypress="handleChatMessageKey(event)">
@@ -220,16 +253,17 @@
             </div>
         </div>
 
-        <!-- مودال پروفایل کاربر -->
+        <!-- مودال پروفایل سایر کاربران -->
         <div id="user-profile-modal" class="absolute inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
             <div class="glass-panel w-full max-w-sm rounded-3xl p-6 flex flex-col items-center text-center relative shadow-2xl border border-pink-500/30">
-                <button onclick="closeUserProfileModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800/90 flex items-center justify-center">✕</button>
+                <button onclick="closeUserProfileModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">✕</button>
                 <div class="relative mb-3">
                     <div class="absolute -inset-1 bg-gradient-to-r from-pink-600 to-purple-600 rounded-full blur opacity-70"></div>
                     <div id="modal-avatar-container" class="relative w-28 h-28 rounded-full border-2 border-slate-900 overflow-hidden bg-slate-800 flex items-center justify-center text-3xl font-extrabold text-white shadow-xl"></div>
                 </div>
                 <h3 id="modal-user-name" class="text-lg font-extrabold text-white mb-1">نام کاربر</h3>
-                <p id="modal-user-distance" class="text-xs text-slate-300 font-medium mb-4">آنلاین در محدوده شعاع</p>
+                <p id="modal-user-bio" class="text-xs text-slate-400 mb-2 italic">بدون بیوگرافی</p>
+                <p id="modal-user-distance" class="text-xs text-pink-400 font-medium mb-4">آنلاین در محدوده شعاع</p>
                 <div class="w-full flex flex-col gap-2.5">
                     <button onclick="openPrivateChatFromModal()" class="w-full py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold text-xs rounded-2xl shadow-lg flex items-center justify-center gap-2">
                         <span>💬 شروع چت خصوصی</span>
@@ -253,20 +287,22 @@
             id: tgUser?.id || Math.floor(Math.random() * 900000) + 100000,
             first_name: [tgUser?.first_name, tgUser?.last_name].filter(Boolean).join(' ') || "کاربر مهمان",
             username: tgUser?.username || "",
-            photo_url: tgUser?.photo_url || null
+            photo_url: tgUser?.photo_url || null,
+            bio: "سلام! من از رادار استفاده می‌کنم.",
+            is_stealth: false
         };
 
         let map;
         let isDarkMap = false;
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
-        let currentRadius = 5; // کیلومتر
+        let currentRadius = 5;
         let tileLayer;
         let myLocationMarker = null;
         let radiusCircleLayer = null;
         let userMarkersMap = {};
         let allOnlineUsers = [];
         let selectedTargetUser = null;
-        let currentChatType = 'global'; // 'global' یا 'private'
+        let currentChatType = 'global';
         let activePrivateTargetId = null;
 
         window.addEventListener('DOMContentLoaded', async () => {
@@ -302,11 +338,13 @@
         });
 
         async function registerAndSyncUser() {
+            if(currentUserData.is_stealth) return;
             const payload = {
                 telegram_id: currentUserData.id,
                 name: currentUserData.first_name,
                 username: currentUserData.username,
                 avatar_url: currentUserData.photo_url,
+                bio: currentUserData.bio,
                 latitude: currentCoords.lat,
                 longitude: currentCoords.lng,
                 last_seen: new Date().toISOString()
@@ -317,6 +355,7 @@
         }
 
         async function updateMyHeartbeat() {
+            if(currentUserData.is_stealth) return;
             await supabaseClient.from('users').update({
                 latitude: currentCoords.lat,
                 longitude: currentCoords.lng,
@@ -336,6 +375,7 @@
         function updateMyLocationMarker() {
             if(!map) return;
             if(myLocationMarker) map.removeLayer(myLocationMarker);
+            if(currentUserData.is_stealth) return;
 
             const initial = currentUserData.first_name.charAt(0);
             const coreContent = currentUserData.photo_url ? `<img src="${currentUserData.photo_url}" style="width:100%; height:100%; object-fit:cover;">` : initial;
@@ -349,34 +389,19 @@
             if(radiusCircleLayer) map.removeLayer(radiusCircleLayer);
             radiusCircleLayer = L.circle([currentCoords.lat, currentCoords.lng], {
                 radius: currentRadius * 1000,
-                color: '#ec4899',
-                fillColor: '#ec4899',
+                color: 'var(--theme-primary, #ec4899)',
+                fillColor: 'var(--theme-primary, #ec4899)',
                 fillOpacity: 0.08,
                 weight: 1.5
             }).addTo(map);
         }
 
-        function updateRadiusValue(val) {
-            currentRadius = Number(val);
-            document.getElementById('radius-slider-val').textContent = currentRadius + ' کیلومتر';
-        }
-
-        function applyRadiusSetting() {
-            document.getElementById('radius-label-display').textContent = currentRadius;
-            drawRadiusCircle();
-            toggleRadiusModal();
-            fetchActiveUsers();
-        }
-
         function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // شعاع زمین به کیلومتر
+            const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                      Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
         }
 
         function renderUsersOnMapAndUI() {
@@ -387,14 +412,13 @@
 
             allOnlineUsers.forEach(u => {
                 if(u.telegram_id === currentUserData.id) return;
-                
                 const dist = calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
                 if(dist > currentRadius) {
                     if(userMarkersMap[u.telegram_id]) {
                         map.removeLayer(userMarkersMap[u.telegram_id]);
                         delete userMarkersMap[u.telegram_id];
                     }
-                    return; // خارج از شعاع تعیین شده
+                    return;
                 }
 
                 countInRadius++;
@@ -437,10 +461,9 @@
             }
 
             document.getElementById('online-count-badge').textContent = countInRadius;
-            listContainer.innerHTML = htmlContent || '<div class="text-xs text-slate-400 text-center py-6">کاربری در این شعاع یافت نشد. شعاع را افزایش دهید.</div>';
+            listContainer.innerHTML = htmlContent || '<div class="text-xs text-slate-400 text-center py-6">کاربری در این شعاع یافت نشد.</div>';
         }
 
-        // جستجو در نقشه (الگو گرفته از گوگل مپ)
         async function handleMapSearch(e) {
             if(e.key === 'Enter') {
                 const query = document.getElementById('map-search-input').value;
@@ -449,32 +472,24 @@
                     const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
                     const data = await res.json();
                     if(data && data.length > 0) {
-                        const lat = parseFloat(data[0].lat);
-                        const lon = parseFloat(data[0].lon);
-                        map.setView([lat, lon], 15, { animate: true });
-                    } else {
-                        alert('مکان مورد نظر یافت نشد.');
-                    }
-                } catch(err) {
-                    alert('خطا در جستجوی مکان.');
-                }
+                        map.setView([parseFloat(data[0].lat), parseFloat(data[0].lon)], 15, { animate: true });
+                    } else { alert('مکان یافت نشد.'); }
+                } catch(err) { alert('خطا در جستجو.'); }
             }
         }
 
-        // مسیریابی دقیق
-        function startNavigation() {
+        function openNavigationMenu() { document.getElementById('navigation-modal').classList.remove('hidden'); }
+        function closeNavigationModal() { document.getElementById('navigation-modal').classList.add('hidden'); }
+        function openExternalNav(type) {
             if(navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
+                    const lat = position.coords.latitude, lon = position.coords.longitude;
                     window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`, '_blank');
+                    closeNavigationModal();
                 });
-            } else {
-                alert('امکان دسترسی به لوکیشن جهت مسیریابی وجود ندارد.');
             }
         }
 
-        // سیستم چت عمومی و خصوصی
         async function openGlobalChat() {
             currentChatType = 'global';
             activePrivateTargetId = null;
@@ -495,20 +510,13 @@
         }
 
         function openPrivateChatFromModal() {
-            if(selectedTargetUser) {
-                openPrivateChat(selectedTargetUser.telegram_id, selectedTargetUser.name);
-            }
+            if(selectedTargetUser) openPrivateChat(selectedTargetUser.telegram_id, selectedTargetUser.name);
         }
 
         async function loadChatMessages() {
             let query = supabaseClient.from('chats').select('*').order('created_at', { ascending: true });
-            
-            if(currentChatType === 'global') {
-                query = query.eq('chat_type', 'global');
-            } else {
-                query = query.or(`and(sender_id.eq.${currentUserData.id},receiver_id.eq.${activePrivateTargetId}),and(sender_id.eq.${activePrivateTargetId},receiver_id.eq.${currentUserData.id})`);
-            }
-
+            if(currentChatType === 'global') query = query.eq('chat_type', 'global');
+            else query = query.or(`and(sender_id.eq.${currentUserData.id},receiver_id.eq.${activePrivateTargetId}),and(sender_id.eq.${activePrivateTargetId},receiver_id.eq.${currentUserData.id})`);
             const { data } = await query;
             renderMessages(data || []);
         }
@@ -518,13 +526,7 @@
             let html = '';
             messages.forEach(m => {
                 const isMe = m.sender_id === currentUserData.id;
-                html += `
-                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                        <div class="max-w-[80%] px-3.5 py-2 rounded-2xl text-xs ${isMe ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-bl-none' : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-br-none'} shadow">
-                            ${m.message}
-                        </div>
-                    </div>
-                `;
+                html += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}"><div class="max-w-[80%] px-3.5 py-2 rounded-2xl text-xs ${isMe ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-bl-none' : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-br-none'} shadow">${m.message}</div></div>`;
             });
             container.innerHTML = html;
             container.scrollTop = container.scrollHeight;
@@ -534,47 +536,67 @@
             const input = document.getElementById('chat-input-message');
             const text = input.value.trim();
             if(!text) return;
-
-            const payload = {
-                sender_id: currentUserData.id,
-                receiver_id: currentChatType === 'private' ? activePrivateTargetId : null,
-                chat_type: currentChatType,
-                message: text,
-                created_at: new Date().toISOString()
-            };
-
+            const payload = { sender_id: currentUserData.id, receiver_id: currentChatType === 'private' ? activePrivateTargetId : null, chat_type: currentChatType, message: text, created_at: new Date().toISOString() };
             await supabaseClient.from('chats').insert([payload]);
             input.value = '';
             await loadChatMessages();
         }
 
-        function handleChatMessageKey(e) {
-            if(e.key === 'Enter') sendChatMessage();
+        function handleChatMessageKey(e) { if(e.key === 'Enter') sendChatMessage(); }
+        function handleNewIncomingMessage(msg) {
+            if(currentChatType === 'global' && msg.chat_type === 'global') loadChatMessages();
+            else if(currentChatType === 'private' && msg.chat_type === 'private' && ((msg.sender_id === activePrivateTargetId && msg.receiver_id === currentUserData.id) || (msg.sender_id === currentUserData.id && msg.receiver_id === activePrivateTargetId))) loadChatMessages();
         }
 
-        function handleNewIncomingMessage(msg) {
-            if(currentChatType === 'global' && msg.chat_type === 'global') {
-                loadChatMessages();
-            } else if(currentChatType === 'private' && msg.chat_type === 'private') {
-                if((msg.sender_id === activePrivateTargetId && msg.receiver_id === currentUserData.id) || 
-                   (msg.sender_id === currentUserData.id && msg.receiver_id === activePrivateTargetId)) {
-                    loadChatMessages();
-                }
+        function openSettingsModal() {
+            document.getElementById('setting-name').value = currentUserData.first_name;
+            document.getElementById('setting-bio').value = currentUserData.bio;
+            document.getElementById('settings-radius-range').value = currentRadius;
+            document.getElementById('settings-radius-val').textContent = currentRadius + ' کیلومتر';
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+        function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
+
+        async function saveProfileChanges() {
+            currentUserData.first_name = document.getElementById('setting-name').value || "کاربر";
+            currentUserData.bio = document.getElementById('setting-bio').value || "";
+            await registerAndSyncUser();
+            closeSettingsModal();
+        }
+
+        function updateSettingsRadius(val) {
+            currentRadius = Number(val);
+            document.getElementById('settings-radius-val').textContent = currentRadius + ' کیلومتر';
+            document.getElementById('radius-label-display').textContent = currentRadius;
+            drawRadiusCircle();
+            fetchActiveUsers();
+        }
+
+        function setAppTheme(colorHex) {
+            document.documentElement.style.setProperty('--theme-primary', colorHex);
+            drawRadiusCircle();
+            updateMyLocationMarker();
+        }
+
+        async function toggleStealthMode(isStealth) {
+            currentUserData.is_stealth = isStealth;
+            if(isStealth) {
+                if(myLocationMarker) map.removeLayer(myLocationMarker);
+                await supabaseClient.from('users').delete().eq('telegram_id', currentUserData.id);
+            } else {
+                await registerAndSyncUser();
             }
         }
-
-        function closeChatModal() { document.getElementById('chat-modal').classList.add('hidden'); }
-        function toggleRadiusModal() { document.getElementById('radius-modal').classList.toggle('hidden'); }
 
         function openUserProfileModal(userJsonStr) {
             const user = JSON.parse(decodeURIComponent(userJsonStr));
             selectedTargetUser = user;
             document.getElementById('modal-user-name').textContent = user.name || "کاربر ناشناس";
+            document.getElementById('modal-user-bio').textContent = user.bio || "بیوگرافی ثبت نشده است.";
             const initial = (user.name || 'ک').charAt(0);
             document.getElementById('modal-avatar-container').innerHTML = user.avatar_url ? `<img src="${user.avatar_url}" style="width:100%; height:100%; object-fit:cover;">` : initial;
             document.getElementById('user-profile-modal').classList.remove('hidden');
         }
-
         function closeUserProfileModal() { document.getElementById('user-profile-modal').classList.add('hidden'); }
         function openTelegramProfile() { if(selectedTargetUser && selectedTargetUser.username) window.open(`https://t.me/${selectedTargetUser.username}`, '_blank'); else alert('نام کاربری موجود نیست.'); }
 
@@ -592,12 +614,9 @@
                 });
             }
         }
-
-        function focusOnUser(lat, lng) {
-            if(map) { map.setView([lat, lng], 16, { animate: true }); toggleOnlineUsersPanel(); }
-        }
-
+        function focusOnUser(lat, lng) { if(map) { map.setView([lat, lng], 16, { animate: true }); toggleOnlineUsersPanel(); } }
         function toggleOnlineUsersPanel() { document.getElementById('online-panel').classList.toggle('translate-y-full'); }
+        function closeChatModal() { document.getElementById('chat-modal').classList.add('hidden'); }
 
         function toggleMapTheme() {
             isDarkMap = !isDarkMap;
