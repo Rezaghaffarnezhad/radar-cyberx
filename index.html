@@ -20,28 +20,36 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .my-animated-marker {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: rgba(26, 115, 232, 0.25);
+        /* استایل دقیق نشانگر پالس‌دار آبی */
+        .pulse-marker-container {
+            position: relative;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: expanding-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
         }
-        .my-marker-inner {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
+        .pulse-core {
+            width: 18px;
+            height: 18px;
+            background: #2563eb;
             border: 3px solid #ffffff;
-            background: #1a73e8;
-            box-shadow: 0 4px 16px rgba(26, 115, 232, 0.7);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(37, 99, 235, 0.8);
+            z-index: 2;
         }
-        @keyframes expanding-pulse {
-            0% { transform: scale(0.6); opacity: 1; box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.7); }
-            70% { transform: scale(1.3); opacity: 0.2; box-shadow: 0 0 0 30px rgba(26, 115, 232, 0); }
-            100% { transform: scale(0.6); opacity: 1; box-shadow: 0 0 0 0 rgba(26, 115, 232, 0); }
+        .pulse-ring {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(37, 99, 235, 0.35);
+            border-radius: 50%;
+            animation: map-pulse 2s infinite ease-out;
+            z-index: 1;
+        }
+        @keyframes map-pulse {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(2.2); opacity: 0; }
         }
 
         .transparent-location-btn {
@@ -92,31 +100,37 @@
             
             tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
-            // ایجاد اولیه نشانگر در مختصات پیش‌فرض
+            // رندر فوری نشانگر در حالت پیش‌فرض
             updateMyLocationMarkerOnMap();
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
                     currentCoords.lat = position.coords.latitude;
                     currentCoords.lng = position.coords.longitude;
-                    if(map) map.setView([currentCoords.lat, currentCoords.lng], 15, { animate: true });
-                    updateMyLocationMarkerOnMap();
-                }, () => {}, { enableHighAccuracy: true, timeout: 5000 });
+                    if(map) {
+                        map.setView([currentCoords.lat, currentCoords.lng], 15, { animate: true });
+                        updateMyLocationMarkerOnMap();
+                    }
+                }, (error) => {
+                    console.warn("Geolocation error:", error);
+                }, { enableHighAccuracy: true, timeout: 10000 });
             }
         });
 
         function updateMyLocationMarkerOnMap() {
             if(!map) return;
-            if(myLocationMarker) map.removeLayer(myLocationMarker);
+            if(myLocationMarker) {
+                map.removeLayer(myLocationMarker);
+            }
             
-            const myHtml = '<div class="my-animated-marker"><div class="my-marker-inner"></div></div>';
-            const myIcon = L.divIcon({ 
-                html: myHtml, 
-                className: '', 
-                iconSize: [80, 80], 
-                iconAnchor: [40, 40] 
+            const customIcon = L.divIcon({
+                className: '',
+                html: '<div class="pulse-marker-container"><div class="pulse-ring"></div><div class="pulse-core"></div></div>',
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
             });
-            myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon: myIcon }).addTo(map);
+
+            myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon: customIcon }).addTo(map);
         }
 
         function centerToMyLocation() {
@@ -124,13 +138,21 @@
                 navigator.geolocation.getCurrentPosition(position => {
                     currentCoords.lat = position.coords.latitude;
                     currentCoords.lng = position.coords.longitude;
-                    if(map) map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
-                    updateMyLocationMarkerOnMap();
+                    if(map) {
+                        map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+                        updateMyLocationMarkerOnMap();
+                    }
                 }, () => {
-                    if(map) map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
-                }, { enableHighAccuracy: true, timeout: 5000 });
+                    if(map) {
+                        map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+                        updateMyLocationMarkerOnMap();
+                    }
+                }, { enableHighAccuracy: true, timeout: 10000 });
             } else {
-                if(map) map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+                if(map) {
+                    map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+                    updateMyLocationMarkerOnMap();
+                }
             }
         }
 
@@ -148,8 +170,7 @@
                 tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
             }
             
-            // اطمینان از حفظ نشانگر روی نقشه بعد از تعویض لایه
-            setTimeout(() => { updateMyLocationMarkerOnMap(); }, 50);
+            setTimeout(() => { updateMyLocationMarkerOnMap(); }, 100);
         }
     </script>
 </body>
