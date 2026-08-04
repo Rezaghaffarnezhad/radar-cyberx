@@ -28,41 +28,6 @@
         .tg-bubble-in { background: #182533; color: #fff; border-radius: 16px 16px 16px 4px; }
         .tg-input-box { background: #17212b; border-top: 1px solid rgba(255,255,255,0.06); }
 
-        /* نشانگر دایره‌ای با حلقه بازشونده و متحرک (رادار) */
-        .my-animated-marker {
-            width: 76px;
-            height: 76px;
-            border-radius: 50%;
-            background: rgba(66, 133, 244, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            z-index: 9999 !important;
-            animation: google-radar-pulse 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1);
-        }
-        .my-marker-inner {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            border: 3px solid #ffffff;
-            overflow: hidden;
-            background: #4285f4;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            color: white;
-            font-size: 14px;
-            box-shadow: 0 4px 18px rgba(66, 133, 244, 0.8);
-            z-index: 2;
-        }
-        @keyframes google-radar-pulse {
-            0% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7), 0 0 0 0 rgba(66, 133, 244, 0.4); }
-            50% { transform: scale(1.15); box-shadow: 0 0 0 22px rgba(66, 133, 244, 0), 0 0 0 40px rgba(66, 133, 244, 0.15); }
-            100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0), 0 0 0 0 rgba(66, 133, 244, 0); }
-        }
-
         /* نشانگر کاربران دیگر روی نقشه */
         .other-user-pin {
             width: 44px;
@@ -661,14 +626,14 @@
 
             if(myLocationMarker) map.removeLayer(myLocationMarker);
             
-            // طراحی نشانگر به شکل دایره با حلقه بازشونده و متحرک (Pulse)
+            // حذف کامل شکل دایره‌ای نشانگر و استفاده از یک پین مکان‌یاب استاندارد و زیبا
             const avatarInner = currentUser.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : currentUser.name.charAt(0);
             const myHtml = `
-                <div class="my-animated-marker">
-                    <div class="my-marker-inner">${avatarInner}</div>
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: #2563eb; border: 3px solid #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.8);">
+                    ${avatarInner}
                 </div>
             `;
-            const myIcon = L.divIcon({ html: myHtml, iconSize: [76, 76], iconAnchor: [38, 38], className: 'my-custom-circle-marker' });
+            const myIcon = L.divIcon({ html: myHtml, iconSize: [44, 44], iconAnchor: [22, 22], className: 'my-standard-pin' });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon, zIndexOffset: 1000 }).addTo(map);
         }
     </script>
