@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - نمایش کاربران</title>
+    <title>تلسکوپ - نسخه جامع و پیشرفته</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -96,11 +96,9 @@
 
         <!-- دکمه‌های سمت راست (لیست افراد + موقعیت من) -->
         <div class="absolute bottom-6 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
-            <!-- دکمه باز کردن لیست افراد -->
             <button onclick="openUsersListModal()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10" title="لیست افراد نزدیک">
                 <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
             </button>
-            <!-- دکمه موقعیت من -->
             <button onclick="centerToMyLocation()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10" title="موقعیت من">
                 <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </button>
@@ -127,20 +125,26 @@
         </div>
     </div>
 
-    <!-- مودال لیست افراد نزدیک -->
+    <!-- مودال لیست افراد نزدیک + باکس جستجوی اکانت/یوزرنیم -->
     <div id="users-list-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeUsersListModal()">
-        <div class="tg-card w-full max-w-md max-h-[80vh] rounded-t-3xl sm:rounded-2xl p-5 flex flex-col gap-4 shadow-2xl border border-slate-700 overflow-hidden" onclick="event.stopPropagation()">
+        <div class="tg-card w-full max-w-md max-h-[85vh] rounded-t-3xl sm:rounded-2xl p-5 flex flex-col gap-3 shadow-2xl border border-slate-700 overflow-hidden" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
-                <h3 class="font-bold text-sm text-white flex items-center gap-2">👥 افراد آنلاین در شعاع <span id="list-radius-label" class="text-blue-400">15</span> کیلومتری</h3>
+                <h3 class="font-bold text-sm text-white flex items-center gap-2">👥 افراد در شعاع <span id="list-radius-label" class="text-blue-400">15</span> کیلومتری</h3>
                 <button onclick="closeUsersListModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
             </div>
             
-            <!-- لیست کاربران -->
-            <div id="users-scroll-container" class="flex flex-col gap-2 overflow-y-auto max-h-[50vh] pr-1">
-                <div class="text-center text-xs text-slate-400 py-6">در حال جستجوی افراد...</div>
+            <!-- باکس جستجو بر اساس نام یا یوزرنیم تلگرام -->
+            <div class="relative w-full">
+                <input type="text" id="user-search-input" oninput="filterUsersList(this.value)" placeholder="جستجو بر اساس نام یا یوزرنیم (@)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl py-2.5 px-3 pr-9 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-500">
+                <svg class="w-4 h-4 text-slate-400 absolute right-3 top-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </div>
 
-            <button onclick="closeUsersListModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl font-medium text-xs text-white transition">بستن</button>
+            <!-- لیست کاربران -->
+            <div id="users-scroll-container" class="flex flex-col gap-2 overflow-y-auto max-h-[45vh] pr-1">
+                <div class="text-center text-xs text-slate-400 py-6">در حال بارگذاری...</div>
+            </div>
+
+            <button onclick="closeUsersListModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl font-medium text-xs text-white transition mt-1">بستن</button>
         </div>
     </div>
 
@@ -163,7 +167,7 @@
 
         let map = null, myLocationMarker = null, radiusCircle = null;
         let otherUserMarkers = []; 
-        let cachedNearbyUsers = []; // ذخیره لیست کاربران نزدیک برای نمایش در مودال
+        let cachedNearbyUsers = []; 
         let currentCoords = { lat: 35.6892, lng: 51.3890 }; // پیش‌فرض تهران
         let activeRadiusKm = 15;
 
@@ -309,7 +313,6 @@
                         const distanceKm = getDistanceFromLatLonInKm(currentCoords.lat, currentCoords.lng, user.lat, user.lng);
                         if (distanceKm <= activeRadiusKm) {
                             
-                            // ذخیره در لیست کش شده برای مودال
                             cachedNearbyUsers.push({ ...user, distance: distanceKm });
 
                             const userInitial = user.name ? user.name.charAt(0) : 'ک';
@@ -327,7 +330,7 @@
                             });
 
                             const marker = L.marker([user.lat, user.lng], { icon: userIcon }).addTo(map);
-                            marker.bindPopup(`<div style="direction: rtl; font-family: 'Vazirmatn'; text-align: right;"><b style="color: #3b82f6;">${user.name || 'کاربر'}</b><br><span style="font-size: 11px; color: #64748b;">فاصله: ${distanceKm.toFixed(1)} کیلومتر</span></div>`);
+                            marker.bindPopup(`<div style="direction: rtl; font-family: 'Vazirmatn'; text-align: right;"><b style="color: #3b82f6;">${user.name || 'کاربر'}</b><br><span style="font-size: 11px; color: #64748b;">@${user.username || 'بدون نام کاربری'}</span><br><span style="font-size: 11px; color: #10b981;">فاصله: ${distanceKm.toFixed(1)} کیلومتر</span></div>`);
                             
                             otherUserMarkers.push(marker);
                         }
@@ -381,49 +384,67 @@
             loadOtherUsers(); 
         }
 
-        // مدیریت مودال لیست افراد نزدیک
+        // مودال و جستجوی پیشرفته افراد
         function openUsersListModal() {
             document.getElementById('list-radius-label').textContent = activeRadiusKm;
-            const container = document.getElementById('users-scroll-container');
-            container.innerHTML = '';
-
-            if (cachedNearbyUsers.length === 0) {
-                container.innerHTML = `<div class="text-center text-xs text-slate-400 py-6">هیچ کاربری در شعاع ${activeRadiusKm} کیلومتری شما پیدا نشد.</div>`;
-            } else {
-                // مرتب‌سازی بر اساس فاصله (نزدیک‌ترین‌ها اول)
-                cachedNearbyUsers.sort((a, b) => a.distance - b.distance);
-
-                cachedNearbyUsers.forEach(user => {
-                    const userInitial = user.name ? user.name.charAt(0) : 'ک';
-                    const avatarHtml = user.avatar_url 
-                        ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
-                        : userInitial;
-
-                    const itemHtml = `
-                        <div onclick="focusOnUser(${user.lat}, ${user.lng})" class="flex items-center justify-between p-2.5 bg-slate-800/60 hover:bg-slate-800 rounded-xl cursor-pointer transition border border-slate-700/50">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-blue-600/30 border border-blue-400/30 flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow">
-                                    ${avatarHtml}
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="font-bold text-xs text-white">${user.name || 'کاربر'}</span>
-                                    <span class="text-[10px] text-slate-400">@${user.username || 'بدون نام کاربری'}</span>
-                                </div>
-                            </div>
-                            <div class="text-left">
-                                <span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg">${user.distance.toFixed(1)} کیلومتر</span>
-                            </div>
-                        </div>
-                    `;
-                    container.innerHTML += itemHtml;
-                });
-            }
-
+            document.getElementById('user-search-input').value = '';
+            renderUsersList(cachedNearbyUsers);
             document.getElementById('users-list-modal').classList.remove('hidden');
         }
 
         function closeUsersListModal() {
             document.getElementById('users-list-modal').classList.add('hidden');
+        }
+
+        function filterUsersList(query) {
+            const q = query.trim().toLowerCase();
+            if (!q) {
+                renderUsersList(cachedNearbyUsers);
+                return;
+            }
+            const filtered = cachedNearbyUsers.filter(u => {
+                const nameMatch = u.name && u.name.toLowerCase().includes(q);
+                const usernameMatch = u.username && u.username.toLowerCase().includes(q);
+                return nameMatch || usernameMatch;
+            });
+            renderUsersList(filtered);
+        }
+
+        function renderUsersList(usersArray) {
+            const container = document.getElementById('users-scroll-container');
+            container.innerHTML = '';
+
+            if (usersArray.length === 0) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-400 py-6">کاربری با این مشخصات پیدا نشد.</div>`;
+                return;
+            }
+
+            usersArray.sort((a, b) => a.distance - b.distance);
+
+            usersArray.forEach(user => {
+                const userInitial = user.name ? user.name.charAt(0) : 'ک';
+                const avatarHtml = user.avatar_url 
+                    ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
+                    : userInitial;
+
+                const itemHtml = `
+                    <div onclick="focusOnUser(${user.lat}, ${user.lng})" class="flex items-center justify-between p-2.5 bg-slate-800/60 hover:bg-slate-800 rounded-xl cursor-pointer transition border border-slate-700/50">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-600/30 border border-blue-400/30 flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow">
+                                ${avatarHtml}
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-bold text-xs text-white">${user.name || 'کاربر'}</span>
+                                <span class="text-[10px] text-slate-400">@${user.username || 'بدون نام کاربری'}</span>
+                            </div>
+                        </div>
+                        <div class="text-left">
+                            <span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg">${user.distance.toFixed(1)} کیلومتر</span>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += itemHtml;
+            });
         }
 
         function focusOnUser(lat, lng) {
