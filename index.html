@@ -23,7 +23,7 @@
 
         .tg-card { background: #17212b; border: 1px solid rgba(255,255,255,0.03); }
 
-        /* نشانگر موقعیت مکانی من با سایه متحرک بازشونده (Pulse) و شکل هندسی متمایز */
+        /* نشانگر موقعیت مکانی من با شکل هندسی متمایز و سایه متحرک */
         .my-animated-marker {
             width: 68px;
             height: 68px;
@@ -37,7 +37,7 @@
         .my-marker-inner {
             width: 40px;
             height: 40px;
-            border-radius: 12px; /* شکل هندسی گوشه‌گرد متمایز برای نمایش موقعیت من */
+            border-radius: 12px;
             border: 3px solid #ffffff;
             overflow: hidden;
             background: #4285f4;
@@ -55,7 +55,7 @@
             100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0), 0 0 0 0 rgba(66, 133, 244, 0); }
         }
 
-        /* نشانگر کاربران دیگر روی نقشه به شکل دایره‌ای با حاشیه سبز */
+        /* نشانگر کاربران دیگر روی نقشه */
         .other-user-pin {
             width: 44px;
             height: 44px;
@@ -95,7 +95,6 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <!-- کلیک روی دکمه آنلاین برای باز کردن لیست افراد آنلاین -->
                     <button onclick="openOnlineUsersModal()" id="online-count-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-xl hover:bg-emerald-500/20 transition cursor-pointer">0 آنلاین 🟢</button>
                     <button onclick="openGlobalChat()" class="text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-xl hover:bg-blue-500/20 transition">چت عمومی 💬</button>
                 </div>
@@ -109,43 +108,55 @@
             </div>
         </div>
 
-        <!-- دکمه تنظیمات شعاع به شکل چرخ‌دنده در سمت چپ -->
+        <!-- دکمه تنظیمات شعاع به شکل چرخ‌دنده در سمت چپ (مکان جای قبلی) -->
         <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center pointer-events-auto">
             <button onclick="openRadiusSettingsModal()" class="w-11 h-11 glass-box rounded-2xl flex items-center justify-center text-blue-400 shadow-xl transition hover:scale-105 active:scale-95" title="تنظیمات شعاع">
-                <svg class="w-6 h-6 animate-spin-slow" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
             </button>
         </div>
 
-        <!-- دکمه‌های کنترل موقعیت و انتخاب دستی در سمت راست -->
+        <!-- دکمه موقعیت من در سمت راست -->
         <div class="absolute bottom-6 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
-            <button onclick="enableManualLocationSelect()" class="w-12 h-12 glass-box rounded-2xl flex items-center justify-center text-blue-400 transition hover:scale-105 active:scale-95 shadow-xl" title="انتخاب لوکیشن دستی">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </button>
-            <button onclick="centerToMyLocation()" class="w-12 h-12 transparent-btn rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95" title="موقعیت من">
+            <button onclick="centerToMyLocation()" class="w-12 h-12 transparent-btn rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl" title="موقعیت من">
                 <svg class="w-7 h-7 text-blue-400 drop-shadow-md" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </button>
         </div>
     </div>
 
-    <!-- مودال تنظیمات شعاع (شامل فیلد و اسلایدر دستی) -->
+    <!-- مودال تنظیمات شعاع و انتخاب لوکیشن دستی -->
     <div id="radius-settings-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onclick="closeRadiusSettingsModal()">
-        <div class="tg-card w-full max-w-xs rounded-2xl p-5 flex flex-col items-center gap-4 shadow-2xl border border-slate-700" onclick="event.stopPropagation()">
-            <h3 class="font-bold text-sm text-white flex items-center gap-2">⚙️ تنظیمات شعاع نقشه</h3>
-            <div class="w-full flex flex-col gap-3">
+        <div class="tg-card w-full max-w-sm rounded-2xl p-5 flex flex-col gap-4 shadow-2xl border border-slate-700" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+                <h3 class="font-bold text-sm text-white flex items-center gap-2">⚙️ تنظیمات شعاع و لوکیشن</h3>
+                <button onclick="closeRadiusSettingsModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
+            </div>
+            
+            <!-- تنظیمات شعاع -->
+            <div class="flex flex-col gap-2">
                 <div class="flex justify-between items-center text-xs text-slate-300">
-                    <span>شعاع فعلی:</span>
+                    <span>شعاع نقشه:</span>
                     <span id="modal-radius-value" class="text-blue-400 font-bold">15 کیلومتر</span>
                 </div>
                 <input id="modal-radius-slider" type="range" min="0.5" max="50" step="0.5" value="15" oninput="onModalRadiusChange(this.value)" class="w-full accent-blue-500 cursor-pointer">
                 <div class="flex items-center gap-2 mt-1">
                     <input id="modal-radius-input" type="number" min="0.1" max="200" step="0.5" placeholder="مقدار برحسب کیلومتر..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                    <button onclick="applyManualRadiusInput()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-xl text-xs font-bold transition">اعمال</button>
+                    <button onclick="applyManualRadiusInput()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-xl text-xs font-bold transition">اعمال شعاع</button>
                 </div>
             </div>
-            <button onclick="closeRadiusSettingsModal()" class="w-full py-2 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition mt-2">تایید و بستن</button>
+
+            <!-- انتخاب لوکیشن دستی داخل تنظیمات -->
+            <div class="border-t border-slate-700/60 pt-3 flex flex-col gap-2">
+                <span class="text-xs text-slate-300 font-medium">موقعیت مکانی شما:</span>
+                <button onclick="enableManualLocationSelect()" class="w-full py-2.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    انتخاب دستی لوکیشن روی نقشه 📍
+                </button>
+            </div>
+
+            <button onclick="closeRadiusSettingsModal()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition mt-1">تایید و بستن</button>
         </div>
     </div>
 
@@ -159,9 +170,7 @@
                 </div>
                 <button onclick="closeOnlineUsersModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
             </div>
-            <div id="online-users-list-container" class="flex-1 overflow-y-auto space-y-2.5 p-1">
-                <!-- لیست کاربران آنلاین به صورت داینامیک پر می‌شود -->
-            </div>
+            <div id="online-users-list-container" class="flex-1 overflow-y-auto space-y-2.5 p-1"></div>
         </div>
     </div>
 
@@ -177,7 +186,7 @@
         </div>
     </div>
 
-    <!-- مودال پروفایل و چت خصوصی با سایر کاربران -->
+    <!-- مودال پروفایل و چت خصوصی واقعی -->
     <div id="user-profile-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onclick="closeUserProfileModal()">
         <div class="tg-card w-full max-w-sm rounded-2xl p-5 flex flex-col gap-4 shadow-2xl border border-slate-700 max-h-[85vh]" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
@@ -190,9 +199,7 @@
                 </div>
                 <button onclick="closeUserProfileModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
             </div>
-            <!-- باکس پیام‌های خصوصی واقعی -->
             <div id="private-chat-messages" class="flex-1 overflow-y-auto space-y-2.5 min-h-[220px] max-h-[280px] p-2 bg-slate-950/40 rounded-xl"></div>
-            <!-- ارسال پیام خصوصی واقعی -->
             <div class="flex gap-2 pt-1">
                 <input id="private-chat-input" type="text" placeholder="پیام خصوصی..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') sendPrivateMessage()">
                 <button onclick="sendPrivateMessage()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition">ارسال</button>
@@ -210,9 +217,7 @@
                 </div>
                 <button onclick="closeGlobalChat()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
             </div>
-            <!-- باکس پیام‌های عمومی واقعی -->
             <div id="global-chat-messages" class="flex-1 overflow-y-auto space-y-3 p-2 bg-slate-950/40 rounded-xl"></div>
-            <!-- ارسال پیام عمومی واقعی -->
             <div class="flex gap-2 pt-1">
                 <input id="global-chat-input" type="text" placeholder="پیام در چت عمومی..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') sendGlobalMessage()">
                 <button onclick="sendGlobalMessage()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition">ارسال</button>
@@ -283,9 +288,10 @@
                 if(manualSelectMarker) { map.removeLayer(manualSelectMarker); manualSelectMarker = null; }
                 updateRadiusCircleOnMap();
                 updateMyHeartbeat();
+                tg?.showAlert?.("موقعیت مکانی شما با موفقیت ثبت شد!");
             });
 
-            // بروزرسانی لحظه‌ای (Realtime) با Supabase Subscriptions برای سرعت و پاسخگویی آنی
+            // بروزرسانی لحظه‌ای (Realtime) با Supabase Subscriptions
             supabaseClient.channel('realtime-telescope')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => { fetchUsersData(); })
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => { 
@@ -294,9 +300,15 @@
                 })
                 .subscribe();
 
-            setInterval(updateMyHeartbeat, 10000);
+            setInterval(updateMyHeartbeat, 8000);
             fetchUsersData();
             fetchGlobalMessages();
+
+            // بررسی مداوم وضعیت آنلاین/آفلاین کاربران هر 5 ثانیه برای حذف آنی افراد آفلاین از نقشه
+            setInterval(() => {
+                renderUsersOnMap();
+                updateOnlineCountUI(activeUsersGlobalList);
+            }, 5000);
         });
 
         async function registerOrUpdateUserInSupabase() {
@@ -340,10 +352,11 @@
 
         function getVisibleOnlineUsers() {
             const now = new Date();
+            // کاربران آنلاین (کمتر از 30 ثانیه پیش سیگنال قلب یا آپدیت فرستاده‌اند) برای حذف آنی در صورت آفلاین شدن
             return activeUsersGlobalList.filter(u => {
                 if(!u.latitude || !u.longitude || u.telegram_id === currentUser.telegram_id) return false;
                 if(!u.last_seen) return false;
-                const isOnline = (now - new Date(u.last_seen)) < 180000; // 3 دقیقه
+                const isOnline = (now - new Date(u.last_seen)) < 30000; 
                 if(!isOnline) return false;
                 const distance = calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
                 return distance <= activeRadiusKm;
@@ -353,21 +366,32 @@
         function renderUsersOnMap() {
             if(!map || !currentUser) return;
 
-            Object.values(userMarkersOnMap).forEach(marker => map.removeLayer(marker));
-            userMarkersOnMap = {};
-
             const visibleUsers = getVisibleOnlineUsers();
+            const visibleIds = new Set(visibleUsers.map(u => u.telegram_id));
 
+            // حذف مارکر کسانی که آفلاین شده‌اند یا از شعاع خارج شده‌اند به صورت آنی
+            Object.keys(userMarkersOnMap).forEach(id => {
+                if(!visibleIds.has(Number(id)) && !visibleIds.has(id)) {
+                    map.removeLayer(userMarkersOnMap[id]);
+                    delete userMarkersOnMap[id];
+                }
+            });
+
+            // افزودن یا بروزرسانی کاربران آنلاین جدید
             visibleUsers.forEach(u => {
-                const initial = (u.name || 'ک').charAt(0);
-                const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : initial;
-                const html = `<div class="other-user-pin">${avatarInner}</div>`;
-                
-                const icon = L.divIcon({ html, iconSize: [44, 44], iconAnchor: [22, 22] });
-                const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
-                
-                marker.on('click', () => { openTargetUserProfile(u); });
-                userMarkersOnMap[u.telegram_id] = marker;
+                if(userMarkersOnMap[u.telegram_id]) {
+                    userMarkersOnMap[u.telegram_id].setLatLng([u.latitude, u.longitude]);
+                } else {
+                    const initial = (u.name || 'ک').charAt(0);
+                    const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : initial;
+                    const html = `<div class="other-user-pin">${avatarInner}</div>`;
+                    
+                    const icon = L.divIcon({ html, iconSize: [44, 44], iconAnchor: [22, 22] });
+                    const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
+                    
+                    marker.on('click', () => { openTargetUserProfile(u); });
+                    userMarkersOnMap[u.telegram_id] = marker;
+                }
             });
         }
 
@@ -375,7 +399,7 @@
             const now = new Date();
             let count = usersList.filter(u => {
                 if(!u.last_seen) return false;
-                return (now - new Date(u.last_seen)) < 180000;
+                return (now - new Date(u.last_seen)) < 30000;
             }).length;
             if(count === 0) count = 1;
             document.getElementById('online-count-badge').textContent = `${count} آنلاین 🟢`;
@@ -418,7 +442,7 @@
         }
         function closeOnlineUsersModal() { document.getElementById('online-users-modal').classList.add('hidden'); }
 
-        // تنظیمات شعاع چرخ‌دنده و دستی
+        // تنظیمات شعاع و لوکیشن در تنظیمات (چرخ‌دنده)
         function openRadiusSettingsModal() {
             document.getElementById('modal-radius-slider').value = activeRadiusKm;
             document.getElementById('modal-radius-value').textContent = `${activeRadiusKm} کیلومتر`;
@@ -447,14 +471,16 @@
             }
         }
 
-        // انتخاب لوکیشن دستی روی نقشه
+        // انتخاب لوکیشن دستی از داخل منوی تنظیمات
         function enableManualLocationSelect() {
+            closeRadiusSettingsModal();
             isManualSelecting = true;
             map.getContainer().style.cursor = 'crosshair';
             if(manualSelectMarker) map.removeLayer(manualSelectMarker);
             manualSelectMarker = L.marker([currentCoords.lat, currentCoords.lng], {
                 draggable: true
             }).addTo(map);
+
             manualSelectMarker.on('dragend', function(event) {
                 const markerPos = event.target.getLatLng();
                 currentCoords.lat = markerPos.lat;
@@ -466,6 +492,7 @@
                 updateRadiusCircleOnMap();
                 updateMyHeartbeat();
             });
+            tg?.showAlert?.("لطفاً روی هر نقطه دلخواه از نقشه کلیک کنید تا موقعیت شما تغییر کند.");
         }
 
         // چت عمومی واقعی
