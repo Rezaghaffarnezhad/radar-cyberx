@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - رادار زنده لحظه‌ای</title>
+    <title>تلسکوپ - رادار حضور لحظه‌ای (Presence)</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -85,7 +85,7 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ رادار آنلاینِ لحظه‌ای</span>
+                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ رادار زنده (حضور آنی)</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
@@ -151,7 +151,7 @@
         let currentCoords = { lat: 35.6892, lng: 51.3890 }; 
         let activeRadiusKm = 15;
         let isFirstCenter = true;
-        let isRegistered = false;
+        let radarChannel = null;
 
         const tgUser = tg?.initDataUnsafe?.user;
         let currentUser = { 
@@ -180,35 +180,16 @@
                                 isFirstCenter = false;
                             }
                             updateMapElements();
-                            registerUser();
+                            initPresenceChannel();
                         },
                         (error) => {
-                            registerUser();
+                            initPresenceChannel();
                         },
                         { enableHighAccuracy: true, timeout: 10000 }
                     );
                 } else {
-                    registerUser();
+                    initPresenceChannel();
                 }
-
-                // هندل کردن خروج لحظه‌ای با تغییر وضعیت صفحه (بستن تب، کم‌سواد کردن مینی‌اپ، سوییچ اپلیکیشن)
-                document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'hidden') {
-                        removeUserInstantly();
-                    } else if (document.visibilityState === 'visible') {
-                        registerUser();
-                    }
-                });
-
-                window.addEventListener('pagehide', () => {
-                    removeUserInstantly();
-                });
-
-                window.addEventListener('beforeunload', () => {
-                    removeUserInstantly();
-                });
-
-                setupRealtimeSubscription();
 
             } catch (err) {
                 console.error("Initialization error:", err);
@@ -256,67 +237,51 @@
             }
         }
 
-        async function registerUser() {
-            if (!supabaseClient) return;
-            try {
-                isRegistered = true;
-                await supabaseClient.from('users').upsert({
-                    id: currentUser.id,
-                    name: currentUser.name,
-                    username: currentUser.username,
-                    avatar_url: currentUser.avatar_url,
-                    lat: currentCoords.lat,
-                    lng: currentCoords.lng,
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'id' });
-
-                fetchAllUsers();
-            } catch (err) {
-                console.error("Error registering user:", err);
-            }
-        }
-
-        async function removeUserInstantly() {
-            if (!supabaseClient || !isRegistered) return;
-            isRegistered = false;
-            try {
-                // پاکسازی آنی رکورد از دیتابیس به محض خروج
-                await supabaseClient.from('users').delete().eq('id', currentUser.id);
-            } catch (e) {
-                console.error("Error removing user instantly:", e);
-            }
-        }
-
-        async function fetchAllUsers() {
-            if (!supabaseClient) return;
-            try {
-                const { data, error } = await supabaseClient.from('users').select('*');
-                if (error) return;
-                if (data) {
-                    processUsersData(data);
-                }
-            } catch (err) {
-                console.error("Error fetching users:", err);
-            }
-        }
-
-        function setupRealtimeSubscription() {
+        function initPresenceChannel() {
             if (!supabaseClient) return;
 
-            // دریافت تغییرات به صورت کاملاً لحظه‌ای از طریق Supabase Realtime
-            supabaseClient
-                .channel('public:users-realtime')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
-                    fetchAllUsers(); 
+            // ایجاد کانال حضور لحظه‌ای (Presence)
+            radarChannel = supabaseClient.channel('radar-online-users', {
+                config: {
+                    presence: {
+                        key: currentUser.id,
+                    },
+                },
+            });
+
+            radarChannel
+                .on('presence', { event: 'sync' }, () => {
+                    const state = radarChannel.presenceState();
+                    processPresenceState(state);
                 })
-                .subscribe();
-
-            fetchAllUsers();
+                .subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        // ارسال اطلاعات اولیه کاربر به کانال حضور
+                        await radarChannel.track({
+                            id: currentUser.id,
+                            name: currentUser.name,
+                            username: currentUser.username,
+                            avatar_url: currentUser.avatar_url,
+                            lat: currentCoords.lat,
+                            lng: currentCoords.lng,
+                            online_at: new Date().toISOString()
+                        });
+                    }
+                });
         }
 
-        function processUsersData(data) {
+        function processPresenceState(state) {
             markersLayerGroup.clearLayers();
             onlineUsersList = [];
+
+            // استخراج تمام کاربران متصل از state کانال
+            let allActiveUsers = [];
+            Object.keys(state).forEach(presenceId => {
+                let userDatas = state[presenceId];
+                if (userDatas && userDatas.length > 0) {
+                    allActiveUsers.push(userDatas[0]); // آخرین وضعیت کاربر
+                }
+            });
 
             onlineUsersList.push({
                 id: currentUser.id,
@@ -329,7 +294,7 @@
                 isMe: true
             });
 
-            data.forEach(user => {
+            allActiveUsers.forEach(user => {
                 const userIdStr = String(user.id);
                 if (userIdStr === String(currentUser.id)) return;
                 if (!user.lat || !user.lng) return;
@@ -419,7 +384,7 @@
 
                 container.innerHTML += `
                     <div onclick="focusOnUser(${user.lat}, ${user.lng})" class="flex items-center justify-between p-2.5 bg-slate-800/60 hover:bg-slate-800 rounded-xl cursor-pointer transition border border-slate-700/50">
-                        <div class="flex items-center gap-3">Na
+                        <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-emerald-600/30 border border-emerald-400/30 flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow relative">
                                 ${avatarHtml}
                                 <div class="online-dot"></div>
