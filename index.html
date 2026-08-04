@@ -3,40 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تست ساده رادار کاربران</title>
+    <title>تست ارتباط دو اکانت</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans p-4 select-none">
+<body class="bg-slate-950 text-slate-100 font-sans p-5 select-none flex flex-col items-center justify-center min-h-screen">
 
-    <div class="max-w-md mx-auto flex flex-col gap-4">
-        <!-- هدر وضعیت کاربر فعلی -->
-        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-xl">
-            <div class="flex items-center gap-3">
-                <div id="my-avatar" class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center font-bold text-lg overflow-hidden border border-blue-400">ک</div>
-                <div>
-                    <h2 id="my-name" class="font-bold text-sm">در حال بارگذاری...</h2>
-                    <span id="my-username" class="text-xs text-slate-400">@username</span>
-                </div>
-            </div>
-            <span class="text-xs bg-emerald-500/10 text-emerald-400 font-bold px-2.5 py-1 rounded-xl border border-emerald-500/20">🟢 آنلاین</span>
+    <div class="max-w-md w-full bg-slate-900 border border-slate-800 p-5 rounded-3xl shadow-2xl flex flex-col gap-4">
+        
+        <!-- عنوان -->
+        <div class="text-center pb-2 border-b border-slate-800">
+            <h1 class="font-bold text-base text-white">🧪 تست ارتباط دو اکانت</h1>
+            <p class="text-[11px] text-slate-400 mt-1">این صفحه را روی دو دستگاه یا دو مرورگر مختلف باز کنید</p>
         </div>
 
-        <!-- دکمه تست و به‌روزرسانی -->
-        <button onclick="forceSync()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-xs transition shadow-lg">
-            ارسال موقعیت و بروزرسانی لیست
+        <!-- کارت مشخصات شما -->
+        <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div id="my-avatar" class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-sm overflow-hidden border border-blue-400">ک</div>
+                <div>
+                    <div id="my-name" class="font-bold text-xs text-white">در حال دریافت...</div>
+                    <div id="my-id" class="text-[10px] text-slate-400 font-mono">ID: ---</div>
+                </div>
+            </div>
+            <span class="text-[10px] bg-emerald-500/10 text-emerald-400 font-bold px-2 py-1 rounded-lg border border-emerald-500/20">🟢 شما آنلاینید</span>
+        </div>
+
+        <!-- دکمه ارسال پینگ دستی -->
+        <button onclick="sendPing()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-95 transition rounded-xl font-bold text-xs shadow-lg text-white">
+            ارسال پینگ / ثبت حضور
         </button>
 
-        <!-- لیست افراد آنلاین -->
-        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-xl flex flex-col gap-3">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                <h3 class="font-bold text-xs text-slate-300">👥 لیست افراد آنلاین در پایگاه داده</h3>
-                <span id="count-badge" class="text-xs bg-slate-800 px-2 py-0.5 rounded-md font-bold">0</span>
+        <!-- لیست دستگاه‌های متصل دیگر -->
+        <div class="flex flex-col gap-2">
+            <div class="flex items-center justify-between text-xs text-slate-300 px-1 font-bold">
+                <span>📡 اکانت‌های آنلاینِ شناسایی‌شده:</span>
+                <span id="active-count" class="bg-slate-800 px-2 py-0.5 rounded text-[10px]">0</span>
             </div>
-            
-            <div id="users-list" class="flex flex-col gap-2 max-h-[60vh] overflow-y-auto pr-1">
-                <div class="text-center text-xs text-slate-500 py-6">در حال دریافت اطلاعات از ساب‌پیس...</div>
+
+            <div id="other-users-box" class="flex flex-col gap-2 max-h-52 overflow-y-auto pr-1">
+                <div class="text-center text-xs text-slate-500 py-6 bg-slate-950/40 rounded-xl border border-slate-800/50">
+                    هنوز اکانت دیگری متصل نشده است...
+                </div>
             </div>
         </div>
     </div>
@@ -49,124 +58,118 @@
         try {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         } catch (e) {
-            console.error("خطا در اتصال به ساب‌پیس:", e);
+            console.error("خطا در اتصال به ساب‌پیس", e);
         }
 
         const tg = window.Telegram?.WebApp;
         if(tg) tg.expand();
 
         const tgUser = tg?.initDataUnsafe?.user;
-        const currentUser = {
-            id: tgUser ? String(tgUser.id) : String(Math.floor(Math.random() * 900000) + 100000),
-            name: tgUser ? `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() : "کاربر تستی " + Math.floor(Math.random()*100),
-            username: tgUser?.username || 'test_user_' + Math.floor(Math.random()*100),
-            avatar_url: tgUser?.photo_url || '',
-            lat: 35.6892 + (Math.random() - 0.5) * 0.01,
-            lng: 51.3890 + (Math.random() - 0.5) * 0.01
-        };
+        
+        // ساخت شناسهتا اگر در دو تب مختلف تست می‌کنید IDs متفاوت تولید شود
+        let myId = tgUser ? String(tgUser.id) : ('browser_' + Math.floor(Math.random() * 90000 + 10000));
+        let myName = tgUser ? `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() : ('کاربر تستی ' + myId.split('_')[1]);
+        let myUsername = tgUser?.username || ('user_' + Math.floor(Math.random() * 1000));
+        let myAvatar = tgUser?.photo_url || '';
 
         window.addEventListener('DOMContentLoaded', () => {
-            renderMyProfile();
-            forceSync();
-            setupRealtime();
+            renderMyInfo();
+            sendPing();
+            setupRealtimeSync();
+
+            // هر ۱۰ ثانیه خودکار پینگ می‌فرستد تا آنلاین بودن حفظ شود
+            setInterval(sendPing, 10000);
         });
 
-        function renderMyProfile() {
-            document.getElementById('my-name').textContent = currentUser.name;
-            document.getElementById('my-username').textContent = '@' + currentUser.username;
+        function renderMyInfo() {
+            document.getElementById('my-name').textContent = myName;
+            document.getElementById('my-id').textContent = '@' + myUsername + ' (شناسه: ' + myId + ')';
             const avatarEl = document.getElementById('my-avatar');
-            if (currentUser.avatar_url) {
-                avatarEl.innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">`;
+            if (myAvatar) {
+                avatarEl.innerHTML = `<img src="${myAvatar}" class="w-full h-full object-cover">`;
             } else {
-                avatarEl.textContent = currentUser.name.charAt(0);
+                avatarEl.textContent = myName.charAt(0);
             }
         }
 
-        async function forceSync() {
+        async function sendPing() {
             if (!supabaseClient) return;
             try {
-                // ثبت یا آپدیت مشخصات در جدول users
-                const { error } = await supabaseClient.from('users').upsert({
-                    id: currentUser.id,
-                    name: currentUser.name,
-                    username: currentUser.username,
-                    avatar_url: currentUser.avatar_url,
-                    lat: currentUser.lat,
-                    lng: currentUser.lng,
+                await supabaseClient.from('users').upsert({
+                    id: myId,
+                    name: myName,
+                    username: myUsername,
+                    avatar_url: myAvatar,
+                    lat: 35.6892, // مقدار ثابت برای تست
+                    lng: 51.3890,
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'id' });
 
-                if (error) {
-                    console.error("خطا در ذخیره اطلاعات:", error);
-                } else {
-                    fetchAllUsers();
-                }
+                fetchOnlineUsers();
             } catch (err) {
-                console.error("خطای ارتباطی:", err);
+                console.error("خطا در ارسال پینگ:", err);
             }
         }
 
-        async function fetchAllUsers() {
+        async function fetchOnlineUsers() {
             if (!supabaseClient) return;
             try {
                 const { data, error } = await supabaseClient.from('users').select('*');
                 if (error) {
-                    console.error("خطا در خواندن جدول:", error);
+                    console.error("خطا در خواندن کاربران:", error);
                     return;
                 }
                 if (data) {
-                    renderUsersList(data);
+                    renderUsers(data);
                 }
             } catch (err) {
                 console.error("خطا:", err);
             }
         }
 
-        function setupRealtime() {
+        function setupRealtimeSync() {
             if (!supabaseClient) return;
             supabaseClient
                 .channel('public:users')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
                     console.log('تغییر لحظه‌ای دریافت شد:', payload);
-                    fetchAllUsers();
+                    fetchOnlineUsers();
                 })
                 .subscribe();
         }
 
-        function renderUsersList(users) {
-            const container = document.getElementById('users-list');
-            container.innerHTML = '';
-            document.getElementById('count-badge').textContent = users.length;
+        function renderUsers(users) {
+            const box = document.getElementById('other-users-box');
+            box.innerHTML = '';
+            document.getElementById('active-count').textContent = users.length;
 
             if (users.length === 0) {
-                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">کاربری در دیتابیس یافت نشد.</div>`;
+                box.innerHTML = `<div class="text-center text-xs text-slate-500 py-6 bg-slate-950/40 rounded-xl border border-slate-800/50">کاربری یافت نشد.</div>`;
                 return;
             }
 
             users.forEach(user => {
-                const isMe = String(user.id) === String(currentUser.id);
+                const isMe = String(user.id) === String(myId);
                 const initial = user.name ? user.name.charAt(0) : 'ک';
                 const avatarHtml = user.avatar_url ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` : initial;
+                
                 const badge = isMe 
-                    ? `<span class="text-[9px] bg-blue-500/20 text-blue-400 font-bold px-1.5 py-0.5 rounded">شما</span>` 
-                    : `<span class="text-[9px] bg-emerald-500/20 text-emerald-400 font-bold px-1.5 py-0.5 rounded">آنلاین</span>`;
+                    ? `<span class="text-[9px] bg-blue-500/20 text-blue-400 font-bold px-2 py-0.5 rounded-md">این دستگاه (شما)</span>` 
+                    : `<span class="text-[9px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded-md">قابل دسترس 🟢</span>`;
 
-                container.innerHTML += `
-                    <div class="flex items-center justify-between p-3 bg-slate-950/60 border border-slate-800/80 rounded-xl">
+                box.innerHTML += `
+                    <div class="flex items-center justify-between p-3 bg-slate-950/60 border border-slate-800/80 rounded-2xl shadow-inner">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-bold text-xs overflow-hidden border border-slate-700 shrink-0">
+                            <div class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center font-bold text-xs overflow-hidden border border-slate-700 shrink-0">
                                 ${avatarHtml}
                             </div>
                             <div class="flex flex-col">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-xs text-white">${user.name || 'بدون نام'}</span>
-                                    ${badge}
-                                </div>
+                                <span class="font-bold text-xs text-white">${user.name || 'بدون نام'}</span>
                                 <span class="text-[10px] text-slate-400">@${user.username || 'no_username'}</span>
                             </div>
                         </div>
-                        <div class="text-[10px] text-slate-400 font-mono">
-                            ${user.lat ? user.lat.toFixed(2) + ', ' + user.lng.toFixed(2) : 'بدون لوکیشن'}
+                        <div>
+                            ${badge}
                         </div>
                     </div>
                 `;
