@@ -115,7 +115,7 @@
         }
         .chat-3d-btn:active { transform: translateX(-50%) scale(0.94); }
 
-        /* غلطک اسکوپ مکانیکی: بدنه کاملاً ثابت و بدون چرخش، تنها غلطک فلزی داخلی می‌چرخد */
+        /* غلطک مکانیکی: بدنه کاملاً ثابت، استوانه داخلی چرخان با الگوی غلطک موس */
         .mouse-wheel-roller {
             background: #111822 !important;
             border: 2px solid #233142 !important;
@@ -271,7 +271,7 @@
             </div>
         </div>
 
-        <!-- ابزارک غلطک فلزی تنظیم شعاع (بدنه ثابت، استوانه داخلی چرخان) -->
+        <!-- ابزارک غلطک مکانیکی با صدای آچار جغجغه -->
         <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center gap-1">
             <div id="radius-roller-widget" onclick="openRadiusSettingsModal(event)" class="mouse-wheel-roller w-11 h-20 flex items-center justify-center" title="برای تنظیم شعاع کلیک کنید">
                 <div id="roller-inner-bar" class="roller-wheel-inner"></div>
@@ -511,9 +511,9 @@
         let cachedMessages = {};
         let searchDebounceTimer = null;
 
-        // صدای فلزی و مکانیکی شبیه اسکوپ اسنایپر
+        // صدای کلیک خشک و مکانیکی آچار جغجغه (Ratchet Click Sound)
         let audioCtx = null;
-        function playSniperScopeSound() {
+        function playRatchetClickSound() {
             try {
                 if (!audioCtx) {
                     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -524,35 +524,21 @@
                 
                 const now = audioCtx.currentTime;
                 
-                // پالس فرکانس بالا برای ایجاد طنین فلزی خشک
+                // نویز مکانیکی خشک فلزی (شبیه جغجغه)
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(1400, now);
-                osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(1100, now);
+                osc.frequency.exponentialRampToValueAtTime(180, now + 0.025);
                 
-                // افکت نویز فلزی کوتاه
-                const osc2 = audioCtx.createOscillator();
-                const gain2 = audioCtx.createGain();
-                osc2.type = 'sawtooth';
-                osc2.frequency.setValueAtTime(600, now);
-                osc2.frequency.linearRampToValueAtTime(120, now + 0.04);
-
-                gain.gain.setValueAtTime(0.18, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-
-                gain2.gain.setValueAtTime(0.12, now);
-                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
                 
                 osc.connect(gain);
-                osc2.connect(gain2);
                 gain.connect(audioCtx.destination);
-                gain2.connect(audioCtx.destination);
                 
                 osc.start(now);
-                osc2.start(now);
-                osc.stop(now + 0.04);
-                osc2.stop(now + 0.04);
+                osc.stop(now + 0.025);
             } catch (e) {}
         }
 
@@ -694,12 +680,12 @@
 
         function setQuickRadius(meters) {
             activeRadiusMeters = meters;
-            playSniperScopeSound();
+            playRatchetClickSound();
             updateRadiusRollerUI();
             updateModalRollerUI();
         }
 
-        // راه‌اندازی مکانیک غلطک با بدنه ثابت و چرخش استوانه داخلی
+        // راه‌اندازی مکانیک غلطک موس (بدنه ثابت و چرخش استوانه داخلی)
         window.addEventListener('DOMContentLoaded', () => {
             setupRollerInteraction('radius-roller-widget', 'roller-inner-bar', (newMeters) => {
                 activeRadiusMeters = newMeters;
@@ -730,7 +716,7 @@
                     activeRadiusMeters = Math.max(100, activeRadiusMeters - 100);
                     currentTranslateY += 6;
                 }
-                playSniperScopeSound();
+                playRatchetClickSound();
                 inner.style.transform = `translateY(${currentTranslateY % 30}px)`;
                 onUpdate(activeRadiusMeters);
             }, { passive: false });
@@ -752,7 +738,7 @@
                         currentTranslateY += 6;
                     }
                     startY = e.touches[0].clientY;
-                    playSniperScopeSound();
+                    playRatchetClickSound();
                     inner.style.transform = `translateY(${currentTranslateY % 30}px)`;
                     onUpdate(activeRadiusMeters);
                 }
@@ -777,7 +763,7 @@
                         currentTranslateY += 6;
                     }
                     startY = e.clientY;
-                    playSniperScopeSound();
+                    playRatchetClickSound();
                     inner.style.transform = `translateY(${currentTranslateY % 30}px)`;
                     onUpdate(activeRadiusMeters);
                 }
@@ -919,7 +905,8 @@
             await fetchUsersData();
             initRealtimeGlobal();
             
-            setInterval(updateMyHeartbeat, 10000);
+            // ارسال پالس هارت‌بیت هر ۳۰ ثانیه برای پایداری وضعیت آنلاین
+            setInterval(updateMyHeartbeat, 30000);
         }
 
         async function updateMyHeartbeat() {
@@ -994,8 +981,11 @@
             
             usersList.forEach(u => {
                 const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
-                const isRecent = lastSeenDate && (now - lastSeenDate < 180000);
-                if(onlineUsersMap[u.telegram_id] || isRecent) {
+                // بازه زمانی امن ۱۰ دقیقه‌ای برای جلوگیری از آفلاین شدن کاذب
+                const isRecent = lastSeenDate && (now - lastSeenDate < 600000);
+                const distanceM = calculateDistanceMeters(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
+                
+                if((onlineUsersMap[u.telegram_id] || isRecent) && (distanceM <= activeRadiusMeters || u.telegram_id === currentUser?.telegram_id)) {
                     onlineCount++;
                 }
             });
@@ -1010,7 +1000,7 @@
             
             const activeUsersInRadius = activeUsersGlobalList.filter(u => {
                 const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
-                const isRecent = lastSeenDate && (now - lastSeenDate < 180000);
+                const isRecent = lastSeenDate && (now - lastSeenDate < 600000);
                 const distanceM = calculateDistanceMeters(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
                 return (onlineUsersMap[u.telegram_id] || isRecent || u.telegram_id === currentUser?.telegram_id) && (distanceM <= activeRadiusMeters || u.telegram_id === currentUser?.telegram_id);
             });
