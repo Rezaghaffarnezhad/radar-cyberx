@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - اشتراک‌گذاری لحظه‌ای لوکیشن و کاربران</title>
+    <title>تلسکوپ - ردیابی و همگام‌سازی لحظه‌ای کاربران</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -85,7 +85,7 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ همگام‌سازی لحظه‌ای فعال</span>
+                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ رادیکالِ زنده (Online)</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
@@ -154,7 +154,7 @@
         let activeRadiusKm = 15;
         let isFirstCenter = true;
 
-        // استخراج دینامیک اطلاعات اکانت فعلی تلگرام (فرقی نمی‌کند اکانت اول باشد یا دوم)
+        // استخراج مشخصات کاربر حاضر در این اکانت تلگرام
         const tgUser = tg?.initDataUnsafe?.user;
         let currentUser = { 
             id: tgUser ? String(tgUser.id) : String(Math.floor(Math.random() * 900000) + 100000),
@@ -173,7 +173,7 @@
                 setupUserUI();
                 updateMapElements();
 
-                // ردیابی و ارسال موقعیت زنده دستگاه هر زمان که اکانت وارد شود
+                // گرفتن موقعیت GPS لحظه‌ای کاربر فعلی
                 if (navigator.geolocation) {
                     navigator.geolocation.watchPosition(
                         (position) => {
@@ -199,6 +199,7 @@
                     saveAndSyncData();
                 }
 
+                // برقراری ارتباط زنده با دیتابیس برای افزودن آنی کاربران جدید
                 setupRealtimeSubscription();
 
             } catch (err) {
@@ -251,7 +252,7 @@
         async function saveAndSyncData() {
             if (!supabaseClient) return;
             try {
-                // ثبت یا آپدیت دقیق اطلاعات اکانت فعلی در جدول users ساب‌پیس
+                // ثبت یا بروزرسانی فوری اطلاعات اکانت فعلی در ساب‌پیس
                 await supabaseClient.from('users').upsert({
                     id: currentUser.id,
                     name: currentUser.name,
@@ -291,10 +292,11 @@
         function setupRealtimeSubscription() {
             if (!supabaseClient) return;
 
+            // گوش دادن به تمامی رویدادها (INSERT, UPDATE, DELETE) جدول users به صورت زنده
             supabaseClient
                 .channel('public:users')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
-                    console.log('Realtime update received:', payload);
+                    console.log('ورود یا تغییر کاربر جدید به صورت زنده:', payload);
                     fetchAllUsers(); 
                 })
                 .subscribe();
@@ -306,7 +308,7 @@
             markersLayerGroup.clearLayers();
             onlineUsersList = [];
 
-            // افزودن اکانت جاری به لیست
+            // افزودن کاربر حاضر به لیست
             onlineUsersList.push({
                 id: currentUser.id,
                 name: currentUser.name,
@@ -326,7 +328,7 @@
                 
                 onlineUsersList.push({ ...user, distance: distanceKm, isMe: false });
 
-                // نمایش پین اکانت‌های دیگر روی نقشه
+                // ساخت پین روی نقشه برای سایر کاربران/اکانت‌ها به صورت کاملاً زنده
                 const userInitial = user.name ? user.name.charAt(0) : 'ک';
                 const avatarHtml = user.avatar_url 
                     ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
@@ -347,8 +349,10 @@
                 markersLayerGroup.addLayer(marker);
             });
 
+            // به‌روزرسانی شمارنده تعداد افراد آنلاین
             document.getElementById('online-count-badge').textContent = onlineUsersList.length;
 
+            // به‌روزرسانی آنی لیست داخل مودال اگر باز باشد
             const modal = document.getElementById('users-list-modal');
             if (!modal.classList.contains('hidden')) {
                 renderUsersList(onlineUsersList);
