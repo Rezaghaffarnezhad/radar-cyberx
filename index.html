@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - نسخه کامل و ایمن‌شده</title>
+    <title>تلسکوپ - نشانگر متحرک</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -26,8 +26,35 @@
         .leaflet-container { background-color: #0e1621 !important; }
         .dark-map .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
 
-        /* حالت انتخاب دستی روی نقشه */
         .picking-mode { cursor: crosshair !important; }
+
+        /* استایل و انیمیشن نشانگر جدید (دایره کوچک با سایه بازشونده) */
+        .animated-my-pin {
+            position: relative;
+            width: 20px !important;
+            height: 20px !important;
+            background-color: #3b82f6; /* رنگ آبی تیره */
+            border: 3px solid #ffffff; /* حاشیه سفید */
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); /* حالت اولیه سایه */
+            animation: pulse-shadow 2s infinite; /* اجرای انیمیشن تکرار شونده */
+            margin-top: -10px !important; /* تنظیم دقیق لنگر */
+            margin-left: -10px !important;
+            z-index: 1000 !important;
+        }
+
+        /* تعریف انیمیشن تپش سایه */
+        @keyframes pulse-shadow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); /* سایه باز می‌شود و محو می‌گردد */
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            }
+        }
 
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
@@ -35,11 +62,9 @@
 </head>
 <body class="relative flex flex-col h-full justify-between select-none">
 
-    <!-- نقشه زنده -->
     <div class="relative w-full h-full">
         <div id="map" class="map-container dark-map"></div>
         
-        <!-- هدر بالای صفحه -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
@@ -54,9 +79,8 @@
             </div>
         </div>
 
-        <!-- دکمه‌های کنترل سمت چپ (انتخاب دستی + تنظیم شعاع) -->
         <div class="absolute bottom-24 left-4 z-10 flex flex-col gap-2 pointer-events-auto">
-            <button onclick="toggleManualPickMode()" id="manual-pick-btn" class="w-12 h-12 glass-box rounded-2xl flex items-center justify-center text-amber-400 shadow-xl transition hover:scale-105 active:scale-95" title="انتخاب دستی لوکیشن روی نقشه">
+            <button onclick="toggleManualPickMode()" id="manual-pick-btn" class="w-12 h-12 glass-box rounded-2xl flex items-center justify-center text-amber-400 shadow-xl transition hover:scale-105 active:scale-95" title="انتخاب دستی لوکیشن">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
             </button>
             <button onclick="openRadiusModal()" class="w-12 h-12 glass-box rounded-2xl flex items-center justify-center text-blue-400 shadow-xl transition hover:scale-105 active:scale-95" title="تنظیم شعاع">
@@ -64,7 +88,6 @@
             </button>
         </div>
 
-        <!-- دکمه موقعیت من در سمت راست -->
         <div class="absolute bottom-6 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
             <button onclick="centerToMyLocation()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10" title="موقعیت من">
                 <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -72,7 +95,6 @@
         </div>
     </div>
 
-    <!-- مودال تنظیم شعاع -->
     <div id="radius-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onclick="closeRadiusModal()">
         <div class="tg-card w-full max-w-sm rounded-2xl p-5 flex flex-col gap-4 shadow-2xl border border-slate-700" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
@@ -93,7 +115,7 @@
     </div>
 
     <script>
-        // اطلاعات اتصال به Supabase (جایگزین کنید)
+        // اطلاعات اتصال به Supabase (در صورت نیاز جایگزین کنید)
         const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
         const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
         let supabaseClient = null;
@@ -168,123 +190,7 @@
                             console.warn("Geolocation warning:", error.message);
                             document.getElementById('status-badge').textContent = "⚠️ پیش‌فرض (GPS غیرفعال)";
                             document.getElementById('status-badge').className = "text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1.5 rounded-xl";
+                            // حتی در صورت خطا، پین را در لوکیشن پیش‌فرض رندر می‌کنیم
+                            updateMapElements();
                         }, 
-                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                    );
-                }
-            } catch (err) {
-                console.error("Initialization error:", err);
-            }
-        });
-
-        function setupUserUI() {
-            try {
-                document.getElementById('top-my-name').textContent = currentUser.name;
-                const avatarEl = document.getElementById('top-my-avatar');
-                if(currentUser.avatar_url) {
-                    avatarEl.innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">`;
-                } else {
-                    avatarEl.textContent = currentUser.name.charAt(0) || 'ک';
-                }
-            } catch (e) {
-                console.warn("UI setup warning:", e);
-            }
-        }
-
-        // تابع اصلی رسم و به‌روزرسانی پین و شعاع (ایزوله شده از خطاها)
-        function updateMapElements() {
-            try {
-                if(!map) return;
-
-                // پاکسازی لایه‌های قبلی برای جلوگیری از گم شدن یا روی هم افتادن
-                if(radiusCircle) map.removeLayer(radiusCircle);
-                if(myLocationMarker) map.removeLayer(myLocationMarker);
-
-                // ۱. ترسیم دایره شعاع
-                radiusCircle = L.circle([currentCoords.lat, currentCoords.lng], {
-                    radius: activeRadiusKm * 1000,
-                    color: '#3b82f6',
-                    weight: 1.5,
-                    fillColor: '#3b82f6',
-                    fillOpacity: 0.08
-                }).addTo(map);
-
-                // ۲. ترسیم نشانگر اختصاصی کاربر
-                const avatarInner = currentUser.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : currentUser.name.charAt(0);
-                const pinHtml = `
-                    <div style="width: 44px; height: 44px; border-radius: 50%; background: #2563eb; border: 3px solid #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.8);">
-                        ${avatarInner}
-                    </div>
-                `;
-                const customIcon = L.divIcon({ 
-                    html: pinHtml, 
-                    iconSize: [44, 44], 
-                    iconAnchor: [22, 22], 
-                    className: 'my-center-pin' 
-                });
-
-                myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon: customIcon, zIndexOffset: 1000 }).addTo(map);
-            } catch (err) {
-                console.error("Error updating map elements:", err);
-            }
-        }
-
-        function centerToMyLocation() {
-            try {
-                if(map) {
-                    map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
-                }
-            } catch (e) {
-                console.warn("Center map warning:", e);
-            }
-        }
-
-        function toggleManualPickMode() {
-            isManualPicking = !isManualPicking;
-            const btn = document.getElementById('manual-pick-btn');
-            const mapEl = document.getElementById('map');
-            if(isManualPicking) {
-                btn.classList.add('bg-amber-500/20', 'border', 'border-amber-400');
-                mapEl.classList.add('picking-mode');
-                if(tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
-            } else {
-                btn.classList.remove('bg-amber-500/20', 'border', 'border-amber-400');
-                mapEl.classList.remove('picking-mode');
-            }
-        }
-
-        async function saveUserLocationToSupabase() {
-            if (!supabaseClient) return;
-            try {
-                await supabaseClient.from('users').upsert({
-                    id: currentUser.id,
-                    name: currentUser.name,
-                    username: currentUser.username,
-                    avatar_url: currentUser.avatar_url,
-                    lat: currentCoords.lat,
-                    lng: currentCoords.lng,
-                    updated_at: new Date()
-                }, { onConflict: 'id' });
-            } catch (err) {
-                console.error("Error saving location to Supabase:", err);
-            }
-        }
-
-        function openRadiusModal() {
-            document.getElementById('modal-radius-slider').value = activeRadiusKm;
-            document.getElementById('modal-radius-value').textContent = `${activeRadiusKm} کیلومتر`;
-            document.getElementById('radius-modal').classList.remove('hidden');
-        }
-
-        function closeRadiusModal() {
-            document.getElementById('radius-modal').classList.add('hidden');
-        }
-
-        function onRadiusChange(val) {
-            activeRadiusKm = parseFloat(val);
-            document.getElementById('modal-radius-value').textContent = `${activeRadiusKm} کیلومتر`;
-            updateMapElements();
-        }
-    </script>
-</body>
-</html>
+                        { enableHighAccuracy: true, timeout: 10000, maximumAge:
