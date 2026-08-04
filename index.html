@@ -27,7 +27,6 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
-        /* نشانگر پین زنده گوگل مپی کامل */
         .my-animated-marker {
             width: 72px;
             height: 72px;
@@ -59,7 +58,6 @@
             100% { transform: scale(0.8); opacity: 0.9; box-shadow: 0 0 0 0 rgba(66, 133, 244, 0); }
         }
 
-        /* شکل لوکیشن دایره‌ای افراد آنلاین روی مپ */
         .other-user-pin {
             width: 46px;
             height: 46px;
@@ -117,22 +115,22 @@
         }
         .chat-3d-btn:active { transform: translateX(-50%) scale(0.94); }
 
-        /* غلطک موس سه بعدی برای تنظیم شعاع */
+        /* غلطک چرخان بدون پس‌زمینه و کاملاً بهینه‌شده برای موبایل */
         .mouse-wheel-roller {
-            background: linear-gradient(145deg, #1c2733, #141c24);
-            border: 2px solid #2a3a4d;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.6), 0 8px 20px rgba(0,0,0,0.4);
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
             cursor: ns-resize;
             user-select: none;
             touch-action: none;
         }
         .roller-wheel-inner {
-            width: 14px;
-            height: 26px;
-            background: linear-gradient(90deg, #18222d, #32445c, #18222d);
-            border-radius: 7px;
-            border: 1px solid #5288c1;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            width: 16px;
+            height: 30px;
+            background: linear-gradient(90deg, rgba(24,34,45,0.8), rgba(82,136,193,0.9), rgba(24,34,45,0.8));
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.25);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
             transition: transform 0.05s ease;
         }
 
@@ -224,7 +222,7 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <!-- نمایش افراد آنلاین -->
+                    <!-- نمایش افراد آنلاین در هدر بالای صفحه -->
                     <div class="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition" onclick="openOnlineUsersModal()">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                         <span id="top-online-count" class="text-[11px] font-bold text-emerald-400">0 آنلاین</span>
@@ -250,13 +248,12 @@
             </div>
         </div>
 
-        <!-- ابزارک غلطک موس سه بعدی برای تغییر شعاع -->
-        <div class="absolute bottom-24 left-4 z-10 glass-box px-3 py-2 rounded-2xl flex flex-col items-center gap-1.5 shadow-2xl">
-            <span class="text-[10px] text-slate-400 font-bold">شعاع</span>
-            <div id="radius-roller-widget" class="mouse-wheel-roller w-9 h-12 rounded-xl flex items-center justify-center" title="با غلطک موس یا کشیدن بالا/پایین شعاع را تنظیم کنید">
+        <!-- ابزارک غلطک چرخان بدون پس‌زمینه با مقیاس ۱۰۰ متری -->
+        <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center gap-1">
+            <div id="radius-roller-widget" class="mouse-wheel-roller w-10 h-14 flex items-center justify-center" title="برای تغییر شعاع کشیده یا بچرخانید">
                 <div id="roller-inner-bar" class="roller-wheel-inner"></div>
             </div>
-            <span id="current-radius-display" class="text-[11px] font-bold text-[#5288c1]">15 km</span>
+            <span id="current-radius-display" class="text-[11px] font-bold text-[#5288c1] drop-shadow">100 m</span>
         </div>
 
         <div class="absolute bottom-24 right-4 z-10 pointer-events-auto">
@@ -307,7 +304,7 @@
         </div>
     </div>
 
-    <!-- لیست افراد حاضر و آنلاین -->
+    <!-- لیست افراد حاضر و آنلاین در بالا -->
     <div id="online-users-modal" class="hidden absolute inset-0 tg-bg z-40 flex flex-col">
         <div class="tg-header px-4 py-3 flex items-center justify-between">
             <h3 class="font-bold text-xs text-white">افراد حاضر و آنلاین</h3>
@@ -455,7 +452,7 @@
         let map, myLocationMarker = null, userMarkersOnMap = {};
         let radiusCircle = null;
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
-        let activeRadiusKm = 15;
+        let activeRadiusMeters = 100; // مقدار اولیه ۱۰۰ متر
         let activePrivateChannel = null;
         let globalChannel = null;
         let onlineUsersMap = {};
@@ -470,7 +467,45 @@
         let cachedMessages = {};
         let searchDebounceTimer = null;
 
-        // تکمیل خودکار کامل از اطلاعات پروفایل تلگرام خود شخص
+        // تولید صدای جیز جیز با استفاده از Web Audio API
+        let audioCtx = null;
+        function playStaticSound() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                
+                const bufferSize = audioCtx.sampleRate * 0.05; // 50 میلی‌ثانیه
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1; // تولید نویز سفید (جیز جیز)
+                }
+
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.value = 1000;
+
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                noise.start();
+            } catch (e) {
+                // نادیده گرفتن خطاهای احتمالی صدا در مرورگر
+            }
+        }
+
         const tgUser = tg?.initDataUnsafe?.user;
         const user = { 
             id: tgUser?.id || Math.floor(Math.random() * 900000) + 100000, 
@@ -593,7 +628,7 @@
             showToast("موقعیت پیدا و ثبت شد");
         }
 
-        // پیاده‌سازی غلطک موس (Scroll Wheel) و تعاملی برای تنظیم شعاع
+        // تنظیم غلطک چرخشی بر اساس گام‌های ۱۰۰ متری با قابلیت کاربری موبایل و وب + پخش صدا
         window.addEventListener('DOMContentLoaded', () => {
             const rollerWidget = document.getElementById('radius-roller-widget');
             let isDraggingRoller = false;
@@ -603,12 +638,32 @@
                 rollerWidget.addEventListener('wheel', (e) => {
                     e.preventDefault();
                     if(e.deltaY < 0) {
-                        activeRadiusKm = Math.min(50, activeRadiusKm + 0.5);
+                        activeRadiusMeters = Math.min(50000, activeRadiusMeters + 100);
                     } else {
-                        activeRadiusKm = Math.max(0.5, activeRadiusKm - 0.5);
+                        activeRadiusMeters = Math.max(100, activeRadiusMeters - 100);
                     }
+                    playStaticSound();
                     updateRadiusRollerUI();
                 }, { passive: false });
+
+                rollerWidget.addEventListener('touchstart', (e) => {
+                    isDraggingRoller = true;
+                    startY = e.touches[0].clientY;
+                }, { passive: true });
+
+                window.addEventListener('touchmove', (e) => {
+                    if(!isDraggingRoller) return;
+                    const deltaY = startY - e.touches[0].clientY;
+                    if(Math.abs(deltaY) > 12) {
+                        if(deltaY > 0) activeRadiusMeters = Math.min(50000, activeRadiusMeters + 100);
+                        else activeRadiusMeters = Math.max(100, activeRadiusMeters - 100);
+                        startY = e.touches[0].clientY;
+                        playStaticSound();
+                        updateRadiusRollerUI();
+                    }
+                }, { passive: true });
+
+                window.addEventListener('touchend', () => { isDraggingRoller = false; });
 
                 rollerWidget.addEventListener('mousedown', (e) => {
                     isDraggingRoller = true;
@@ -618,10 +673,11 @@
                 window.addEventListener('mousemove', (e) => {
                     if(!isDraggingRoller) return;
                     const deltaY = startY - e.clientY;
-                    if(Math.abs(deltaY) > 8) {
-                        if(deltaY > 0) activeRadiusKm = Math.min(50, activeRadiusKm + 0.5);
-                        else activeRadiusKm = Math.max(0.5, activeRadiusKm - 0.5);
+                    if(Math.abs(deltaY) > 12) {
+                        if(deltaY > 0) activeRadiusMeters = Math.min(50000, activeRadiusMeters + 100);
+                        else activeRadiusMeters = Math.max(100, activeRadiusMeters - 100);
                         startY = e.clientY;
+                        playStaticSound();
                         updateRadiusRollerUI();
                     }
                 });
@@ -631,11 +687,13 @@
         });
 
         function updateRadiusRollerUI() {
-            document.getElementById('current-radius-display').textContent = `${activeRadiusKm} km`;
+            let displayString = activeRadiusMeters >= 1000 ? `${(activeRadiusMeters / 1000).toFixed(1)} km` : `${activeRadiusMeters} m`;
+            document.getElementById('current-radius-display').textContent = displayString;
+            
             const rollerInner = document.getElementById('roller-inner-bar');
             if(rollerInner) {
-                const percentage = (activeRadiusKm / 50) * 16;
-                rollerInner.style.transform = `translateY(${percentage - 8}px)`;
+                const percentage = ((activeRadiusMeters - 100) / 49900) * 20;
+                rollerInner.style.transform = `translateY(${percentage - 10}px)`;
             }
             updateRadiusCircleOnMap();
             renderUsersOnMap();
@@ -660,9 +718,8 @@
             if(!map) return;
             if(radiusCircle) map.removeLayer(radiusCircle);
             
-            // شکل لوکیشن دایره
             radiusCircle = L.circle([currentCoords.lat, currentCoords.lng], {
-                radius: activeRadiusKm * 1000,
+                radius: activeRadiusMeters,
                 color: '#1a73e8',
                 weight: 1.8,
                 fillColor: '#1a73e8',
@@ -678,8 +735,8 @@
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
 
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371;
+        function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
@@ -806,7 +863,6 @@
             }
         }
 
-        // نمایش افراد آنلاین روی مپ با لوکیشن فرد
         function renderUsersOnMap() {
             if(!map || !currentUser) return;
 
@@ -815,8 +871,8 @@
 
             const visibleUsers = activeUsersGlobalList.filter(u => {
                 if (!u.latitude || !u.longitude || u.telegram_id === currentUser.telegram_id) return false;
-                const distance = calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
-                return distance <= activeRadiusKm;
+                const distanceM = calculateDistanceMeters(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
+                return distanceM <= activeRadiusMeters;
             });
 
             visibleUsers.forEach(u => {
@@ -848,7 +904,6 @@
             document.getElementById('top-online-count').textContent = `${onlineCount} آنلاین`;
         }
 
-        // نمایش افراد آنلاین در لیست مودال
         function openOnlineUsersModal() {
             const container = document.getElementById('online-users-list-container');
             const now = new Date();
@@ -857,14 +912,15 @@
                 if(u.telegram_id === currentUser?.telegram_id) return true;
                 const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
                 const isRecent = lastSeenDate && (now - lastSeenDate < 180000);
-                const distance = calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
-                return (onlineUsersMap[u.telegram_id] || isRecent) && (distance <= activeRadiusKm);
+                const distanceM = calculateDistanceMeters(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
+                return (onlineUsersMap[u.telegram_id] || isRecent) && (distanceM <= activeRadiusMeters);
             });
             
             container.innerHTML = activeUsersInRadius.length ? activeUsersInRadius.map(u => {
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : (u.name || 'ک').charAt(0);
                 const isMeLabel = u.telegram_id === currentUser?.telegram_id ? ' (شما)' : '';
-                const distanceVal = u.telegram_id === currentUser?.telegram_id ? 'موقعیت شما' : `فاصله: ${calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude).toFixed(1)} کیلومتر`;
+                const distM = calculateDistanceMeters(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
+                const distanceVal = u.telegram_id === currentUser?.telegram_id ? 'موقعیت شما' : `فاصله: ${distM >= 1000 ? (distM/1000).toFixed(1) + ' کیلومتر' : Math.round(distM) + ' متر'}`;
                 return `
                     <div onclick="closeOnlineUsersModal(); openUserProfile(${u.telegram_id})" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
                         <div class="relative w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden">
@@ -1155,8 +1211,9 @@
             currentChatTargetId = roomName;
             selectedTargetUser = null;
 
+            let radiusText = activeRadiusMeters >= 1000 ? `${(activeRadiusMeters / 1000).toFixed(1)} کیلومتر` : `${activeRadiusMeters} متر`;
             document.getElementById('chat-title').textContent = title;
-            document.getElementById('chat-lastseen').textContent = `گروه شعاعی (${activeRadiusKm} کیلومتر)`;
+            document.getElementById('chat-lastseen').textContent = `گروه شعاعی (${radiusText})`;
             document.getElementById('chat-header-avatar').textContent = '🌐';
 
             document.getElementById('chat-window').classList.remove('hidden');
@@ -1182,7 +1239,7 @@
             if(currentChatType === 'group') {
                 filteredMessages = filteredMessages.filter(m => {
                     if(!m.sender_lat || !m.sender_lng) return true;
-                    return calculateDistance(currentCoords.lat, currentCoords.lng, m.sender_lat, m.sender_lng) <= activeRadiusKm;
+                    return calculateDistanceMeters(currentCoords.lat, currentCoords.lng, m.sender_lat, m.sender_lng) <= activeRadiusMeters;
                 });
             }
 
