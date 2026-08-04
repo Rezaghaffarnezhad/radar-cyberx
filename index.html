@@ -27,36 +27,36 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
-        /* نشانگر موقعیت مکانی من با سایه متحرک بازشونده (Pulse) */
-        .my-animated-marker {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background: rgba(66, 133, 244, 0.15);
+        /* نشانگر موقعیت مکانی من به شکل فلش/جهت‌نما همراه با عکس پروفایل و افکت پالس */
+        .my-arrow-marker {
+            width: 50px;
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: google-radar-pulse 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+            position: relative;
+            filter: drop-shadow(0 4px 10px rgba(66, 133, 244, 0.6));
         }
-        .my-marker-inner {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
+        .my-arrow-inner {
+            width: 42px;
+            height: 42px;
+            background: #2563eb;
             border: 3px solid #ffffff;
-            overflow: hidden;
-            background: #4285f4;
+            border-radius: 50% 50% 50% 10px;
+            transform: rotate(-45deg);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
-            color: white;
-            font-size: 13px;
-            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.6);
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
         }
-        @keyframes google-radar-pulse {
-            0% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.6), 0 0 0 0 rgba(66, 133, 244, 0.4); }
-            50% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(66, 133, 244, 0), 0 0 0 35px rgba(66, 133, 244, 0.15); }
-            100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(66, 133, 244, 0), 0 0 0 0 rgba(66, 133, 244, 0); }
+        .my-arrow-inner img, .my-arrow-inner span {
+            transform: rotate(45deg);
+        }
+        .my-arrow-inner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         /* نشانگر کاربران دیگر روی نقشه با عکس پروفایل */
@@ -510,7 +510,6 @@
         let isPickingLocation = false;
         let searchDebounceTimer = null;
 
-        // دریافت اطلاعات کاربر مستقیم از تلگرام با مقادیر امن پیش‌فرض
         const telegramUser = tg?.initDataUnsafe?.user;
         let user = { 
             id: telegramUser?.id || Math.floor(Math.random() * 900000) + 100000, 
@@ -713,10 +712,11 @@
 
             if(myLocationMarker) map.removeLayer(myLocationMarker);
             const initial = (currentUser?.name || 'ک').charAt(0);
-            const myAvatarInner = currentUser?.avatar_url ? `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">` : initial;
+            const myAvatarInner = currentUser?.avatar_url ? `<img src="${currentUser.avatar_url}">` : `<span>${initial}</span>`;
             
-            const myHtml = `<div class="my-animated-marker"><div class="my-marker-inner">${myAvatarInner}</div></div>`;
-            const myIcon = L.divIcon({ html: myHtml, iconSize: [64, 64], iconAnchor: [32, 32] });
+            // نشانگر فلش‌شکل اختصاصی موقعیت من
+            const myHtml = `<div class="my-arrow-marker"><div class="my-arrow-inner">${myAvatarInner}</div></div>`;
+            const myIcon = L.divIcon({ html: myHtml, iconSize: [50, 50], iconAnchor: [25, 25] });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon }).addTo(map);
         }
 
@@ -729,12 +729,12 @@
         }
 
         function formatTelegramLastSeen(dateString) {
-            if (!dateString) return 'آخرین بازدید اخیراً';
+            if (!dateString) return 'آنلاین';
             const date = new Date(dateString);
             const now = new Date();
             const diffSec = Math.floor((now - date) / 1000);
 
-            if (diffSec < 60) return 'آنلاین';
+            if (diffSec < 180) return 'آنلاین';
             if (diffSec < 3600) return `آخرین بازدید ${Math.floor(diffSec / 60)} دقیقه پیش`;
             if (diffSec < 86400) return `آخرین بازدید امروز ساعت ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
             return `آخرین بازدید در ${date.toLocaleDateString('fa-IR')} ساعت ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
@@ -783,7 +783,6 @@
 
             if (data) {
                 currentUser = data;
-                // اگر کاربر تلگرام عکس یا نام جدید داشت و در دیتابیس ثبت نشده بود، به‌روزرسانی شود
                 let updates = {};
                 if (!currentUser.avatar_url && user.photo_url) updates.avatar_url = user.photo_url;
                 if (!currentUser.username && user.username) updates.username = user.username;
@@ -898,7 +897,7 @@
             
             usersList.forEach(u => {
                 const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
-                const isRecent = lastSeenDate && (now - lastSeenDate < 180000);
+                const isRecent = lastSeenDate && (now - lastSeenDate < 180000); // بازه 3 دقیقه‌ای برای حضور آنلاین
                 
                 if(onlineUsersMap[Number(u.telegram_id)] || onlineUsersMap[String(u.telegram_id)] || isRecent) {
                     onlineCount++;
@@ -913,6 +912,7 @@
             const container = document.getElementById('online-users-list-container');
             const now = new Date();
             
+            // فیلتر کردن دقیق کاربران آنلاین بر اساس کانال Presence یا آخرین فعالیت (کمتر از 3 دقیقه)
             const onlineUsers = activeUsersGlobalList.filter(u => {
                 if(u.telegram_id === currentUser?.telegram_id) return true;
                 const lastSeenDate = u.last_seen ? new Date(u.last_seen) : null;
