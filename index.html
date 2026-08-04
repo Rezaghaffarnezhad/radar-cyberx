@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تست رادار کاربران</title>
+    <title>تلسکوپ - رادار زنده کاربران</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -11,159 +11,277 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
-        body, html { width: 100%; height: 100%; margin: 0; background: #0e1621; color: #f5f5f5; font-family: 'Vazirmatn', sans-serif; overflow: hidden; }
+        body, html { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #0e1621; color: #f5f5f5; font-family: 'Vazirmatn', sans-serif; }
         .map-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
-        .glass { background: rgba(23, 33, 43, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        
+        .glass-box {
+            background: rgba(23, 33, 43, 0.85);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .tg-card { background: #17212b; border: 1px solid rgba(255,255,255,0.04); }
+        .leaflet-container { background-color: #0e1621 !important; }
         .dark-map .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
-        .my-pin { width: 24px; height: 24px; background: #3b82f6; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 15px #3b82f6; }
-        .other-pin { width: 36px; height: 36px; background: #1e293b; border: 2px solid #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; overflow: hidden; }
+
+        .animated-my-pin {
+            width: 26px !important;
+            height: 26px !important;
+            background-color: #3b82f6 !important;
+            border: 3px solid #ffffff !important;
+            border-radius: 50% !important;
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.8);
+            animation: pulse-shadow 2s infinite ease-out;
+            margin-top: -13px !important;
+            margin-left: -13px !important;
+            z-index: 1000 !important;
+        }
+
+        @keyframes pulse-shadow {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.8); }
+            70% { box-shadow: 0 0 0 18px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+        .other-user-pin {
+            width: 42px !important;
+            height: 42px !important;
+            border-radius: 50%;
+            background: #1e293b;
+            border: 2.5px solid #10b981;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 13px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            position: relative;
+        }
+
+        .online-dot {
+            position: absolute;
+            bottom: 1px;
+            right: 1px;
+            width: 10px;
+            height: 10px;
+            background-color: #10b981;
+            border: 2px solid #1e293b;
+            border-radius: 50%;
+        }
+
+        /* انیمیشن اعلان ورود */
+        #toast-notification {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateY(-120%);
+        }
+        #toast-notification.show {
+            transform: translateY(0);
+        }
+
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
     </style>
 </head>
-<body class="relative flex flex-col h-full justify-between">
+<body class="relative flex flex-col h-full justify-between select-none">
 
-    <div id="map" class="map-container dark-map"></div>
-
-    <!-- هدر بالا برای تست اتصال -->
-    <div class="absolute top-4 left-4 right-4 z-20 flex flex-col gap-2">
-        <div class="glass p-3 rounded-2xl flex items-center justify-between shadow-2xl">
-            <div class="flex items-center gap-2">
-                <div id="my-avatar" class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs overflow-hidden border border-blue-400">ک</div>
-                <div>
-                    <div id="my-name" class="font-bold text-xs text-white">در حال اتصال...</div>
-                    <div id="status-text" class-[10px] text-emerald-400 font-mono">وضعیت: در حال بارگذاری</div>
+    <div class="relative w-full h-full">
+        <div id="map" class="map-container dark-map"></div>
+        
+        <!-- اعلان شناور ورود کاربر جدید -->
+        <div id="toast-container" class="absolute top-16 left-3 right-3 z-30 flex justify-center pointer-events-none">
+            <div id="toast-notification" class="glass-box px-4 py-3 rounded-2xl flex items-center gap-3 shadow-2xl border border-emerald-500/30 max-w-sm w-full pointer-events-auto">
+                <div id="toast-avatar" class="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center font-bold text-white text-sm overflow-hidden shrink-0 border border-emerald-400">
+                    🔔
                 </div>
+                <div class="flex flex-col flex-1">
+                    <span class="text-[10px] text-emerald-400 font-bold">🎉 کاربر جدید وارد شد!</span>
+                    <span id="toast-text" class="text-xs font-bold text-white truncate">نام کاربر</span>
+                </div>
+                <button onclick="hideToast()" class="text-slate-400 hover:text-white px-1 text-sm">✕</button>
             </div>
-            <button onclick="manualSync()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition shadow">
-                ثبت موقعیت
-            </button>
         </div>
 
-        <!-- باکس دیباگ برای دیدن خطاهای احتمالی -->
-        <div id="debug-box" class="glass p-2 rounded-xl text-[10px] text-amber-300 font-mono max-h-24 overflow-y-auto hidden">
-            <b>گزارش سیستم:</b> <span id="debug-log">شروع فرآیند...</span>
+        <!-- هدر بالای صفحه -->
+        <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
+            <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
+                <div class="flex items-center gap-2">
+                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ رادار آنلاینِ فعال</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5">
+                        <span id="top-my-name" class="font-bold text-xs text-white truncate max-w-[100px]">کاربر</span>
+                        <div id="top-my-avatar" class="w-8 h-8 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow">ک</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- دکمه‌های سمت راست -->
+        <div class="absolute bottom-6 right-4 z-10 flex flex-col gap-2 pointer-events-auto">
+            <button onclick="openUsersListModal()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10 relative" title="لیست افراد آنلاین">
+                <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                <span id="online-count-badge" class="absolute -top-1 -right-1 bg-emerald-500 text-slate-950 font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-900">0</span>
+            </button>
+            <button onclick="centerToMyLocation()" class="w-12 h-12 bg-slate-800/80 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95 shadow-xl border border-white/10" title="موقعیت من">
+                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </button>
         </div>
     </div>
 
-    <!-- دکمه‌های کنترل پایین صفحه -->
-    <div class="absolute bottom-6 right-4 z-20 flex flex-col gap-2">
-        <button onclick="centerMap()" class="w-12 h-12 bg-slate-800 hover:bg-slate-700 rounded-2xl flex items-center justify-center text-white shadow-xl border border-white/10 font-bold">
-            📍
-        </button>
+    <!-- مودال لیست افراد آنلاین -->
+    <div id="users-list-modal" class="hidden absolute inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeUsersListModal()">
+        <div class="tg-card w-full max-w-md max-h-[85vh] rounded-t-3xl sm:rounded-2xl p-5 flex flex-col gap-3 shadow-2xl border border-slate-700 overflow-hidden" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+                <h3 class="font-bold text-sm text-white flex items-center gap-2">🟢 اسامی افراد آنلاین در سیستم</h3>
+                <button onclick="closeUsersListModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
+            </div>
+            
+            <div class="relative w-full">
+                <input type="text" id="user-search-input" oninput="filterUsersList(this.value)" placeholder="جستجو بر اساس نام یا یوزرنیم (@)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl py-2.5 px-3 pr-9 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-500">
+                <svg class="w-4 h-4 text-slate-400 absolute right-3 top-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+
+            <div id="users-scroll-container" class="flex flex-col gap-2 overflow-y-auto max-h-[45vh] pr-1">
+                <div class="text-center text-xs text-slate-400 py-6">در حال بارگذاری لیست...</div>
+            </div>
+
+            <button onclick="closeUsersListModal()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-xl font-medium text-xs text-white transition mt-1">بستن</button>
+        </div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://dxdskvkcmovotzxixxhd.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_3-rNuWmg9jAyPPQ89hE4ZQ_avo0wsPd';
         let supabaseClient = null;
-        let map = null, myMarker = null, otherMarkersGroup = null;
-
-        const tg = window.Telegram?.WebApp;
-        if(tg) tg.expand();
-        const tgUser = tg?.initDataUnsafe?.user;
-
-        const currentUser = {
-            id: tgUser ? String(tgUser.id) : String(Math.floor(Math.random() * 900000) + 100000),
-            name: tgUser ? `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() : "تستی " + Math.floor(Math.random()*100),
-            username: tgUser?.username || 'user_' + Math.floor(Math.random()*1000),
-            avatar_url: tgUser?.photo_url || '',
-            lat: 35.6892 + (Math.random() - 0.5) * 0.01,
-            lng: 51.3890 + (Math.random() - 0.5) * 0.01
-        };
-
-        function logDebug(msg) {
-            console.log(msg);
-            const box = document.getElementById('debug-box');
-            const logEl = document.getElementById('debug-log');
-            box.classList.remove('hidden');
-            logEl.textContent = msg;
+        
+        try {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch (e) {
+            console.error("Supabase init error:", e);
         }
+
+        let tg = window.Telegram?.WebApp;
+        if(tg) tg.expand();
+
+        let map = null, myLocationMarker = null, radiusCircle = null;
+        let markersLayerGroup = L.layerGroup(); 
+        let onlineUsersList = []; 
+        let knownUserIds = new Set(); 
+        let isInitialLoad = true;
+        let currentCoords = { lat: 35.6892, lng: 51.3890 }; 
+        let activeRadiusKm = 15;
+        let isFirstCenter = true;
+
+        const tgUser = tg?.initDataUnsafe?.user;
+        let currentUser = { 
+            id: tgUser ? String(tgUser.id) : String(Math.floor(Math.random() * 900000) + 100000),
+            name: tgUser ? `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() : "کاربر تستی (" + Math.floor(Math.random()*100) + ")",
+            username: tgUser?.username || 'user_' + Math.floor(Math.random()*1000),
+            avatar_url: tgUser?.photo_url || ''
+        };
 
         window.addEventListener('DOMContentLoaded', () => {
             try {
-                logDebug("در حال راه‌اندازی نقشه...");
+                map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 15);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
                 
-                // مقداردهی اولیه نقشه
-                map = L.map('map', { zoomControl: false }).setView([currentUser.lat, currentUser.lng], 15);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
-                otherMarkersGroup = L.layerGroup().addTo(map);
+                markersLayerGroup.addTo(map);
+                setupUserUI();
+                updateMapElements();
 
-                // تنظیم اطلاعات ظاهری کاربر
-                document.getElementById('my-name').textContent = currentUser.name;
-                const av = document.getElementById('my-avatar');
-                if(currentUser.avatar_url) av.innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">`;
-                else av.textContent = currentUser.name.charAt(0);
-
-                // ایجاد نشانگر من
-                updateMyMarker();
-
-                // اتصال به ساب‌پیس
-                if (window.supabase) {
-                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                    logDebug("اتصال به Supabase موفقیت‌آمیز بود.");
-                    manualSync();
-                    setupRealtime();
-                } else {
-                    logDebug("خطا: کتابخانه Supabase بارگذاری نشد!");
-                }
-
-                // گرفتن موقعیت واقعی دستگاه در صورت اجازه
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
-                        pos => {
-                            currentUser.lat = pos.coords.latitude;
-                            currentUser.lng = pos.coords.longitude;
-                            updateMyMarker();
-                            map.setView([currentUser.lat, currentUser.lng], 16);
-                            manualSync();
-                            logDebug("موقعیت GPS با موفقیت دریافت شد.");
+                        (position) => {
+                            currentCoords.lat = position.coords.latitude;
+                            currentCoords.lng = position.coords.longitude;
+                            if(map && isFirstCenter) {
+                                map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+                                isFirstCenter = false;
+                            }
+                            updateMapElements();
+                            saveAndSyncData();
                         },
-                        err => {
-                            logDebug("هشدار GPS: دسترسی به موقعیت مکانی داده نشد، از موقعیت پیش‌فرض استفاده می‌شود.");
+                        (error) => {
+                            saveAndSyncData();
                         },
-                        { timeout: 8000 }
+                        { enableHighAccuracy: true, timeout: 10000 }
                     );
+                } else {
+                    saveAndSyncData();
                 }
 
-            } catch (e) {
-                logDebug("خطای بحرانی در اجرا: " + e.message);
+                setupRealtimeSubscription();
+
+            } catch (err) {
+                console.error("Initialization error:", err);
             }
         });
 
-        function updateMyMarker() {
-            if(!map) return;
-            if(myMarker) map.removeLayer(myMarker);
-            const icon = L.divIcon({ html: '<div class="my-pin"></div>', iconSize: [24, 24], iconAnchor: [12, 12] });
-            myMarker = L.marker([currentUser.lat, currentUser.lng], { icon: icon }).addTo(map);
+        function setupUserUI() {
+            try {
+                document.getElementById('top-my-name').textContent = currentUser.name;
+                const avatarEl = document.getElementById('top-my-avatar');
+                if(currentUser.avatar_url) {
+                    avatarEl.innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">`;
+                } else {
+                    avatarEl.textContent = currentUser.name.charAt(0) || 'ک';
+                }
+            } catch (e) {
+                console.warn("UI setup warning:", e);
+            }
         }
 
-        function centerMap() {
-            if(map) map.setView([currentUser.lat, currentUser.lng], 16);
+        function updateMapElements() {
+            try {
+                if(!map) return;
+                if(radiusCircle) map.removeLayer(radiusCircle);
+                if(myLocationMarker) map.removeLayer(myLocationMarker);
+
+                radiusCircle = L.circle([currentCoords.lat, currentCoords.lng], {
+                    radius: activeRadiusKm * 1000,
+                    color: '#3b82f6',
+                    weight: 1.5,
+                    fillColor: '#3b82f6',
+                    fillOpacity: 0.08
+                }).addTo(map);
+
+                const customIcon = L.divIcon({ 
+                    html: '<div class="animated-my-pin"></div>', 
+                    iconSize: [26, 26], 
+                    iconAnchor: [13, 13], 
+                    className: '' 
+                });
+
+                myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon: customIcon, zIndexOffset: 1000 }).addTo(map);
+            } catch (err) {
+                console.error("Error updating map elements:", err);
+            }
         }
 
-        async function manualSync() {
+        async function saveAndSyncData() {
             if (!supabaseClient) return;
             try {
-                document.getElementById('status-text').textContent = 'در حال ارسال به سرور...';
-                
-                const { error } = await supabaseClient.from('users').upsert({
+                // ارسال اطلاعات به همراه ستون telegram_id در صورت نیاز جدول شما
+                const payloadData = {
                     id: currentUser.id,
                     name: currentUser.name,
                     username: currentUser.username,
                     avatar_url: currentUser.avatar_url,
-                    lat: currentUser.lat,
-                    lng: currentUser.lng,
+                    lat: currentCoords.lat,
+                    lng: currentCoords.lng,
                     updated_at: new Date().toISOString()
-                }, { onConflict: 'id' });
+                };
 
-                if (error) {
-                    logDebug("خطا در ثبت پایگاه داده: " + error.message);
-                    document.getElementById('status-text').textContent = 'خطا در ثبت!';
-                } else {
-                    document.getElementById('status-text').textContent = '🟢 آنلاین و متصل';
-                    fetchAllUsers();
-                }
+                await supabaseClient.from('users').upsert(payloadData, { onConflict: 'id' });
+
+                fetchAllUsers();
             } catch (err) {
-                logDebug("خطای ارتباطی: " + err.message);
+                console.error("Error saving location:", err);
             }
         }
 
@@ -171,50 +289,207 @@
             if (!supabaseClient) return;
             try {
                 const { data, error } = await supabaseClient.from('users').select('*');
-                if (error) {
-                    logDebug("خطا در خواندن کاربران: " + error.message);
-                    return;
-                }
+                if (error) return;
                 if (data) {
-                    renderOtherUsers(data);
+                    processUsersData(data);
                 }
             } catch (err) {
-                logDebug("خطا در دریافت لیست: " + err.message);
+                console.error("Error fetching users:", err);
             }
         }
 
-        function setupRealtime() {
+        function setupRealtimeSubscription() {
             if (!supabaseClient) return;
+
             supabaseClient
                 .channel('public:users')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
-                    logDebug("تغییرات زنده دریافت شد!");
-                    fetchAllUsers();
+                    fetchAllUsers(); 
                 })
                 .subscribe();
+
+            fetchAllUsers();
         }
 
-        function renderOtherUsers(users) {
-            if(!otherMarkersGroup) return;
-            otherMarkersGroup.clearLayers();
+        function processUsersData(data) {
+            markersLayerGroup.clearLayers();
+            onlineUsersList = [];
 
-            users.forEach(user => {
-                if (String(user.id) === String(currentUser.id)) return; // خودم را روی نقشه دیگران تکرار نکن
+            onlineUsersList.push({
+                id: currentUser.id,
+                name: currentUser.name,
+                username: currentUser.username,
+                avatar_url: currentUser.avatar_url,
+                lat: currentCoords.lat,
+                lng: currentCoords.lng,
+                distance: 0,
+                isMe: true
+            });
+
+            data.forEach(user => {
+                const userIdStr = String(user.id);
+
+                if (!isInitialLoad && userIdStr !== String(currentUser.id) && !knownUserIds.has(userIdStr)) {
+                    showNewUserNotification(user);
+                }
+                knownUserIds.add(userIdStr);
+
+                if (userIdStr === String(currentUser.id)) return;
                 if (!user.lat || !user.lng) return;
 
-                const initial = user.name ? user.name.charAt(0) : 'ک';
-                const avHtml = user.avatar_url ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` : initial;
+                const distanceKm = getDistanceFromLatLonInKm(currentCoords.lat, currentCoords.lng, user.lat, user.lng);
+                onlineUsersList.push({ ...user, distance: distanceKm, isMe: false });
+
+                const userInitial = user.name ? user.name.charAt(0) : 'ک';
+                const avatarHtml = user.avatar_url 
+                    ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
+                    : userInitial;
+
+                const pinHtml = `<div class="other-user-pin">${avatarHtml}<div class="online-dot"></div></div>`;
                 
-                const icon = L.divIcon({
-                    html: `<div class="other-pin">${avHtml}</div>`,
-                    iconSize: [36, 36],
-                    iconAnchor: [18, 18]
+                const userIcon = L.divIcon({
+                    html: pinHtml,
+                    iconSize: [42, 42],
+                    iconAnchor: [21, 21],
+                    className: ''
                 });
 
-                const marker = L.marker([user.lat, user.lng], { icon: icon });
-                marker.bindPopup(`<div style="direction:rtl; font-family:Vazirmatn;"><b>${user.name}</b><br><span style="font-size:10px; color:gray;">@${user.username}</span></div>`);
-                otherMarkersGroup.addLayer(marker);
+                const marker = L.marker([user.lat, user.lng], { icon: userIcon });
+                marker.bindPopup(`<div style="direction: rtl; font-family: 'Vazirmatn'; text-align: right;"><b style="color: #10b981;">${user.name || 'کاربر'} (آنلاین)</b><br><span style="font-size: 11px; color: #64748b;">@${user.username || 'بدون نام'}</span><br><span style="font-size: 11px; color: #10b981;">فاصله: ${distanceKm.toFixed(1)} کیلومتر</span></div>`);
+                
+                markersLayerGroup.addLayer(marker);
             });
+
+            isInitialLoad = false;
+            document.getElementById('online-count-badge').textContent = onlineUsersList.length;
+
+            const modal = document.getElementById('users-list-modal');
+            if (!modal.classList.contains('hidden')) {
+                renderUsersList(onlineUsersList);
+            }
+        }
+
+        let toastTimeout = null;
+        function showNewUserNotification(user) {
+            const toast = document.getElementById('toast-notification');
+            const toastText = document.getElementById('toast-text');
+            const toastAvatar = document.getElementById('toast-avatar');
+
+            toastText.textContent = `${user.name || 'یک کاربر'} وارد مینی‌اپ شد!`;
+            if (user.avatar_url) {
+                toastAvatar.innerHTML = `<img src="${user.avatar_url}" class="w-full h-full object-cover">`;
+            } else {
+                toastAvatar.innerHTML = user.name ? user.name.charAt(0) : '👤';
+            }
+
+            playNotificationSound();
+            toast.classList.add('show');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                hideToast();
+            }, 5000);
+        }
+
+        function hideToast() {
+            document.getElementById('toast-notification').classList.remove('show');
+        }
+
+        function playNotificationSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } catch (e) {
+                // Ignore
+            }
+        }
+
+        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+            const R = 6371; 
+            const dLat = deg2rad(lat2 - lat1);
+            const dLon = deg2rad(lon2 - lon1);
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2); 
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+            return R * c;
+        }
+
+        function deg2rad(deg) { return deg * (Math.PI/180); }
+
+        function centerToMyLocation() {
+            if(map) map.setView([currentCoords.lat, currentCoords.lng], 16, { animate: true });
+        }
+
+        function openUsersListModal() {
+            document.getElementById('user-search-input').value = '';
+            renderUsersList(onlineUsersList);
+            document.getElementById('users-list-modal').classList.remove('hidden');
+        }
+
+        function closeUsersListModal() {
+            document.getElementById('users-list-modal').classList.add('hidden');
+        }
+
+        function filterUsersList(query) {
+            const q = query.trim().toLowerCase();
+            if (!q) { renderUsersList(onlineUsersList); return; }
+            const filtered = onlineUsersList.filter(u => (u.name && u.name.toLowerCase().includes(q)) || (u.username && u.username.toLowerCase().includes(q)));
+            renderUsersList(filtered);
+        }
+
+        function renderUsersList(usersArray) {
+            const container = document.getElementById('users-scroll-container');
+            container.innerHTML = '';
+
+            if (usersArray.length === 0) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-400 py-6">کاربر دیگری یافت نشد.</div>`;
+                return;
+            }
+
+            usersArray.sort((a, b) => a.distance - b.distance);
+
+            usersArray.forEach(user => {
+                const userInitial = user.name ? user.name.charAt(0) : 'ک';
+                const avatarHtml = user.avatar_url ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` : userInitial;
+                const badgeHtml = user.isMe ? `<span class="text-[9px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded mr-1.5">شما (این اکانت)</span>` : `<span class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded mr-1.5">آنلاین</span>`;
+                const distanceBadge = user.isMe ? `<span class="text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2 py-1 rounded-lg">موقعیت من</span>` : `<span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg">${user.distance.toFixed(1)} کیلومتر</span>`;
+
+                container.innerHTML += `
+                    <div onclick="focusOnUser(${user.lat}, ${user.lng})" class="flex items-center justify-between p-2.5 bg-slate-800/60 hover:bg-slate-800 rounded-xl cursor-pointer transition border border-slate-700/50">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-emerald-600/30 border border-emerald-400/30 flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow relative">
+                                ${avatarHtml}
+                                <div class="online-dot"></div>
+                            </div>
+                            <div class="flex flex-col">
+                                <div class="flex items-center">
+                                    <span class="font-bold text-xs text-white">${user.name || 'کاربر'}</span>
+                                    ${badgeHtml}
+                                </div>
+                                <span class="text-[10px] text-slate-400">@${user.username || 'بدون نام کاربری'}</span>
+                            </div>
+                        </div>
+                        <div class="text-left">${distanceBadge}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function focusOnUser(lat, lng) {
+            closeUsersListModal();
+            if (map) map.setView([lat, lng], 17, { animate: true });
         }
     </script>
 </body>
