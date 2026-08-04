@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - رادار زنده کاربران</title>
+    <title>تلسکوپ - رادار زنده ورود و خروج</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -179,23 +179,32 @@
                                 isFirstCenter = false;
                             }
                             updateMapElements();
-                            saveAndSyncData();
+                            registerUser();
                         },
                         (error) => {
-                            saveAndSyncData();
+                            registerUser();
                         },
                         { enableHighAccuracy: true, timeout: 10000 }
                     );
                 } else {
-                    saveAndSyncData();
+                    registerUser();
                 }
 
-                // ارسال پینگ زنده هر ۱۰ ثانیه برای حفظ حضور
-                setInterval(saveAndSyncData, 10000);
+                // پینگ زنده هر ۱۰ ثانیه برای اعلام حضور مداوم
+                const heartbeatInterval = setInterval(registerUser, 10000);
 
-                // حذف یا خروج اضطراب‌زدای کاربر هنگام بستن مینی‌اپ
+                // خروج اضطراری و حذف از دیتابیس هنگام بستن تب یا مینی‌اپ
                 window.addEventListener('beforeunload', () => {
-                    removeUserFromDatabase();
+                    removeUser();
+                });
+
+                // پشتیبانی از پنهان شدن صفحه (برای موبایل و سوئیچ تب)
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'hidden') {
+                        removeUser();
+                    } else if (document.visibilityState === 'visible') {
+                        registerUser();
+                    }
                 });
 
                 setupRealtimeSubscription();
@@ -246,7 +255,7 @@
             }
         }
 
-        async function saveAndSyncData() {
+        async function registerUser() {
             if (!supabaseClient) return;
             try {
                 await supabaseClient.from('users').upsert({
@@ -261,14 +270,14 @@
 
                 fetchAllUsers();
             } catch (err) {
-                console.error("Error saving location:", err);
+                console.error("Error registering user:", err);
             }
         }
 
-        async function removeUserFromDatabase() {
+        async function removeUser() {
             if (!supabaseClient) return;
             try {
-                // پاک کردن کاربر از جدول به هنگام خروج
+                // حذف آنی کاربر از دیتابیس به محض خروج
                 await supabaseClient.from('users').delete().eq('id', currentUser.id);
             } catch (e) {
                 console.error("Error removing user:", e);
@@ -291,7 +300,7 @@
         function setupRealtimeSubscription() {
             if (!supabaseClient) return;
 
-            // گوش دادن به تغییرات Realtime برای ورود و خروج آنی کاربران
+            // گوش دادن زنده به تمام تغییرات (ورودی جدید یا حذف رکورد)
             supabaseClient
                 .channel('public:users')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
@@ -374,7 +383,6 @@
         function openUsersListModal() {
             document.getElementById('user-search-input').value = '';
             renderUsersList(onlineUsersList);
-            document.getElementById('users-list-modal').classList.add('hidden'); // پیش‌فرض بسته
             document.getElementById('users-list-modal').classList.remove('hidden');
         }
 
