@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - ردیابی لحظه‌ای کاربران</title>
+    <title>تلسکوپ - اشتراک‌گذاری عمومی لوکیشن</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -86,7 +86,7 @@
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
-                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ آنلاینِ لحظه‌ای</span>
+                    <span id="status-badge" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl">⚡ اشتراک‌گذاری عمومی فعال</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1.5">
@@ -139,7 +139,7 @@
     <div id="users-list-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeUsersListModal()">
         <div class="tg-card w-full max-w-md max-h-[85vh] rounded-t-3xl sm:rounded-2xl p-5 flex flex-col gap-3 shadow-2xl border border-slate-700 overflow-hidden" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
-                <h3 class="font-bold text-sm text-white flex items-center gap-2">🟢 لیست افراد آنلاین لحظه‌ای</h3>
+                <h3 class="font-bold text-sm text-white flex items-center gap-2">🟢 لیست افراد آنلاین روی نقشه</h3>
                 <button onclick="closeUsersListModal()" class="text-slate-400 hover:text-white text-lg font-bold px-2">✕</button>
             </div>
             
@@ -180,6 +180,7 @@
         let currentCoords = { lat: 35.6892, lng: 51.3890 }; 
         let activeRadiusKm = 15;
 
+        // دریافت اطلاعات کاربر از تلگرام یا تولید یک شناسه منحصر‌به‌فرد تستی
         const tgUser = tg?.initDataUnsafe?.user;
         let currentUser = { 
             id: tgUser ? String(tgUser.id) : String(Math.floor(Math.random() * 900000) + 100000),
@@ -198,6 +199,7 @@
                 setupUserUI();
                 updateMapElements();
 
+                // گرفتن لوکیشن واقعی دستگاه و ارسال عمومی
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
                         (position) => {
@@ -212,7 +214,7 @@
                         }, 
                         (error) => {
                             console.warn("Geolocation warning:", error.message);
-                            saveAndSyncData();
+                            saveAndSyncData(); // ذخیره با مختصات پیش‌فرض در صورت عدم دسترسی GPS
                         }, 
                         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                     );
@@ -220,7 +222,7 @@
                     saveAndSyncData();
                 }
 
-                // راه‌اندازی اتصال لحظه‌ای (Realtime)
+                // فعال‌سازی سوکت Realtime برای دریافت لحظه‌ای ورود بقیه کاربران
                 setupRealtimeSubscription();
 
             } catch (err) {
@@ -289,7 +291,6 @@
             }
         }
 
-        // دریافت اولیه کل کاربران
         async function fetchAllUsers() {
             if (!supabaseClient) return;
             try {
@@ -310,7 +311,6 @@
             }
         }
 
-        // گوش دادن به تغییرات لحظه‌ای دیتابیس (Realtime)
         function setupRealtimeSubscription() {
             if (!supabaseClient) return;
 
@@ -318,13 +318,10 @@
                 .channel('public:users')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
                     console.log('Realtime change received:', payload);
-                    fetchAllUsers(); // به محض تغییر، لیست و نقشه به‌روز می‌شود
+                    fetchAllUsers(); 
                 })
-                .subscribe((status) => {
-                    console.log("Realtime status:", status);
-                });
+                .subscribe();
 
-            // بارگذاری اولیه
             fetchAllUsers();
         }
 
@@ -352,7 +349,7 @@
                 
                 onlineUsersList.push({ ...user, distance: distanceKm, isMe: false });
 
-                // ترسیم پین روی نقشه
+                // ترسیم پین بقیه کاربران روی نقشه
                 const userInitial = user.name ? user.name.charAt(0) : 'ک';
                 const avatarHtml = user.avatar_url 
                     ? `<img src="${user.avatar_url}" class="w-full h-full object-cover">` 
