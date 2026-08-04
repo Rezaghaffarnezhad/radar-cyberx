@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تلسکوپ - عیب‌یابی کاربران</title>
+    <title>تلسکوپ - نسخه نهایی و همگام‌سازی زنده</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -168,19 +168,13 @@
         let currentCoords = { lat: 35.6892, lng: 51.3890 }; 
         let activeRadiusKm = 15;
 
-        const tgUser = tg?.initDataUnsafe?.user || { 
-            id: Math.floor(Math.random() * 900000) + 100000, 
-            first_name: "کاربر تستی", 
-            last_name: "",
-            username: "guest_user",
-            photo_url: ""
-        };
-
+        // دریافت اطلاعات کاربر از تلگرام یا تولید شناسه تستی منحصربه‌فرد
+        const tgUser = tg?.initDataUnsafe?.user;
         let currentUser = { 
-            id: tgUser.id,
-            name: `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim(),
-            username: tgUser.username || '',
-            avatar_url: tgUser.photo_url || ''
+            id: tgUser ? String(tgUser.id) : String(Math.floor(Math.random() * 900000) + 100000),
+            name: tgUser ? `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() : "کاربر تستی",
+            username: tgUser?.username || 'guest_user',
+            avatar_url: tgUser?.photo_url || ''
         };
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -209,14 +203,20 @@
                             document.getElementById('status-badge').textContent = "⚠️ پیش‌فرض (GPS غیرفعال)";
                             document.getElementById('status-badge').className = "text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1.5 rounded-xl";
                             updateMapElements();
-                            loadAllUsers();
+                            saveAndSyncData();
                         }, 
                         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                     );
                 } else {
                     updateMapElements();
-                    loadAllUsers();
+                    saveAndSyncData();
                 }
+
+                // به‌روزرسانی خودکار لیست و نقشه هر ۱۰ ثانیه
+                setInterval(() => {
+                    loadAllUsers();
+                }, 10000);
+
             } catch (err) {
                 console.error("Initialization error:", err);
             }
@@ -267,7 +267,6 @@
         async function saveAndSyncData() {
             if (!supabaseClient) return;
             try {
-                console.log("Saving user data to Supabase...", currentUser);
                 const { error } = await supabaseClient.from('users').upsert({
                     id: currentUser.id,
                     name: currentUser.name,
@@ -280,10 +279,7 @@
 
                 if (error) {
                     console.error("Supabase Upsert Error:", error);
-                } else {
-                    console.log("User data saved successfully!");
                 }
-
                 loadAllUsers();
             } catch (err) {
                 console.error("Error saving location to Supabase:", err);
@@ -297,7 +293,7 @@
                 otherUserMarkers = [];
                 allRegisteredUsers = [];
 
-                // اضافه کردن خود کاربر
+                // اضافه کردن خود کاربر به لیست محلی
                 allRegisteredUsers.push({
                     id: currentUser.id,
                     name: currentUser.name,
@@ -309,7 +305,6 @@
                     isMe: true
                 });
 
-                console.log("Fetching all users from Supabase...");
                 const { data, error } = await supabaseClient
                     .from('users')
                     .select('*');
@@ -319,17 +314,17 @@
                     return;
                 }
 
-                console.log("Fetched users from database:", data);
-
                 if (data && data.length > 0) {
                     data.forEach(user => {
-                        if (String(user.id) === String(currentUser.id)) return; // خودش رو جدا اضافه کردیم
+                        // مقایسه امن شناسه‌ها به صورت رشته‌ای
+                        if (String(user.id) === String(currentUser.id)) return; 
                         if (!user.lat || !user.lng) return;
 
                         const distanceKm = getDistanceFromLatLonInKm(currentCoords.lat, currentCoords.lng, user.lat, user.lng);
                         
                         allRegisteredUsers.push({ ...user, distance: distanceKm, isMe: false });
 
+                        // پین کردن روی نقشه اگر داخل شعاع باشد
                         if (distanceKm <= activeRadiusKm) {
                             const userInitial = user.name ? user.name.charAt(0) : 'ک';
                             const avatarHtml = user.avatar_url 
