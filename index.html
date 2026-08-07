@@ -55,7 +55,7 @@
             overflow: hidden;
             box-shadow: 0 4px 14px rgba(0,0,0,0.5);
             cursor: pointer;
-            transition: transform 0.2s ease;
+            transition: transform 0.2s ease, opacity 0.3s ease;
             position: relative;
         }
         .other-user-pin:hover { transform: scale(1.12); }
@@ -205,7 +205,6 @@
         }
         .transparent-location-btn:hover { background: rgba(255, 255, 255, 0.08) !important; }
 
-        /* انیمیشن تایپ کردن در هدر چت */
         .typing-dots span {
             height: 5px;
             width: 5px;
@@ -521,6 +520,7 @@
         let isPickingLocation = false;
         let searchDebounceTimer = null;
         let typingTimeout = null;
+        let presenceInterval = null;
 
         const user = tg?.initDataUnsafe?.user || { 
             id: Math.floor(Math.random() * 900000) + 100000, 
@@ -744,7 +744,7 @@
             const target = activeUsersGlobalList.find(u => u.telegram_id === userId);
             if (!target || !target.last_seen) return false;
             const diff = new Date() - new Date(target.last_seen);
-            return diff < 45000; // کمتر از ۴۵ ثانیه پیش به عنوان آنلاین محسوب می‌شود
+            return diff < 45000; // کمتر از ۴۵ ثانیه پیش آنلاین محسوب می‌شود
         }
 
         function formatTelegramLastSeen(userId, dateString) {
@@ -829,7 +829,8 @@
             await fetchUsersData();
             initRealtimeGlobal();
             
-            setInterval(updateMyHeartbeat, 10000);
+            if(presenceInterval) clearInterval(presenceInterval);
+            presenceInterval = setInterval(updateMyHeartbeat, 8000);
         }
 
         async function updateMyHeartbeat() {
@@ -839,7 +840,20 @@
                 longitude: currentCoords.lng, 
                 last_seen: new Date().toISOString() 
             }).eq('telegram_id', currentUser.telegram_id);
+            
+            if(globalChannel) {
+                globalChannel.track({ online_at: new Date().toISOString() }).catch(() => {});
+            }
+            
             fetchUsersData();
+            
+            // به‌روزرسانی آنی وضعیت نمایشی آخرین بازدید در صفحات باز (پروفایل مخاطب و چت)
+            if(!document.getElementById('user-profile-modal').classList.contains('hidden') && selectedTargetUser) {
+                document.getElementById('modal-user-lastseen').textContent = formatTelegramLastSeen(selectedTargetUser.telegram_id, selectedTargetUser.last_seen);
+            }
+            if(currentChatType === 'pv' && !document.getElementById('chat-window').classList.contains('hidden') && selectedTargetUser) {
+                updateChatHeaderStatusUI();
+            }
         }
 
         function updateMyAvatarUI() {
@@ -867,16 +881,34 @@
             const { data } = await supabaseClient.from('users').select('*');
             if (data) {
                 activeUsersGlobalList = data;
+                
+                // به‌روزرسانی اطلاعات پروفایل مخاطب باز شده اگر آنلاین بودنش تغییر کرد
+                if(selectedTargetUser) {
+                    const freshTarget = data.find(u => u.telegram_id === selectedTargetUser.telegram_id);
+                    if(freshTarget) {
+                        selectedTargetUser.last_seen = freshTarget.last_seen;
+                        if(!document.getElementById('user-profile-modal').classList.contains('hidden')) {
+                            document.getElementById('modal-user-lastseen').textContent = formatTelegramLastSeen(selectedTargetUser.telegram_id, selectedTargetUser.last_seen);
+                        }
+                    }
+                }
+
                 renderUsersOnMap();
                 updateOnlineCountUI(data);
+
+                // اگر مودال لیست افراد آنلاین باز است، آن را هم به‌روز کن
+                if(!document.getElementById('online-users-modal').classList.contains('hidden')) {
+                    openOnlineUsersModal();
+                }
+                // اگر هاب چت تب مخاطبین باز است، وضعیت آنلاین مخاطبین را به‌روز کن
+                if(!document.getElementById('chat-hub-modal').classList.contains('hidden') && !document.getElementById('hub-content-contacts').classList.contains('hidden')) {
+                    loadMatchesAndRequests();
+                }
             }
         }
 
         function renderUsersOnMap() {
             if(!map || !currentUser) return;
-
-            Object.values(userMarkersOnMap).forEach(marker => map.removeLayer(marker));
-            userMarkersOnMap = {};
 
             const visibleUsers = activeUsersGlobalList.filter(u => {
                 if (!u.latitude || !u.longitude || u.telegram_id === currentUser.telegram_id) return false;
@@ -884,20 +916,38 @@
                 return distance <= activeRadiusKm;
             });
 
+            const visibleIds = visibleUsers.map(u => u.telegram_id);
+
+            // حذف پین‌های کاربرانی که از شعاع خارج شده‌اند یا آفلاین کامل شده‌اند
+            Object.keys(userMarkersOnMap).forEach(id => {
+                const numId = Number(id);
+                if (!visibleIds.includes(numId)) {
+                    map.removeLayer(userMarkersOnMap[id]);
+                    delete userMarkersOnMap[id];
+                }
+            });
+
             visibleUsers.forEach(u => {
+                const onlineNow = isUserOnline(u.telegram_id);
                 const initial = (u.name || 'ک').charAt(0);
                 const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : initial;
-                const onlineDot = isUserOnline(u.telegram_id) ? '<div class="pin-online-dot"></div>' : '';
-                const html = `<div class="other-user-pin">${avatarInner}${onlineDot}</div>`;
+                const onlineDot = onlineNow ? '<div class="pin-online-dot"></div>' : '';
+                const html = `<div class="other-user-pin" style="border-color: ${onlineNow ? '#22c55e' : '#64748b'}">${avatarInner}${onlineDot}</div>`;
                 
-                const icon = L.divIcon({ html, iconSize: [44, 44], iconAnchor: [22, 22] });
-                const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
-                
-                marker.on('click', () => {
-                    openUserProfile(u.telegram_id);
-                });
+                if (userMarkersOnMap[u.telegram_id]) {
+                    // بروزرسانی آیکون و وضعیت پین موجود بدون بازسازی کامل نقشه (جلوگیری از پرش)
+                    userMarkersOnMap[u.telegram_id].setIcon(L.divIcon({ html, iconSize: [44, 44], iconAnchor: [22, 22] }));
+                    userMarkersOnMap[u.telegram_id].setLatLng([u.latitude, u.longitude]);
+                } else {
+                    const icon = L.divIcon({ html, iconSize: [44, 44], iconAnchor: [22, 22] });
+                    const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
+                    
+                    marker.on('click', () => {
+                        openUserProfile(u.telegram_id);
+                    });
 
-                userMarkersOnMap[u.telegram_id] = marker;
+                    userMarkersOnMap[u.telegram_id] = marker;
+                }
             });
         }
 
@@ -1026,11 +1076,13 @@
                 const { data: usersData } = await supabaseClient.from('users').select('*').in('telegram_id', matchedUserIds);
                 document.getElementById('matched-users-list-container').innerHTML = usersData ? usersData.map(u => {
                     const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : (u.name || 'ک').charAt(0);
-                    const statusText = isUserOnline(u.telegram_id) ? '<span class="text-emerald-400 font-medium">آنلاین</span>' : formatTelegramLastSeen(u.telegram_id, u.last_seen);
+                    const onlineNow = isUserOnline(u.telegram_id);
+                    const statusText = onlineNow ? '<span class="text-emerald-400 font-medium">آنلاین</span>' : formatTelegramLastSeen(u.telegram_id, u.last_seen);
                     return `
                         <div onclick="openPrivateChat(${u.telegram_id}, '${u.name}')" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
                             <div class="relative w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden">
                                 ${avatarInner}
+                                ${onlineNow ? '<div class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#17212b]"></div>' : ''}
                             </div>
                             <div class="flex-1">
                                 <h4 class="font-bold text-xs text-white">${u.name}</h4>
