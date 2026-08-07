@@ -744,7 +744,7 @@
             const target = activeUsersGlobalList.find(u => u.telegram_id === userId);
             if (!target || !target.last_seen) return false;
             const diff = new Date() - new Date(target.last_seen);
-            return diff < 45000; // کمتر از ۴۵ ثانیه پیش آنلاین محسوب می‌شود
+            return diff < 45000;
         }
 
         function formatTelegramLastSeen(userId, dateString) {
