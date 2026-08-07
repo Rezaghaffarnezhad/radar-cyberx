@@ -740,11 +740,7 @@
 
         function isUserOnline(userId) {
             if (userId === currentUser?.telegram_id) return true;
-            if (onlineUsersMap[userId]) return true;
-            const target = activeUsersGlobalList.find(u => u.telegram_id === userId);
-            if (!target || !target.last_seen) return false;
-            const diff = new Date() - new Date(target.last_seen);
-            return diff < 45000;
+            return !!onlineUsersMap[userId];
         }
 
         function formatTelegramLastSeen(userId, dateString) {
@@ -830,7 +826,7 @@
             initRealtimeGlobal();
             
             if(presenceInterval) clearInterval(presenceInterval);
-            presenceInterval = setInterval(updateMyHeartbeat, 8000);
+            presenceInterval = setInterval(updateMyHeartbeat, 6000);
         }
 
         async function updateMyHeartbeat() {
@@ -908,6 +904,7 @@
 
             const visibleUsers = activeUsersGlobalList.filter(u => {
                 if (!u.latitude || !u.longitude || u.telegram_id === currentUser.telegram_id) return false;
+                if (!isUserOnline(u.telegram_id)) return false; // اگر کاربر آفلاین شد، از روی مپ حذف شود
                 const distance = calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
                 return distance <= activeRadiusKm;
             });
