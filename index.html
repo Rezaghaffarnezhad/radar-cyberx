@@ -27,46 +27,64 @@
         .tg-input { background: #18222d; border: 1px solid #232e3c; color: #fff; transition: all 0.08s ease; }
         .tg-input:focus { border-color: #5288c1; outline: none; }
         
+        /* نشانگر کوچکتر و حلقه بازشونده متحرک برای لوکیشن خودم */
         .my-animated-marker {
-            width: 32px !important;
-            height: 32px !important;
+            width: 24px !important;
+            height: 24px !important;
             background: #2563eb !important;
-            border: 3px solid #ffffff !important;
+            border: 2.5px solid #ffffff !important;
             border-radius: 50% !important;
-            box-shadow: 0 0 12px rgba(37, 99, 235, 0.8) !important;
+            box-shadow: 0 0 10px rgba(37, 99, 235, 0.8) !important;
             z-index: 1000 !important;
+            position: relative;
         }
-        .leaflet-marker-pane {
-            z-index: 600 !important;
+        .my-animated-marker::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            right: -6px;
+            bottom: -6px;
+            border: 2px solid #2563eb;
+            border-radius: 50%;
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(2.2); opacity: 0; }
         }
 
+        .leaflet-marker-pane { z-index: 600 !important; }
+
+        /* حذف کامل کادر مربع و طراحی پین کاملاً گرد و مینیمال */
         .other-user-pin {
-            width: 44px;
-            height: 44px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             background: #17212b;
-            border: 2.5px solid #22c55e;
+            border: 2px solid #22c55e;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
             color: white;
-            font-size: 13px;
+            font-size: 11px;
             overflow: hidden;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
             cursor: pointer;
             transition: transform 0.2s ease, opacity 0.3s ease;
             position: relative;
         }
+        .other-user-pin img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
         .other-user-pin:hover { transform: scale(1.12); }
         .pin-online-dot {
             position: absolute;
-            bottom: 2px;
-            right: 2px;
-            width: 10px;
-            height: 10px;
+            bottom: 1px;
+            right: 1px;
+            width: 8px;
+            height: 8px;
             background-color: #22c55e;
-            border: 2px solid #17212b;
+            border: 1.5px solid #17212b;
             border-radius: 50%;
         }
 
@@ -169,9 +187,7 @@
             opacity: 0;
             transition: opacity 0.25s ease;
         }
-        .google-search-bar-container.expanded .google-search-text-input {
-            opacity: 1;
-        }
+        .google-search-bar-container.expanded .google-search-text-input { opacity: 1; }
         .google-suggestions-dropdown {
             position: absolute;
             top: 42px;
@@ -198,21 +214,12 @@
         }
         .google-suggestion-item:hover { background: #232e3c; }
 
-        .transparent-location-btn {
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
+        .transparent-location-btn { background: transparent !important; border: none !important; box-shadow: none !important; }
         .transparent-location-btn:hover { background: rgba(255, 255, 255, 0.08) !important; }
 
         .typing-dots span {
-            height: 5px;
-            width: 5px;
-            float: left;
-            margin: 0 1px;
-            background-color: #5288c1;
-            border-radius: 50%;
-            display: inline-block;
+            height: 5px; width: 5px; float: left; margin: 0 1px;
+            background-color: #5288c1; border-radius: 50%; display: inline-block;
             animation: typing 1.2s infinite ease-in-out;
         }
         .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
@@ -233,7 +240,6 @@
     <div id="view-map" class="view-section relative w-full h-full">
         <div id="map" class="map-container"></div>
         
-        <!-- کادر شیشه‌ای بالای صفحه -->
         <div class="absolute top-3 left-3 right-3 z-10 pointer-events-none">
             <div class="glass-box px-3 py-2 rounded-2xl flex items-center justify-between gap-2 shadow-2xl pointer-events-auto">
                 <div class="flex items-center gap-2">
@@ -242,19 +248,17 @@
                         <span id="top-online-count" class="text-[11px] font-bold text-emerald-400">0 آنلاین</span>
                     </div>
 
-                    <!-- جستجوی آدرس با انتخاب ذره‌بین -->
                     <div id="google-search-container" class="google-search-bar-container">
                         <button class="google-search-icon-btn" onclick="toggleGoogleSearchExpansion()">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </button>
-                        <input id="google-map-search-input" oninput="handleGoogleMapSearchInput(this.value)" type="text" placeholder="جستجوی مکان یا آدرس..." class="google-search-text-input">
+                        <input id="google-map-search-input" oninput="handleGoogleMapSearchInput(this.value)" type="text" placeholder="جستجوی مکان..." class="google-search-text-input">
                         <div id="google-suggestions-list" class="google-suggestions-dropdown"></div>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2">
                     <button onclick="toggleMapTheme()" class="w-7 h-7 rounded-xl flex items-center justify-center text-xs text-white hover:bg-slate-700/50 transition" title="تغییر حالت نقشه">🌓</button>
-
                     <div onclick="navigateTo('profile')" class="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition">
                         <span id="top-my-name" class="font-bold text-xs text-white truncate max-w-[60px]">کاربر</span>
                         <div id="top-my-avatar" class="w-7 h-7 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden shadow">ک</div>
@@ -264,13 +268,12 @@
         </div>
 
         <div class="absolute bottom-24 left-4 z-10 flex flex-col items-center gap-2">
-            <input id="radius-slider" type="range" min="0.5" max="50" step="0.5" value="15" oninput="onRadiusSliderChange(this.value)" class="vertical-slider-container accent-blue-600 cursor-pointer" title="تنظیم شعاع">
-            <button onclick="openRadiusSettingsModal()" class="w-9 h-9 flex items-center justify-center text-white text-lg drop-shadow-xl hover:scale-110 active:scale-95 transition" title="تنظیمات شعاع">⚙️</button>
+            <input id="radius-slider" type="range" min="0.5" max="50" step="0.5" value="15" oninput="onRadiusSliderChange(this.value)" class="vertical-slider-container accent-blue-600 cursor-pointer">
+            <button onclick="openRadiusSettingsModal()" class="w-9 h-9 flex items-center justify-center text-white text-lg drop-shadow-xl hover:scale-110 active:scale-95 transition">⚙️</button>
         </div>
 
-        <!-- نشانگر لوکیشن من -->
         <div class="absolute bottom-24 right-4 z-10 pointer-events-auto">
-            <button onclick="centerToMyLocation()" class="w-12 h-12 transparent-location-btn rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95" title="موقعیت من">
+            <button onclick="centerToMyLocation()" class="w-12 h-12 transparent-location-btn rounded-2xl flex items-center justify-center text-white transition hover:scale-105 active:scale-95">
                 <svg class="w-7 h-7 text-blue-400 drop-shadow-md" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </button>
         </div>
@@ -318,7 +321,7 @@
         </div>
     </div>
 
-    <!-- مودال تنظیمات شعاع و انتخاب لوکیشن دستی روی نقشه -->
+    <!-- مودال تنظیمات شعاع -->
     <div id="radius-settings-modal" class="hidden absolute inset-0 bg-black/70 z-40 flex items-center justify-center p-4" onclick="closeRadiusSettingsModal()">
         <div class="tg-card w-full max-w-sm rounded-2xl p-4 flex flex-col gap-4 shadow-2xl border border-slate-700" onclick="event.stopPropagation()">
             <div class="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -336,13 +339,7 @@
                 
                 <div class="bg-[#18222d] p-3 rounded-xl flex flex-col gap-2">
                     <span class="text-[11px] text-slate-300 font-bold">انتخاب لوکیشن دستی روی نقشه</span>
-                    <p class="text-[10px] text-slate-400 leading-relaxed">با زدن دکمه زیر، نقشه برای شما باز می‌شود. روی هر نقطه از نقشه کلیک کنید تا به عنوان لوکیشن شما ثبت شود.</p>
                     <button onclick="startPickingLocationOnMap()" class="py-2 bg-[#2b5278] hover:bg-[#336394] rounded-lg text-[11px] text-white transition flex items-center justify-center gap-1.5 font-medium">📍 انتخاب نقطه روی نقشه</button>
-                </div>
-
-                <div class="flex items-center justify-between bg-[#18222d] p-3 rounded-xl">
-                    <span class="text-[11px] text-slate-300">بروزرسانی خودکار موقعیت</span>
-                    <input type="checkbox" id="setting-auto-loc" checked class="w-4 h-4 accent-blue-600 rounded cursor-pointer">
                 </div>
             </div>
             <button onclick="closeRadiusSettingsModal()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition">ذخیره تنظیمات</button>
@@ -384,7 +381,7 @@
                 <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-sm shadow">🌐</div>
                 <div class="flex-1">
                     <h4 class="font-bold text-xs text-white">گروه عمومی شعاعی (مخصوص شعاع فعلی)</h4>
-                    <p class="text-[10px] text-slate-400 mt-0.5">ارسال و دریافت پیام برای افراد داخل شعاع • حذف زمان‌بندی‌شده</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">فقط افراد مچ‌شده داخل شعاع • حذف خودکار پیام‌ها پس از ۲۴ ساعت</p>
                 </div>
             </div>
         </div>
@@ -462,7 +459,7 @@
                 onmousedown="startVoiceRecording(event)" 
                 onmouseup="stopVoiceRecording(event)" 
                 onclick="handleSendAction()" 
-                class="w-10 h-10 rounded-xl bg-[#2b5278] hover:bg-[#336394] flex items-center justify-center text-white transition select-none" title="برای وویس نگه دارید یا متن بنویسید">
+                class="w-10 h-10 rounded-xl bg-[#2b5278] hover:bg-[#336394] flex items-center justify-center text-white transition select-none">
                 <svg id="btn-icon-mic" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"/></svg>
                 <svg id="btn-icon-send" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
             </button>
@@ -478,12 +475,10 @@
         </div>
     </div>
 
-    <!-- نمایش عکس پروفایل بزرگ -->
     <div id="avatar-modal" class="hidden absolute inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onclick="this.classList.add('hidden')">
         <img id="avatar-fullscreen-img" src="" class="max-w-full max-h-full rounded-2xl object-contain shadow-2xl">
     </div>
 
-    <!-- اعلان Toast -->
     <div id="toast" class="absolute top-16 left-3 right-3 z-50 transform -translate-y-20 opacity-0 pointer-events-none tg-card px-3.5 py-2.5 rounded-xl border border-[#5288c1]/30 shadow-xl flex items-center gap-2.5">
         <span class="text-sm">🔔</span>
         <div id="toast-text" class="text-xs font-semibold text-white">اعلان جدید</div>
@@ -509,6 +504,7 @@
         let onlineUsersMap = {};
         let typingUsersMap = {};
         let activeUsersGlobalList = [];
+        let acceptedMatchIds = [];
         let isDarkMap = false;
         let navigationHistory = ['map'];
         let replyingToMessage = null;
@@ -539,16 +535,9 @@
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
             const target = document.getElementById(`view-${viewId}`);
             if(target) target.classList.remove('hidden');
-            
-            if(navigationHistory[navigationHistory.length - 1] !== viewId) {
-                navigationHistory.push(viewId);
-            }
+            if(navigationHistory[navigationHistory.length - 1] !== viewId) navigationHistory.push(viewId);
             if(viewId === 'map' && map) setTimeout(() => map.invalidateSize(), 20);
         }
-
-        window.addEventListener('popstate', (e) => {
-            handleMobileBackButton();
-        });
 
         function handleMobileBackButton() {
             if(isPickingLocation) {
@@ -557,110 +546,58 @@
                 showToast("انتخاب لوکیشن لغو شد");
                 return;
             }
-
-            const radiusModal = document.getElementById('radius-settings-modal');
-            if(!radiusModal.classList.contains('hidden')) {
-                closeRadiusSettingsModal();
-                return;
-            }
-
-            const chatWindow = document.getElementById('chat-window');
-            if(!chatWindow.classList.contains('hidden')) {
-                backToChatHub();
-                return;
-            }
-
-            const chatHub = document.getElementById('chat-hub-modal');
-            if(!chatHub.classList.contains('hidden')) {
-                closeChatHubModal();
-                return;
-            }
-
-            const onlineModal = document.getElementById('online-users-modal');
-            if(!onlineModal.classList.contains('hidden')) {
-                closeOnlineUsersModal();
-                return;
-            }
-
-            const userProfileModal = document.getElementById('user-profile-modal');
-            if(!userProfileModal.classList.contains('hidden')) {
-                closeUserProfileModal();
-                return;
-            }
-
-            const profileView = document.getElementById('view-profile');
-            if(!profileView.classList.contains('hidden')) {
-                navigateTo('map');
-                return;
-            }
-
-            if(tg) tg.close();
-            else window.close();
+            if(!document.getElementById('radius-settings-modal').classList.contains('hidden')) { closeRadiusSettingsModal(); return; }
+            if(!document.getElementById('chat-window').classList.contains('hidden')) { backToChatHub(); return; }
+            if(!document.getElementById('chat-hub-modal').classList.contains('hidden')) { closeChatHubModal(); return; }
+            if(!document.getElementById('online-users-modal').classList.contains('hidden')) { closeOnlineUsersModal(); return; }
+            if(!document.getElementById('user-profile-modal').classList.contains('hidden')) { closeUserProfileModal(); return; }
+            if(!document.getElementById('view-profile').classList.contains('hidden')) { navigateTo('map'); return; }
+            if(tg) tg.close(); else window.close();
         }
 
         function goBack() { handleMobileBackButton(); }
-
-        function backToChatHub() {
-            document.getElementById('chat-window').classList.add('hidden');
-            openChatHubModal();
-        }
+        function backToChatHub() { document.getElementById('chat-window').classList.add('hidden'); openChatHubModal(); }
 
         function toggleMapTheme() {
             isDarkMap = !isDarkMap;
             const mapContainer = document.getElementById('map');
-            if(isDarkMap) mapContainer.classList.add('dark-map');
-            else mapContainer.classList.remove('dark-map');
+            if(isDarkMap) mapContainer.classList.add('dark-map'); else mapContainer.classList.remove('dark-map');
         }
 
         function toggleGoogleSearchExpansion() {
             const container = document.getElementById('google-search-container');
             container.classList.toggle('expanded');
-            if(container.classList.contains('expanded')) {
-                document.getElementById('google-map-search-input').focus();
-            } else {
-                document.getElementById('google-suggestions-list').style.display = 'none';
-            }
+            if(container.classList.contains('expanded')) document.getElementById('google-map-search-input').focus();
+            else document.getElementById('google-suggestions-list').style.display = 'none';
         }
 
         async function handleGoogleMapSearchInput(query) {
             const q = query.trim();
             const suggestionsBox = document.getElementById('google-suggestions-list');
-            if(!q) {
-                suggestionsBox.style.display = 'none';
-                return;
-            }
-
+            if(!q) { suggestionsBox.style.display = 'none'; return; }
             clearTimeout(searchDebounceTimer);
             searchDebounceTimer = setTimeout(async () => {
                 try {
                     const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&accept-language=fa`);
                     const results = await response.json();
-                    
                     if(results && results.length > 0) {
                         suggestionsBox.innerHTML = results.map(item => `
                             <div class="google-suggestion-item" onclick="selectMapSearchResult(${item.lat}, ${item.lon}, '${item.display_name.replace(/'/g, "")}')">
-                                <span>📍</span>
-                                <span class="truncate">${item.display_name}</span>
+                                <span>📍</span><span class="truncate">${item.display_name}</span>
                             </div>
                         `).join('');
                         suggestionsBox.style.display = 'block';
-                    } else {
-                        suggestionsBox.style.display = 'none';
-                    }
-                } catch(err) {
-                    suggestionsBox.style.display = 'none';
-                }
+                    } else { suggestionsBox.style.display = 'none'; }
+                } catch(err) { suggestionsBox.style.display = 'none'; }
             }, 350);
         }
 
         function selectMapSearchResult(lat, lon, displayName) {
-            const latitude = parseFloat(lat);
-            const longitude = parseFloat(lon);
+            const latitude = parseFloat(lat), longitude = parseFloat(lon);
             currentCoords = { lat: latitude, lng: longitude };
             if(map) map.setView([latitude, longitude], 16, { animate: true });
             updateRadiusCircleOnMap();
             updateMyLocation(latitude, longitude);
-            
             document.getElementById('google-suggestions-list').style.display = 'none';
             document.getElementById('google-map-search-input').value = displayName;
             document.getElementById('google-search-container').classList.remove('expanded');
@@ -702,9 +639,7 @@
                     updateRadiusCircleOnMap();
                     updateMyLocation(currentCoords.lat, currentCoords.lng);
                     showToast("موقعیت شما به‌روز شد");
-                }, () => {
-                    showToast("دسترسی به موقعیت مکانی مقدور نیست");
-                }, { enableHighAccuracy: true, timeout: 5000 });
+                }, () => { showToast("دسترسی به موقعیت مکانی مقدور نیست"); }, { enableHighAccuracy: true, timeout: 5000 });
             }
         }
 
@@ -720,20 +655,13 @@
             }).addTo(map);
 
             if(myLocationMarker) map.removeLayer(myLocationMarker);
-            
-            const myIcon = L.divIcon({ 
-                html: '<div class="my-animated-marker"></div>', 
-                className: 'custom-leaflet-marker', 
-                iconSize: [32, 32], 
-                iconAnchor: [16, 16] 
-            });
+            const myIcon = L.divIcon({ html: '<div class="my-animated-marker"></div>', className: 'custom-leaflet-marker', iconSize: [24, 24], iconAnchor: [12, 12] });
             myLocationMarker = L.marker([currentCoords.lat, currentCoords.lng], { icon: myIcon }).addTo(map);
         }
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
@@ -746,10 +674,8 @@
         function formatTelegramLastSeen(userId, dateString) {
             if (isUserOnline(userId)) return 'آنلاین';
             if (!dateString) return 'آخرین بازدید اخیراً';
-            const date = new Date(dateString);
-            const now = new Date();
+            const date = new Date(dateString), now = new Date();
             const diffSec = Math.floor((now - date) / 1000);
-
             if (diffSec < 60) return 'آنلاین';
             if (diffSec < 3600) return `آخرین بازدید ${Math.floor(diffSec / 60)} دقیقه پیش`;
             if (diffSec < 86400) return `آخرین بازدید امروز ساعت ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
@@ -780,32 +706,15 @@
                     if(map) map.setView([currentCoords.lat, currentCoords.lng], 14, { animate: true });
                     updateRadiusCircleOnMap();
                     initUserSession();
-                }, () => {
-                    initUserSession();
-                }, { enableHighAccuracy: true, timeout: 5000 });
-            } else {
-                initUserSession();
-            }
+                }, () => { initUserSession(); }, { enableHighAccuracy: true, timeout: 5000 });
+            } else { initUserSession(); }
         });
 
         async function initUserSession() {
-            const { data } = await supabaseClient
-                .from('users')
-                .select('*')
-                .eq('telegram_id', user.id)
-                .single();
-
-            if (data) {
-                currentUser = data;
-            } else {
-                const newUserData = { 
-                    telegram_id: user.id, 
-                    name: user.first_name, 
-                    username: user.username, 
-                    latitude: currentCoords.lat, 
-                    longitude: currentCoords.lng,
-                    last_seen: new Date().toISOString() 
-                };
+            const { data } = await supabaseClient.from('users').select('*').eq('telegram_id', user.id).single();
+            if (data) { currentUser = data; } 
+            else {
+                const newUserData = { telegram_id: user.id, name: user.first_name, username: user.username, latitude: currentCoords.lat, longitude: currentCoords.lng, last_seen: new Date().toISOString() };
                 const { data: inserted } = await supabaseClient.from('users').upsert(newUserData).select().single();
                 currentUser = inserted || newUserData;
             }
@@ -815,13 +724,12 @@
             document.getElementById('input-my-bio').value = currentUser.bio || '';
             
             const savedAvatar = localStorage.getItem('saved_user_avatar_' + user.id);
-            if(savedAvatar) {
-                currentUser.avatar_url = savedAvatar;
-            }
+            if(savedAvatar) currentUser.avatar_url = savedAvatar;
 
             updateMyAvatarUI();
             updateRadiusCircleOnMap();
 
+            await fetchMatchesData();
             await fetchUsersData();
             initRealtimeGlobal();
             
@@ -831,32 +739,17 @@
 
         async function updateMyHeartbeat() {
             if(!currentUser) return;
-            await supabaseClient.from('users').update({ 
-                latitude: currentCoords.lat, 
-                longitude: currentCoords.lng, 
-                last_seen: new Date().toISOString() 
-            }).eq('telegram_id', currentUser.telegram_id);
-            
-            if(globalChannel) {
-                globalChannel.track({ online_at: new Date().toISOString() }).catch(() => {});
-            }
-            
+            await supabaseClient.from('users').update({ latitude: currentCoords.lat, longitude: currentCoords.lng, last_seen: new Date().toISOString() }).eq('telegram_id', currentUser.telegram_id);
+            if(globalChannel) globalChannel.track({ online_at: new Date().toISOString() }).catch(() => {});
             fetchUsersData();
-            
-            if(!document.getElementById('user-profile-modal').classList.contains('hidden') && selectedTargetUser) {
-                document.getElementById('modal-user-lastseen').textContent = formatTelegramLastSeen(selectedTargetUser.telegram_id, selectedTargetUser.last_seen);
-            }
-            if(currentChatType === 'pv' && !document.getElementById('chat-window').classList.contains('hidden') && selectedTargetUser) {
-                updateChatHeaderStatusUI();
-            }
         }
 
         function updateMyAvatarUI() {
             if(!currentUser) return;
             const initial = (currentUser.name || 'ک').charAt(0);
             if(currentUser.avatar_url) {
-                document.getElementById('my-avatar').innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">`;
-                document.getElementById('top-my-avatar').innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover">`;
+                document.getElementById('my-avatar').innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover rounded-full">`;
+                document.getElementById('top-my-avatar').innerHTML = `<img src="${currentUser.avatar_url}" class="w-full h-full object-cover rounded-full">`;
             } else {
                 document.getElementById('my-avatar').textContent = initial;
                 document.getElementById('top-my-avatar').textContent = initial;
@@ -872,30 +765,31 @@
             fetchUsersData();
         }
 
+        async function fetchMatchesData() {
+            if(!currentUser) return;
+            const { data: matches } = await supabaseClient.from('matches')
+                .select('*')
+                .or(`user1_id.eq.${currentUser.telegram_id},user2_id.eq.${currentUser.telegram_id}`)
+                .eq('status', 'accepted');
+
+            acceptedMatchIds = [];
+            if(matches) {
+                matches.forEach(m => {
+                    const otherId = m.user1_id === currentUser.telegram_id ? m.user2_id : m.user1_id;
+                    acceptedMatchIds.push(otherId);
+                });
+            }
+        }
+
         async function fetchUsersData() {
+            await fetchMatchesData();
             const { data } = await supabaseClient.from('users').select('*');
             if (data) {
                 activeUsersGlobalList = data;
-                
-                if(selectedTargetUser) {
-                    const freshTarget = data.find(u => u.telegram_id === selectedTargetUser.telegram_id);
-                    if(freshTarget) {
-                        selectedTargetUser.last_seen = freshTarget.last_seen;
-                        if(!document.getElementById('user-profile-modal').classList.contains('hidden')) {
-                            document.getElementById('modal-user-lastseen').textContent = formatTelegramLastSeen(selectedTargetUser.telegram_id, selectedTargetUser.last_seen);
-                        }
-                    }
-                }
-
                 renderUsersOnMap();
                 updateOnlineCountUI(data);
-
-                if(!document.getElementById('online-users-modal').classList.contains('hidden')) {
-                    openOnlineUsersModal();
-                }
-                if(!document.getElementById('chat-hub-modal').classList.contains('hidden') && !document.getElementById('hub-content-contacts').classList.contains('hidden')) {
-                    loadMatchesAndRequests();
-                }
+                if(!document.getElementById('online-users-modal').classList.contains('hidden')) openOnlineUsersModal();
+                if(!document.getElementById('chat-hub-modal').classList.contains('hidden') && !document.getElementById('hub-content-contacts').classList.contains('hidden')) loadMatchesAndRequests();
             }
         }
 
@@ -904,7 +798,7 @@
 
             const visibleUsers = activeUsersGlobalList.filter(u => {
                 if (!u.latitude || !u.longitude || u.telegram_id === currentUser.telegram_id) return false;
-                if (!isUserOnline(u.telegram_id)) return false; // اگر کاربر آفلاین شد، از روی مپ حذف شود
+                if (!isUserOnline(u.telegram_id)) return false;
                 const distance = calculateDistance(currentCoords.lat, currentCoords.lng, u.latitude, u.longitude);
                 return distance <= activeRadiusKm;
             });
@@ -922,21 +816,17 @@
             visibleUsers.forEach(u => {
                 const onlineNow = isUserOnline(u.telegram_id);
                 const initial = (u.name || 'ک').charAt(0);
-                const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : initial;
+                const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">` : initial;
                 const onlineDot = onlineNow ? '<div class="pin-online-dot"></div>' : '';
                 const html = `<div class="other-user-pin" style="border-color: ${onlineNow ? '#22c55e' : '#64748b'}">${avatarInner}${onlineDot}</div>`;
                 
                 if (userMarkersOnMap[u.telegram_id]) {
-                    userMarkersOnMap[u.telegram_id].setIcon(L.divIcon({ html, iconSize: [44, 44], iconAnchor: [22, 22] }));
+                    userMarkersOnMap[u.telegram_id].setIcon(L.divIcon({ html, iconSize: [36, 36], iconAnchor: [18, 18] }));
                     userMarkersOnMap[u.telegram_id].setLatLng([u.latitude, u.longitude]);
                 } else {
-                    const icon = L.divIcon({ html, iconSize: [44, 44], iconAnchor: [22, 22] });
+                    const icon = L.divIcon({ html, iconSize: [36, 36], iconAnchor: [18, 18] });
                     const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
-                    
-                    marker.on('click', () => {
-                        openUserProfile(u.telegram_id);
-                    });
-
+                    marker.on('click', () => { openUserProfile(u.telegram_id); });
                     userMarkersOnMap[u.telegram_id] = marker;
                 }
             });
@@ -944,12 +834,7 @@
 
         function updateOnlineCountUI(usersList) {
             let onlineCount = 0;
-            usersList.forEach(u => {
-                if(isUserOnline(u.telegram_id)) {
-                    onlineCount++;
-                }
-            });
-            
+            usersList.forEach(u => { if(isUserOnline(u.telegram_id)) onlineCount++; });
             if(currentUser && onlineCount === 0) onlineCount = 1;
             document.getElementById('top-online-count').textContent = `${onlineCount} آنلاین`;
         }
@@ -957,9 +842,8 @@
         function openOnlineUsersModal() {
             const container = document.getElementById('online-users-list-container');
             const onlineUsers = activeUsersGlobalList.filter(u => isUserOnline(u.telegram_id));
-            
             container.innerHTML = onlineUsers.length ? onlineUsers.map(u => {
-                const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : (u.name || 'ک').charAt(0);
+                const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover rounded-full">` : (u.name || 'ک').charAt(0);
                 const isMeLabel = u.telegram_id === currentUser?.telegram_id ? ' (شما)' : '';
                 return `
                     <div onclick="closeOnlineUsersModal(); openUserProfile(${u.telegram_id})" class="tg-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-[#1f2c38] transition">
@@ -974,7 +858,6 @@
                     </div>
                 `;
             }).join('') : '<div class="text-center text-xs text-slate-400 py-6">هیچ کاربر آنلاین دیگری یافت نشد.</div>';
-
             document.getElementById('online-users-modal').classList.remove('hidden');
         }
 
@@ -983,7 +866,6 @@
         async function handleAvatarUpload(event) {
             const file = event.target.files[0];
             if(!file || !currentUser) return;
-
             const reader = new FileReader();
             reader.onload = async function(e) {
                 const base64Image = e.target.result;
@@ -1002,71 +884,42 @@
             const username = document.getElementById('input-my-username').value.trim();
             const bio = document.getElementById('input-my-bio').value.trim();
             if (!name) return;
-
             await supabaseClient.from('users').update({ name, username, bio }).eq('telegram_id', currentUser.telegram_id);
-            currentUser.name = name;
-            currentUser.username = username;
-            currentUser.bio = bio;
+            currentUser.name = name; currentUser.username = username; currentUser.bio = bio;
             updateMyAvatarUI();
             updateRadiusCircleOnMap();
             showToast("پروفایل به‌روز شد");
         }
 
-        function openChatHubModal() {
-            document.getElementById('chat-hub-modal').classList.remove('hidden');
-            loadMatchesAndRequests();
-        }
+        function openChatHubModal() { document.getElementById('chat-hub-modal').classList.remove('hidden'); loadMatchesAndRequests(); }
         function closeChatHubModal() { document.getElementById('chat-hub-modal').classList.add('hidden'); }
 
         function switchHubTab(tab) {
-            const contactsDiv = document.getElementById('hub-content-contacts');
-            const requestsDiv = document.getElementById('hub-content-requests');
-            const groupsDiv = document.getElementById('hub-content-groups');
-            const btnContacts = document.getElementById('hub-tab-contacts');
-            const btnRequests = document.getElementById('hub-tab-requests');
-            const btnGroups = document.getElementById('hub-tab-groups');
+            const contactsDiv = document.getElementById('hub-content-contacts'), requestsDiv = document.getElementById('hub-content-requests'), groupsDiv = document.getElementById('hub-content-groups');
+            const btnContacts = document.getElementById('hub-tab-contacts'), btnRequests = document.getElementById('hub-tab-requests'), btnGroups = document.getElementById('hub-tab-groups');
 
-            contactsDiv.classList.add('hidden');
-            requestsDiv.classList.add('hidden');
-            groupsDiv.classList.add('hidden');
+            contactsDiv.classList.add('hidden'); requestsDiv.classList.add('hidden'); groupsDiv.classList.add('hidden');
             btnContacts.className = "flex-1 py-2.5 text-center text-xs font-medium text-slate-400 transition";
             btnRequests.className = "flex-1 py-2.5 text-center text-xs font-medium text-slate-400 transition";
             btnGroups.className = "flex-1 py-2.5 text-center text-xs font-medium text-slate-400 transition";
 
             if(tab === 'contacts') {
-                contactsDiv.classList.remove('hidden');
-                btnContacts.className = "flex-1 py-2.5 text-center text-xs font-bold text-[#5288c1] border-b-2 border-[#5288c1] transition";
-                loadMatchesAndRequests();
+                contactsDiv.classList.remove('hidden'); btnContacts.className = "flex-1 py-2.5 text-center text-xs font-bold text-[#5288c1] border-b-2 border-[#5288c1] transition"; loadMatchesAndRequests();
             } else if(tab === 'requests') {
-                requestsDiv.classList.remove('hidden');
-                btnRequests.className = "flex-1 py-2.5 text-center text-xs font-bold text-[#5288c1] border-b-2 border-[#5288c1] transition";
-                loadMatchesAndRequests();
+                requestsDiv.classList.remove('hidden'); btnRequests.className = "flex-1 py-2.5 text-center text-xs font-bold text-[#5288c1] border-b-2 border-[#5288c1] transition"; loadMatchesAndRequests();
             } else if(tab === 'groups') {
-                groupsDiv.classList.remove('hidden');
-                btnGroups.className = "flex-1 py-2.5 text-center text-xs font-bold text-[#5288c1] border-b-2 border-[#5288c1] transition";
+                groupsDiv.classList.remove('hidden'); btnGroups.className = "flex-1 py-2.5 text-center text-xs font-bold text-[#5288c1] border-b-2 border-[#5288c1] transition";
             }
         }
 
         async function loadMatchesAndRequests() {
             if(!currentUser) return;
-            
-            const { data: matches } = await supabaseClient.from('matches')
-                .select('*')
-                .or(`user1_id.eq.${currentUser.telegram_id},user2_id.eq.${currentUser.telegram_id}`)
-                .eq('status', 'accepted');
+            await fetchMatchesData();
 
-            let matchedUserIds = [];
-            if(matches) {
-                matches.forEach(m => {
-                    const otherId = m.user1_id === currentUser.telegram_id ? m.user2_id : m.user1_id;
-                    matchedUserIds.push(otherId);
-                });
-            }
-
-            if(matchedUserIds.length > 0) {
-                const { data: usersData } = await supabaseClient.from('users').select('*').in('telegram_id', matchedUserIds);
+            if(acceptedMatchIds.length > 0) {
+                const { data: usersData } = await supabaseClient.from('users').select('*').in('telegram_id', acceptedMatchIds);
                 document.getElementById('matched-users-list-container').innerHTML = usersData ? usersData.map(u => {
-                    const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : (u.name || 'ک').charAt(0);
+                    const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover rounded-full">` : (u.name || 'ک').charAt(0);
                     const onlineNow = isUserOnline(u.telegram_id);
                     const statusText = onlineNow ? '<span class="text-emerald-400 font-medium">آنلاین</span>' : formatTelegramLastSeen(u.telegram_id, u.last_seen);
                     return `
@@ -1086,27 +939,17 @@
                 document.getElementById('matched-users-list-container').innerHTML = '<div class="text-center text-xs text-slate-400 py-6">هنوز هیچ مخاطبی ندارید. روی افراد روی نقشه کلیک کنید و درخواست ارتباط بفرستید.</div>';
             }
 
-            const { data: pendingReqs } = await supabaseClient.from('matches')
-                .select('*')
-                .eq('user2_id', currentUser.telegram_id)
-                .eq('status', 'pending');
-
+            const { data: pendingReqs } = await supabaseClient.from('matches').select('*').eq('user2_id', currentUser.telegram_id).eq('status', 'pending');
             if(pendingReqs && pendingReqs.length > 0) {
                 const reqSenderIds = pendingReqs.map(r => r.user1_id);
                 const { data: sendersData } = await supabaseClient.from('users').select('*').in('telegram_id', reqSenderIds);
-                
                 document.getElementById('requests-list-container').innerHTML = sendersData ? sendersData.map(u => {
-                    const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover">` : (u.name || 'ک').charAt(0);
+                    const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" class="w-full h-full object-cover rounded-full">` : (u.name || 'ک').charAt(0);
                     return `
                         <div class="tg-card p-3 rounded-xl flex items-center gap-3 justify-between">
                             <div class="flex items-center gap-3 cursor-pointer" onclick="openUserProfile(${u.telegram_id})">
-                                <div class="w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden">
-                                    ${avatarInner}
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-xs text-white">${u.name}</h4>
-                                    <p class="text-[10px] text-blue-400 mt-0.5">درخواست ارتباط</p>
-                                </div>
+                                <div class="w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white text-xs overflow-hidden">${avatarInner}</div>
+                                <div><h4 class="font-bold text-xs text-white">${u.name}</h4><p class="text-[10px] text-blue-400 mt-0.5">درخواست ارتباط</p></div>
                             </div>
                             <div class="flex gap-1.5">
                                 <button onclick="acceptMatchRequest(${u.telegram_id})" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold">تایید</button>
@@ -1131,11 +974,8 @@
             document.getElementById('modal-user-lastseen').textContent = formatTelegramLastSeen(data.telegram_id, data.last_seen);
 
             const avatarEl = document.getElementById('modal-user-avatar');
-            if(data.avatar_url) {
-                avatarEl.innerHTML = `<img src="${data.avatar_url}" class="w-full h-full object-cover">`;
-            } else {
-                avatarEl.textContent = (data.name || 'ک').charAt(0);
-            }
+            if(data.avatar_url) avatarEl.innerHTML = `<img src="${data.avatar_url}" class="w-full h-full object-cover rounded-full">`;
+            else avatarEl.textContent = (data.name || 'ک').charAt(0);
 
             const actionContainer = document.getElementById('profile-action-container');
             if(currentUser && targetId === currentUser.telegram_id) {
@@ -1144,11 +984,7 @@
                 return;
             }
 
-            const { data: matchCheck } = await supabaseClient.from('matches')
-                .select('*')
-                .or(`and(user1_id.eq.${currentUser.telegram_id},user2_id.eq.${targetId}),and(user1_id.eq.${targetId},user2_id.eq.${currentUser.telegram_id})`)
-                .single();
-
+            const { data: matchCheck } = await supabaseClient.from('matches').select('*').or(`and(user1_id.eq.${currentUser.telegram_id},user2_id.eq.${targetId}),and(user1_id.eq.${targetId},user2_id.eq.${currentUser.telegram_id})`).single();
             if(matchCheck) {
                 if(matchCheck.status === 'accepted') {
                     actionContainer.innerHTML = `<button onclick="closeUserProfileModal(); openPrivateChat(${targetId}, '${data.name}')" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition shadow">ارسال پیام</button>`;
@@ -1158,7 +994,6 @@
             } else {
                 actionContainer.innerHTML = `<button id="btn-send-match-req" onclick="sendMatchRequest()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition shadow">ارسال درخواست ارتباط</button>`;
             }
-
             document.getElementById('user-profile-modal').classList.remove('hidden');
         }
 
@@ -1166,29 +1001,19 @@
 
         async function sendMatchRequest() {
             if(!selectedTargetUser || !currentUser) return;
-            await supabaseClient.from('matches').insert([{
-                user1_id: currentUser.telegram_id,
-                user2_id: selectedTargetUser.telegram_id,
-                status: 'pending'
-            }]);
+            await supabaseClient.from('matches').insert([{ user1_id: currentUser.telegram_id, user2_id: selectedTargetUser.telegram_id, status: 'pending' }]);
             showToast("درخواست ارتباط ارسال شد");
             openUserProfile(selectedTargetUser.telegram_id);
         }
 
         async function acceptMatchRequest(senderId) {
-            await supabaseClient.from('matches')
-                .update({ status: 'accepted' })
-                .eq('user1_id', senderId)
-                .eq('user2_id', currentUser.telegram_id);
+            await supabaseClient.from('matches').update({ status: 'accepted' }).eq('user1_id', senderId).eq('user2_id', currentUser.telegram_id);
             showToast("درخواست تایید شد. اکنون در مخاطبین شماست.");
             loadMatchesAndRequests();
         }
 
         async function rejectMatchRequest(senderId) {
-            await supabaseClient.from('matches')
-                .delete()
-                .eq('user1_id', senderId)
-                .eq('user2_id', currentUser.telegram_id);
+            await supabaseClient.from('matches').delete().eq('user1_id', senderId).eq('user2_id', currentUser.telegram_id);
             showToast("درخواست رد شد");
             loadMatchesAndRequests();
         }
@@ -1209,21 +1034,15 @@
         }
 
         function openProfileFromChatHeader() {
-            if(currentChatType === 'pv' && selectedTargetUser) {
-                openUserProfile(selectedTargetUser.telegram_id);
-            }
+            if(currentChatType === 'pv' && selectedTargetUser) openUserProfile(selectedTargetUser.telegram_id);
         }
 
         async function openPrivateChat(targetId, targetName) {
             currentChatType = 'pv';
             currentChatTargetId = targetId;
-            
             const container = document.getElementById('chat-messages');
-            if (cachedMessages[targetId]) {
-                renderMessagesHTML(cachedMessages[targetId], container);
-            } else {
-                container.innerHTML = '<div class="flex justify-center items-center py-10"><span class="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span></div>';
-            }
+            if (cachedMessages[targetId]) renderMessagesHTML(cachedMessages[targetId], container);
+            else container.innerHTML = '<div class="flex justify-center items-center py-10"><span class="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span></div>';
 
             document.getElementById('chat-window').classList.remove('hidden');
             closeChatHubModal();
@@ -1235,29 +1054,22 @@
             updateChatHeaderStatusUI();
             
             const headerAvatar = document.getElementById('chat-header-avatar');
-            if(selectedTargetUser.avatar_url) {
-                headerAvatar.innerHTML = `<img src="${selectedTargetUser.avatar_url}" class="w-full h-full object-cover">`;
-            } else {
-                headerAvatar.textContent = (selectedTargetUser.name || 'ک').charAt(0);
-            }
+            if(selectedTargetUser.avatar_url) headerAvatar.innerHTML = `<img src="${selectedTargetUser.avatar_url}" class="w-full h-full object-cover rounded-full">`;
+            else headerAvatar.textContent = (selectedTargetUser.name || 'ک').charAt(0);
             
-            await supabaseClient.from('messages')
-                .update({ is_read: true })
-                .eq('sender_id', targetId)
-                .eq('receiver_id', currentUser.telegram_id)
-                .eq('is_read', false);
-
+            await supabaseClient.from('messages').update({ is_read: true }).eq('sender_id', targetId).eq('receiver_id', currentUser.telegram_id).eq('is_read', false);
             loadMessages();
             initRealtimeChatChannel();
         }
 
-        function openGroupChat(roomName, title) {
+        async function openGroupChat(roomName, title) {
+            await fetchMatchesData();
             currentChatType = 'group';
             currentChatTargetId = roomName;
             selectedTargetUser = null;
 
             document.getElementById('chat-title').textContent = title;
-            document.getElementById('chat-lastseen').textContent = `گروه شعاعی (${activeRadiusKm} کیلومتر)`;
+            document.getElementById('chat-lastseen').textContent = `گروه شعاعی (${activeRadiusKm} کیلومتر • حذف خودکار ۲۴ ساعته)`;
             document.getElementById('chat-header-avatar').textContent = '🌐';
 
             document.getElementById('chat-window').classList.remove('hidden');
@@ -1269,7 +1081,6 @@
         function updateChatHeaderStatusUI() {
             if (currentChatType !== 'pv' || !selectedTargetUser) return;
             const lastseenEl = document.getElementById('chat-lastseen');
-            
             if (typingUsersMap[selectedTargetUser.telegram_id]) {
                 lastseenEl.innerHTML = `<span class="text-[#5288c1] flex items-center gap-1 font-medium">در حال تایپ<span class="typing-dots"><span></span><span></span><span></span></span></span>`;
             } else {
@@ -1291,17 +1102,24 @@
             const { data } = await query.order('created_at', { ascending: true });
             let filteredMessages = data || [];
 
-            if(currentChatType === 'group') {
-                filteredMessages = filteredMessages.filter(m => {
-                    if(!m.sender_lat || !m.sender_lng) return true;
-                    return calculateDistance(currentCoords.lat, currentCoords.lng, m.sender_lat, m.sender_lng) <= activeRadiusKm;
-                });
-            }
+            const now = new Date();
+            filteredMessages = filteredMessages.filter(m => {
+                // پاک شدن پیام‌های گروهی بعد از ۲۴ ساعت
+                if(m.room_name) {
+                    const msgDate = new Date(m.created_at);
+                    if((now - msgDate) > 86400000) return false;
+                }
+                // عدم نمایش پیام‌های گروهی به افراد خارج از شعاع یا خارج از لیست مچ‌شده‌ها
+                if(currentChatType === 'group' && m.sender_id !== currentUser.telegram_id) {
+                    if(!acceptedMatchIds.includes(m.sender_id)) return false;
+                    if(m.sender_lat && m.sender_lng) {
+                        if(calculateDistance(currentCoords.lat, currentCoords.lng, m.sender_lat, m.sender_lng) > activeRadiusKm) return false;
+                    }
+                }
+                return true;
+            });
 
-            if (currentChatType === 'pv') {
-                cachedMessages[currentChatTargetId] = filteredMessages;
-            }
-
+            if (currentChatType === 'pv') cachedMessages[currentChatTargetId] = filteredMessages;
             renderMessagesHTML(filteredMessages, container);
         }
 
@@ -1311,12 +1129,7 @@
                 let ticksHTML = '';
                 if (isMe && currentChatType === 'pv') {
                     const isRead = m.is_read;
-                    ticksHTML = `
-                        <span class="inline-flex items-center text-[10px] ml-1 select-none tracking-tighter">
-                            <span class="${isRead ? 'text-sky-400 font-bold' : 'text-slate-300'}">✓</span>
-                            <span class="${isRead ? 'text-sky-400 font-bold -ml-1' : 'hidden'}">✓</span>
-                        </span>
-                    `;
+                    ticksHTML = `<span class="inline-flex items-center text-[10px] ml-1 select-none tracking-tighter"><span class="${isRead ? 'text-sky-400 font-bold' : 'text-slate-300'}">✓</span><span class="${isRead ? 'text-sky-400 font-bold -ml-1' : 'hidden'}">✓</span></span>`;
                 }
 
                 const msgTime = new Date(m.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1324,28 +1137,21 @@
                 
                 let replyBlock = '';
                 if(m.reply_to) {
-                    replyBlock = `
-                        <div class="bg-black/20 px-2 py-1 rounded border-r-2 border-[#5288c1] mb-1 text-[10px] text-slate-300">
-                            <span class="font-bold text-[#5288c1] block">${m.reply_sender || 'کاربر'}</span>
-                            <span class="truncate block">${m.reply_text || ''}</span>
-                        </div>
-                    `;
+                    replyBlock = `<div class="bg-black/20 px-2 py-1 rounded border-r-2 border-[#5288c1] mb-1 text-[10px] text-slate-300"><span class="font-bold text-[#5288c1] block">${m.reply_sender || 'کاربر'}</span><span class="truncate block">${m.reply_text || ''}</span></div>`;
                 }
 
                 return `
                     <div id="msg-card-${m.id}" 
-                         ontouchstart="handleTouchStart(event, '${m.id}', '${m.sender_name || 'کاربر'}', '${m.message}')"
+                         ontouchstart="handleTouchStart(event, '${m.id}')"
                          ontouchmove="handleTouchMove(event, '${m.id}')"
                          ontouchend="handleTouchEnd(event, '${m.id}', '${m.sender_name || 'کاربر'}', '${m.message}')"
                          onclick="openMessageActions('${m.id}', '${m.message}', ${isMe})"
-                         class="max-w-[80%] px-3 py-2 rounded-xl text-xs flex flex-col ${isMe ? 'chat-bubble-out self-end' : 'chat-bubble-in self-start'} relative group cursor-pointer swipe-message-container">
+                         class="max-w-[80%] px-3 py-2 rounded-xl text-xs flex flex-col ${isMe ? 'chat-bubble-out self-end' : 'chat-bubble-in self-start'} relative group cursor-pointer">
                         ${currentChatType !== 'pv' && !isMe ? `<div class="text-[10px] text-[#5288c1] font-bold mb-0.5">${m.sender_name || 'کاربر'}</div>` : ''}
                         ${replyBlock}
                         <div>${m.message}</div>
                         <div class="flex items-center justify-end gap-1 mt-0.5">
-                            ${editedMark}
-                            <span class="text-[9px] text-slate-300 opacity-80">${msgTime}</span>
-                            ${ticksHTML}
+                            ${editedMark}<span class="text-[9px] text-slate-300 opacity-80">${msgTime}</span>${ticksHTML}
                         </div>
                     </div>
                 `;
@@ -1356,11 +1162,7 @@
         function openMessageActions(id, text, isMe) {
             selectedMessageForAction = { id, text, isMe };
             const editBtn = document.getElementById('action-btn-edit');
-            if (isMe) {
-                editBtn.classList.remove('hidden');
-            } else {
-                editBtn.classList.add('hidden');
-            }
+            if (isMe) editBtn.classList.remove('hidden'); else editBtn.classList.add('hidden');
             document.getElementById('message-actions-modal').classList.remove('hidden');
         }
 
@@ -1395,37 +1197,23 @@
             toggleInputButtonState();
         }
 
-        let touchStartX = 0;
-        let currentSwipeId = null;
-
-        function handleTouchStart(e, id) {
-            touchStartX = e.touches[0].clientX;
-            currentSwipeId = id;
-        }
-
+        let touchStartX = 0, currentSwipeId = null;
+        function handleTouchStart(e, id) { touchStartX = e.touches[0].clientX; currentSwipeId = id; }
         function handleTouchMove(e, id) {
             if (!touchStartX || currentSwipeId !== id) return;
-            let currentX = e.touches[0].clientX;
-            let diff = currentX - touchStartX;
+            let currentX = e.touches[0].clientX, diff = currentX - touchStartX;
             if (diff > 0 && diff < 120) {
                 const el = document.getElementById(`msg-card-${id}`);
                 if (el) el.style.transform = `translateX(${diff}px)`;
             }
         }
-
         function handleTouchEnd(e, id, sender, text) {
             if (!touchStartX || currentSwipeId !== id) return;
-            let endX = e.changedTouches[0].clientX;
-            let diff = endX - touchStartX;
-            
+            let endX = e.changedTouches[0].clientX, diff = endX - touchStartX;
             const el = document.getElementById(`msg-card-${id}`);
             if (el) el.style.transform = `translateX(0px)`;
-
-            if (diff > 50) {
-                setReplyTarget(id, sender, text);
-            }
-            touchStartX = 0;
-            currentSwipeId = null;
+            if (diff > 50) setReplyTarget(id, sender, text);
+            touchStartX = 0; currentSwipeId = null;
         }
 
         function setReplyTarget(id, sender, text) {
@@ -1436,45 +1224,29 @@
             document.getElementById('chat-input').focus();
         }
 
-        function cancelReply() {
-            replyingToMessage = null;
-            document.getElementById('reply-preview-bar').classList.add('hidden');
-        }
+        function cancelReply() { replyingToMessage = null; document.getElementById('reply-preview-bar').classList.add('hidden'); }
 
         function handleChatInputTyping() {
             toggleInputButtonState();
             if (currentChatType === 'pv' && activePrivateChannel && currentUser && selectedTargetUser) {
-                activePrivateChannel.send({
-                    type: 'broadcast',
-                    event: 'typing',
-                    payload: { sender_id: currentUser.telegram_id, receiver_id: selectedTargetUser.telegram_id }
-                });
+                activePrivateChannel.send({ type: 'broadcast', event: 'typing', payload: { sender_id: currentUser.telegram_id, receiver_id: selectedTargetUser.telegram_id } });
             }
         }
 
         function toggleInputButtonState() {
             const inputVal = document.getElementById('chat-input').value;
-            const micIcon = document.getElementById('btn-icon-mic');
-            const sendIcon = document.getElementById('btn-icon-send');
-
-            if (inputVal.trim().length > 0) {
-                micIcon.classList.add('hidden');
-                sendIcon.classList.remove('hidden');
-            } else {
-                micIcon.classList.remove('hidden');
-                sendIcon.classList.add('hidden');
-            }
+            const micIcon = document.getElementById('btn-icon-mic'), sendIcon = document.getElementById('btn-icon-send');
+            if (inputVal.trim().length > 0) { micIcon.classList.add('hidden'); sendIcon.classList.remove('hidden'); }
+            else { micIcon.classList.remove('hidden'); sendIcon.classList.add('hidden'); }
         }
 
         function startVoiceRecording(e) {
             const inputVal = document.getElementById('chat-input').value;
             if (inputVal.trim().length > 0) return;
-
             e.preventDefault();
             if (isVoiceRecordingActive) return;
             isVoiceRecordingActive = true;
             showToast("🔴 در حال ضبط صدا...");
-            
             voiceTimer = setTimeout(async () => {
                 if(isVoiceRecordingActive) {
                     isVoiceRecordingActive = false;
@@ -1487,7 +1259,6 @@
         async function stopVoiceRecording(e) {
             const inputVal = document.getElementById('chat-input').value;
             if (inputVal.trim().length > 0) return;
-
             e.preventDefault();
             if (!isVoiceRecordingActive) return;
             clearTimeout(voiceTimer);
@@ -1497,31 +1268,16 @@
         }
 
         async function sendVoiceMessagePayload(text) {
-            let payload = {
-                sender_id: currentUser.telegram_id,
-                sender_name: currentUser.name,
-                message: text,
-                is_read: false,
-                sender_lat: currentCoords.lat,
-                sender_lng: currentCoords.lng
-            };
-
-            if (currentChatType === 'pv') {
-                payload.receiver_id = currentChatTargetId;
-            } else {
-                payload.room_name = currentChatTargetId;
-                payload.receiver_id = null;
-            }
-
+            let payload = { sender_id: currentUser.telegram_id, sender_name: currentUser.name, message: text, is_read: false, sender_lat: currentCoords.lat, sender_lng: currentCoords.lng };
+            if (currentChatType === 'pv') payload.receiver_id = currentChatTargetId;
+            else { payload.room_name = currentChatTargetId; payload.receiver_id = null; }
             await supabaseClient.from('messages').insert([payload]);
         }
 
         async function handleSendAction() {
             const input = document.getElementById('chat-input');
             const message = input.value.trim();
-
             if (!message) return;
-
             input.value = '';
             toggleInputButtonState();
 
@@ -1533,15 +1289,7 @@
                 return;
             }
 
-            let payload = {
-                sender_id: currentUser.telegram_id,
-                sender_name: currentUser.name,
-                message,
-                is_read: false,
-                sender_lat: currentCoords.lat,
-                sender_lng: currentCoords.lng
-            };
-
+            let payload = { sender_id: currentUser.telegram_id, sender_name: currentUser.name, message, is_read: false, sender_lat: currentCoords.lat, sender_lng: currentCoords.lng };
             if (replyingToMessage) {
                 payload.reply_to = replyingToMessage.id;
                 payload.reply_sender = replyingToMessage.sender;
@@ -1556,14 +1304,7 @@
                 payload.receiver_id = null;
             }
 
-            const { data: insertedMsg } = await supabaseClient.from('messages').insert([payload]).select().single();
-
-            if (currentChatType === 'group' && insertedMsg) {
-                setTimeout(async () => {
-                    await supabaseClient.from('messages').delete().eq('id', insertedMsg.id);
-                    loadMessages();
-                }, 86400000);
-            }
+            await supabaseClient.from('messages').insert([payload]);
         }
 
         function initRealtimeChatChannel() {
@@ -1573,19 +1314,13 @@
                 : `chat_room_${currentChatTargetId}`;
             
             activePrivateChannel = supabaseClient.channel(channelName)
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
-                    loadMessages();
-                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => { loadMessages(); })
                 .on('broadcast', { event: 'typing' }, payload => {
                     if (currentChatType === 'pv' && payload.payload.sender_id === currentChatTargetId) {
                         typingUsersMap[payload.payload.sender_id] = true;
                         updateChatHeaderStatusUI();
-                        
                         clearTimeout(typingTimeout);
-                        typingTimeout = setTimeout(() => {
-                            typingUsersMap[payload.payload.sender_id] = false;
-                            updateChatHeaderStatusUI();
-                        }, 2500);
+                        typingTimeout = setTimeout(() => { typingUsersMap[payload.payload.sender_id] = false; updateChatHeaderStatusUI(); }, 2500);
                     }
                 })
                 .subscribe();
@@ -1593,13 +1328,9 @@
 
         function initRealtimeGlobal() {
             if(globalChannel) supabaseClient.removeChannel(globalChannel);
-
-            globalChannel = supabaseClient.channel('global-app-sync', {
-                config: { presence: { key: String(currentUser.telegram_id) } },
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => {
-                fetchUsersData();
-            })
+            globalChannel = supabaseClient.channel('global-app-sync', { config: { presence: { key: String(currentUser.telegram_id) } } })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, payload => { fetchUsersData(); })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, payload => { fetchUsersData(); })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
                 const m = payload.new;
                 if (!m) return;
@@ -1615,9 +1346,7 @@
                 fetchUsersData();
             })
             .subscribe(async (status) => {
-                if (status === 'SUBSCRIBED') {
-                    await globalChannel.track({ online_at: new Date().toISOString() });
-                }
+                if (status === 'SUBSCRIBED') await globalChannel.track({ online_at: new Date().toISOString() });
             });
         }
     </script>
