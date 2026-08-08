@@ -56,33 +56,33 @@
 
         .leaflet-marker-pane { z-index: 600 !important; }
 
-        /* پین کاملاً گرد و مینیمال دیگران */
+        /* پین کاملاً گرد و مینیمال دیگران - بدون کادر مربع و تیره اضافه */
         .other-user-pin {
-            width: 36px;
-            height: 36px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
             background: #17212b;
-            border: 2px solid #22c55e;
+            border: 2.5px solid #22c55e;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
             color: white;
-            font-size: 11px;
+            font-size: 12px;
             overflow: hidden;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             cursor: pointer;
             transition: transform 0.2s ease, opacity 0.3s ease;
             position: relative;
         }
-        .other-user-pin img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-        .other-user-pin:hover { transform: scale(1.12); }
+        .other-user-pin img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+        .other-user-pin:hover { transform: scale(1.15); }
         .pin-online-dot {
             position: absolute;
             bottom: 1px;
             right: 1px;
-            width: 8px;
-            height: 8px;
+            width: 9px;
+            height: 9px;
             background-color: #22c55e;
             border: 1.5px solid #17212b;
             border-radius: 50%;
@@ -340,7 +340,7 @@
                 <label class="text-[11px] text-slate-400 mb-1 block">بیوگرافی (درباره من)</label>
                 <textarea id="input-my-bio" rows="2" class="w-full tg-input px-3.5 py-2.5 rounded-xl text-xs resize-none"></textarea>
             </div>
-            <button onclick="playSound('click'); saveProfile()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition shadow">ذخیره و به‌روزرسانی کامل</button>
+            <button onclick="playSound('click'); saveProfile()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition shadow">ذخیره و به‌روزرسانی دائمی</button>
         </div>
     </div>
 
@@ -368,8 +368,8 @@
                 <input type="checkbox" id="setting-darkmap-toggle" onchange="toggleMapTheme()" class="w-4 h-4 accent-blue-600 cursor-pointer">
             </div>
             <div class="flex flex-col gap-1.5 pt-2">
-                <h4 class="font-bold text-xs text-white">درباره این مینی‌پپ</h4>
-                <p class="text-[10px] text-slate-400 leading-relaxed">نسخه پیشرفته تلگرام با قابلیت جستجوی شعاعی، چت زنده مبتنی بر موقعیت، پاک‌سازی هوشمند پیام‌ها و فیلترهای پیشرفته ارتباطی.</p>
+                <h4 class="font-bold text-xs text-white">ذخیره دائمی تنظیمات</h4>
+                <p class="text-[10px] text-slate-400 leading-relaxed">تمام تغییرات شعاع، پروفایل و تم نقشه به صورت خودکار برای همیشه روی حافظه دستگاه و حساب کاربری شما ذخیره می‌شوند.</p>
             </div>
         </div>
     </div>
@@ -395,7 +395,7 @@
                     <button onclick="playSound('click'); startPickingLocationOnMap()" class="py-2 bg-[#2b5278] hover:bg-[#336394] rounded-lg text-[11px] text-white transition flex items-center justify-center gap-1.5 font-medium">📍 انتخاب نقطه روی نقشه</button>
                 </div>
             </div>
-            <button onclick="playSound('click'); closeRadiusSettingsModal()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition">ذخیره تنظیمات</button>
+            <button onclick="playSound('click'); closeRadiusSettingsModal()" class="w-full py-2.5 bg-[#2b5278] hover:bg-[#336394] rounded-xl font-medium text-xs text-white transition">ذخیره و بستن</button>
         </div>
     </div>
 
@@ -575,14 +575,14 @@
         let map, myLocationMarker = null, userMarkersOnMap = {};
         let radiusCircle = null;
         let currentCoords = { lat: 35.6892, lng: 51.3890 };
-        let activeRadiusKm = 15;
+        let activeRadiusKm = parseFloat(localStorage.getItem('saved_radius_km')) || 15;
         let activePrivateChannel = null;
         let globalChannel = null;
         let onlineUsersMap = {};
         let typingUsersMap = {};
         let activeUsersGlobalList = [];
         let acceptedMatchIds = [];
-        let isDarkMap = false;
+        let isDarkMap = localStorage.getItem('saved_dark_map') === 'true';
         let navigationHistory = ['map'];
         let replyingToMessage = null;
         let editingMessage = null;
@@ -597,9 +597,9 @@
         
         let currentOnlineFilter = 'all';
         let currentGenderFilter = 'all';
-        let soundEnabled = true;
+        let soundEnabled = localStorage.getItem('saved_sound_enabled') !== 'false';
 
-        // سیستم اصوات وب‌اسپیکر (Web Audio API Synthesizer) برای صداهای درخواست‌شده
+        // سیستم اصوات وب‌اسپیکر (Web Audio API Synthesizer)
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(type) {
             if(!soundEnabled) return;
@@ -641,7 +641,8 @@
 
         function toggleSoundSetting(val) {
             soundEnabled = val;
-            showToast(val ? "صداها فعال شدند" : "صداها قطع شدند");
+            localStorage.setItem('saved_sound_enabled', val);
+            showToast(val ? "صداها برای همیشه فعال شدند" : "صداها قطع شدند");
         }
 
         const user = tg?.initDataUnsafe?.user || { 
@@ -687,6 +688,7 @@
 
         function toggleMapTheme() {
             isDarkMap = !isDarkMap;
+            localStorage.setItem('saved_dark_map', isDarkMap);
             const mapContainer = document.getElementById('map');
             if(isDarkMap) {
                 mapContainer.classList.add('dark-map');
@@ -695,6 +697,7 @@
                 mapContainer.classList.remove('dark-map');
                 document.getElementById('setting-darkmap-toggle').checked = false;
             }
+            showToast("تنظیم تم نقشه ذخیره شد");
         }
 
         function toggleGoogleSearchExpansion() {
@@ -739,6 +742,7 @@
 
         function onRadiusSliderChange(val) {
             activeRadiusKm = parseFloat(val);
+            localStorage.setItem('saved_radius_km', activeRadiusKm);
             document.getElementById('modal-radius-range').value = val;
             document.getElementById('modal-radius-val').textContent = `${val} کیلومتر`;
             updateRadiusCircleOnMap();
@@ -748,6 +752,7 @@
 
         function onModalRadiusChange(val) {
             activeRadiusKm = parseFloat(val);
+            localStorage.setItem('saved_radius_km', activeRadiusKm);
             document.getElementById('radius-slider').value = val;
             document.getElementById('modal-radius-val').textContent = `${val} کیلومتر`;
             updateRadiusCircleOnMap();
@@ -771,7 +776,6 @@
                     const newLat = position.coords.latitude;
                     const newLng = position.coords.longitude;
                     
-                    // بررسی جابجایی قابل توجه برای ریست کردن چت شعاعی
                     if(calculateDistance(currentCoords.lat, currentCoords.lng, newLat, newLng) > activeRadiusKm) {
                         handleRadiusBoundaryReset();
                     }
@@ -833,6 +837,17 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
+            // اعمال مقادیر ذخیره‌شده دائمی در UI
+            document.getElementById('radius-slider').value = activeRadiusKm;
+            document.getElementById('modal-radius-range').value = activeRadiusKm;
+            document.getElementById('modal-radius-val').textContent = `${activeRadiusKm} کیلومتر`;
+            document.getElementById('setting-sound-toggle').checked = soundEnabled;
+
+            if(isDarkMap) {
+                document.getElementById('setting-darkmap-toggle').checked = true;
+                document.getElementById('map').classList.add('dark-map');
+            }
+
             map = L.map('map', { zoomControl: false }).setView([currentCoords.lat, currentCoords.lng], 13);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
@@ -868,11 +883,20 @@
 
         async function initUserSession() {
             const { data } = await supabaseClient.from('users').select('*').eq('telegram_id', user.id).single();
-            if (data) { currentUser = data; } 
-            else {
+            if (data) { 
+                currentUser = data; 
+            } else {
                 const newUserData = { telegram_id: user.id, name: user.first_name, username: user.username, gender: 'male', visibility: 'public', latitude: currentCoords.lat, longitude: currentCoords.lng, last_seen: new Date().toISOString() };
                 const { data: inserted } = await supabaseClient.from('users').upsert(newUserData).select().single();
                 currentUser = inserted || newUserData;
+            }
+
+            // بازیابی دائمی عکس پروفایل ذخیره شده در دستگاه یا دیتابیس
+            const savedAvatar = localStorage.getItem('saved_user_avatar_' + user.id) || currentUser.avatar_url;
+            if(savedAvatar) {
+                currentUser.avatar_url = savedAvatar;
+                // همزمان‌سازی دائمی با دیتابیس برای اطمینان از قابلیت نمایش برای دیگران
+                await supabaseClient.from('users').update({ avatar_url: savedAvatar }).eq('telegram_id', currentUser.telegram_id);
             }
 
             document.getElementById('input-my-name').value = currentUser.name || '';
@@ -881,9 +905,6 @@
             document.getElementById('input-my-gender').value = currentUser.gender || 'male';
             document.getElementById('input-my-visibility').value = currentUser.visibility || 'public';
             document.getElementById('input-my-age').value = currentUser.age || '';
-            
-            const savedAvatar = localStorage.getItem('saved_user_avatar_' + user.id);
-            if(savedAvatar) currentUser.avatar_url = savedAvatar;
 
             updateMyAvatarUI();
             updateRadiusCircleOnMap();
@@ -975,15 +996,17 @@
             visibleUsers.forEach(u => {
                 const onlineNow = isUserOnline(u.telegram_id);
                 const initial = (u.name || 'ک').charAt(0);
-                const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">` : initial;
+                
+                // تصویر پروفایل دیگران کاملاً شفاف، گرد و بدون کادر مربعی اضافه
+                const avatarInner = u.avatar_url ? `<img src="${u.avatar_url}">` : initial;
                 const onlineDot = onlineNow ? '<div class="pin-online-dot"></div>' : '';
                 const html = `<div class="other-user-pin" style="border-color: ${onlineNow ? '#22c55e' : '#64748b'}">${avatarInner}${onlineDot}</div>`;
                 
                 if (userMarkersOnMap[u.telegram_id]) {
-                    userMarkersOnMap[u.telegram_id].setIcon(L.divIcon({ html, iconSize: [36, 36], iconAnchor: [18, 18] }));
+                    userMarkersOnMap[u.telegram_id].setIcon(L.divIcon({ html, className: '', iconSize: [38, 38], iconAnchor: [19, 19] }));
                     userMarkersOnMap[u.telegram_id].setLatLng([u.latitude, u.longitude]);
                 } else {
-                    const icon = L.divIcon({ html, iconSize: [36, 36], iconAnchor: [18, 18] });
+                    const icon = L.divIcon({ html, className: '', iconSize: [38, 38], iconAnchor: [19, 19] });
                     const marker = L.marker([u.latitude, u.longitude], { icon }).addTo(map);
                     marker.on('click', () => { playSound('click'); openUserProfile(u.telegram_id); });
                     userMarkersOnMap[u.telegram_id] = marker;
@@ -1028,16 +1051,14 @@
             const container = document.getElementById('online-users-list-container');
             let users = activeUsersGlobalList.filter(u => u.visibility !== 'hidden');
 
-            // اعمال فیلتر وضعیت آنلاین/آفلاین/قبلی
             users = users.filter(u => {
                 const online = isUserOnline(u.telegram_id);
                 if(currentOnlineFilter === 'online') return online;
                 if(currentOnlineFilter === 'offline') return !online;
-                if(currentOnlineFilter === 'recent') return !online && u.last_seen; // کسانی که قبلاً بودند
+                if(currentOnlineFilter === 'recent') return !online && u.last_seen;
                 return true;
             });
 
-            // اعمال فیلتر جنسیت
             if(currentGenderFilter !== 'all') {
                 users = users.filter(u => u.gender === currentGenderFilter);
             }
@@ -1072,12 +1093,14 @@
             const reader = new FileReader();
             reader.onload = async function(e) {
                 const base64Image = e.target.result;
+                // ذخیره دائمی روی دستگاه و سرور برای اینکه برای دیگران نیز قابل نمایش باشد
                 localStorage.setItem('saved_user_avatar_' + currentUser.telegram_id, base64Image);
-                await supabaseClient.from('users').update({ avatar_url: base64Image }).eq('telegram_id', currentUser.telegram_id);
                 currentUser.avatar_url = base64Image;
+
+                await supabaseClient.from('users').update({ avatar_url: base64Image }).eq('telegram_id', currentUser.telegram_id);
                 updateMyAvatarUI();
                 updateRadiusCircleOnMap();
-                showToast("عکس پروفایل ذخیره شد");
+                showToast("عکس پروفایل برای همیشه ذخیره شد");
             };
             reader.readAsDataURL(file);
         }
@@ -1091,11 +1114,11 @@
             const age = parseInt(document.getElementById('input-my-age').value) || null;
             if (!name) return;
 
-            await supabaseClient.from('users').update({ name, username, bio, gender, visibility, age }).eq('telegram_id', currentUser.telegram_id);
+            await supabaseClient.from('users').update({ name, username, bio, gender, visibility, age, avatar_url: currentUser.avatar_url || null }).eq('telegram_id', currentUser.telegram_id);
             currentUser.name = name; currentUser.username = username; currentUser.bio = bio; currentUser.gender = gender; currentUser.visibility = visibility; currentUser.age = age;
             updateMyAvatarUI();
             updateRadiusCircleOnMap();
-            showToast("پروفایل جامع به‌روز شد");
+            showToast("پروفایل شما دائمی ذخیره شد");
             navigateTo('map');
         }
 
@@ -1312,7 +1335,6 @@
             const { data } = await query.order('created_at', { ascending: true });
             let filteredMessages = data || [];
 
-            // مکانیزم حذف خودکار با بالا رفتن حجم پیام‌ها در گروه (حفظ آخرین ۵۰ پیام مهم)
             if (currentChatType === 'group' && filteredMessages.length > 50) {
                 const overflowCount = filteredMessages.length - 50;
                 const oldMessages = filteredMessages.slice(0, overflowCount);
@@ -1323,7 +1345,6 @@
             }
 
             filteredMessages = filteredMessages.filter(m => {
-                // عدم نمایش پیام‌های گروهی به افراد خارج از شعاع
                 if(currentChatType === 'group' && m.sender_id !== currentUser.telegram_id) {
                     if(m.sender_lat && m.sender_lng) {
                         if(calculateDistance(currentCoords.lat, currentCoords.lng, m.sender_lat, m.sender_lng) > activeRadiusKm) return false;
